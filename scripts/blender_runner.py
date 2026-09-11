@@ -175,6 +175,13 @@ def _build_env() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Bridge script path (R2)
+# ---------------------------------------------------------------------------
+
+_BRIDGE_SCRIPT = Path(__file__).parent / "blender_bridge.py"
+
+
+# ---------------------------------------------------------------------------
 # Discovery
 # ---------------------------------------------------------------------------
 
@@ -189,13 +196,13 @@ def discover_blender(explicit_path: str | None, search_path: str) -> BlenderRunt
         BlenderRuntime with parsed version and background support flag.
 
     Raises:
-        BlenderNotFoundError: No executable found.
+        BlenderNotFoundError: No executable found or not executable.
         BlenderUnsupportedVersionError: Version output unparseable.
     """
     # --- resolve executable path ---
     if explicit_path is not None:
         exe = Path(explicit_path)
-        if not exe.is_file():
+        if not exe.is_file() or not os.access(exe, os.X_OK):  # R1
             raise BlenderNotFoundError(f"Blender not found: {explicit_path}")
     else:
         found = shutil.which("blender", path=search_path)
@@ -205,15 +212,21 @@ def discover_blender(explicit_path: str | None, search_path: str) -> BlenderRunt
             )
         exe = Path(found)
 
-    # --- probe version ---
-    result = subprocess.run(
-        [str(exe), "--version"],
-        capture_output=True,
-        text=True,
-        timeout=15,
-        env=_build_env(),
-        shell=False,
-    )
+    # --- probe version ---  (R6: catch TimeoutExpired)
+    try:
+        result = subprocess.run(
+            [str(exe), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=_build_env(),
+            shell=False,
+        )
+    except subprocess.TimeoutExpired:
+        raise BlenderUnsupportedVersionError(
+            f"Blender --version timed out: {exe}"
+        )
+
     output = result.stdout.strip()
     if not output:
         output = result.stderr.strip()
@@ -228,6 +241,16 @@ def discover_blender(explicit_path: str | None, search_path: str) -> BlenderRunt
 # argv construction
 # ---------------------------------------------------------------------------
 
+def _check_symlink_escape(path: Path, label: str) -> None:
+    """Reject symlinks that resolve outside their parent directory."""
+    resolved = path.resolve()
+    base = path.parent.resolve()
+    if not str(resolved).startswith(str(base) + os.sep):
+        raise BlenderError(
+            f"{label} path escapes directory via symlink: {path} -> {resolved}",
+        )
+
+
 def build_argv(
     runtime: BlenderRuntime,
     project: Path,
@@ -235,8 +258,9 @@ def build_argv(
 ) -> list[str]:
     """Build the argv list for a Blender invocation.
 
-    Validates that *project* resolves inside *project*'s parent directory
-    (symlink escape check).
+    Validates that *project* resolves inside its parent directory (symlink
+    escape check).  Validates that *request* is not a symlink and is a
+    regular file (R3).
 
     Args:
         runtime: Discovered Blender runtime.
@@ -247,20 +271,30 @@ def build_argv(
         argv list starting with the Blender executable path.
 
     Raises:
-        BlenderError: If the project path escapes via symlink.
+        BlenderError: If project escapes via symlink or request is a symlink.
     """
-    # --- symlink escape detection ---
-    project_resolved = project.resolve()
-    base = project.parent.resolve()
-    if not str(project_resolved).startswith(str(base) + os.sep):
+    # --- project symlink escape detection ---
+    _check_symlink_escape(project, "Project")
+
+    # --- request symlink policy (R3) ---
+    if request.is_symlink():
         raise BlenderError(
-            f"Project path escapes project directory via symlink: {project} -> {project_resolved}",
+            f"Request path must not be a symlink: {request}",
+        )
+    if not request.resolve().is_file():
+        raise BlenderError(
+            f"Request path must be a regular file: {request}",
         )
 
-    argv: list[str] = [str(runtime.executable), str(project)]
+    bridge = str(_BRIDGE_SCRIPT)
 
+    argv: list[str] = [str(runtime.executable)]
+
+    # --background gated on runtime support
     if runtime.background_supported:
         argv.append("--background")
+
+    argv.append(str(project))
 
     # Engine flag varies by major version
     major = int(runtime.version.split(".")[0])
@@ -268,6 +302,9 @@ def build_argv(
         argv.extend(["--engine", "CYCLES"])
     else:
         argv.extend(["-E", "CYCLES"])
+
+    # Bridge script and request path (R2)
+    argv.extend(["--python", bridge, "--", str(request)])
 
     return argv
 
@@ -332,10 +369,15 @@ def run_blender(
     err_chunks: list[str] = []
     deadline = _monotonic() + timeout_seconds
     timed_out = False
+    cancel_raised = False
 
     try:
         while True:
-            cancel(process)
+            try:
+                cancel(process)  # R7: may raise
+            except Exception:
+                cancel_raised = True
+                raise
             rc = process.poll()
             if rc is not None:
                 break
@@ -372,12 +414,18 @@ def run_blender(
     finally:
         process.stdout.close()  # type: ignore[union-attr]
         process.stderr.close()  # type: ignore[union-attr]
-
-    if timed_out:
-        _terminate_or_kill(process)
-        raise BlenderTimeoutError(
-            f"Blender process timed out after {timeout_seconds}s"
-        )
+        # R7: terminate child on every exit path (cancel exception, timeout,
+        # or normal).  Guard against already-exited processes.
+        if cancel_raised or timed_out:
+            try:
+                _terminate_or_kill(process)
+            except OSError:
+                pass
+            if timed_out:
+                raise BlenderTimeoutError(
+                    f"Blender process timed out after {timeout_seconds}s"
+                )
+            # cancel_raised: the cancel exception is already being propagated
 
     # Negative return code means killed by signal (e.g. SIGTERM from cancel).
     if process.returncode is not None and process.returncode < 0:
