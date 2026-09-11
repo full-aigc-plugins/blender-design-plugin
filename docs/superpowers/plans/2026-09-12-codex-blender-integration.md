@@ -103,10 +103,17 @@ imports `bpy`.
 
 **Files:** Create `skills/codex-blender-use/SKILL.md`, `skills/codex-blender-inspect/SKILL.md`, `skills/codex-blender-export-preview/SKILL.md`, `skills/codex-blender-link/SKILL.md`, `tests/scenarios/*.md`.
 
+**The two user-facing flows are the authority** (`docs/reference/upstream-user-manual.md`). The
+official Blender panel offers 相机渲染 (camera render, then a Jimeng link) and 本地上传 (link an
+already-rendered local video). The Skills must expose recognisably the same two flows, and the
+router must send each user request to the right one.
+
 - [ ] Run and save no-skill baselines for: missing Blender, untrusted embedded scripts, absent camera, output outside scope, render timeout, and a request to upload without authorization.
-- [ ] Implement `codex-blender-use` as the router; it must not duplicate the capability Skills.
+- [ ] Implement `codex-blender-use` as the router; it must not duplicate the capability Skills. It selects the camera-render flow or the local-upload flow from the user's intent, and never treats "here is a video file" as a render request.
 - [ ] Implement inspect, export, and link Skills one at a time, validating each before starting the next.
+- [ ] The camera-render flow ends in a Jimeng link; the local-upload flow must not open or mutate a Blender scene.
 - [ ] Verify the router refuses to upload without explicit authorization and never retries a render.
+- [ ] State in each Skill that Maya is out of scope for this repository.
 - [ ] Commit with `feat: add Codex Blender workflows`.
 
 ### Task 5: Distribution and verification gates
