@@ -1,0 +1,7 @@
+{
+  "id": "codex-blender",
+  "name": "Codex Blender",
+  "description": "Inspect authorized Blender projects and export preview video safely.",
+  "version": "0.1.0",
+  "plugin": ".codex-plugin/plugin.json"
+}

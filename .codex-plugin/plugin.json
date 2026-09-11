@@ -1,0 +1,9 @@
+{
+  "id": "codex-blender",
+  "name": "Codex Blender",
+  "version": "0.1.0",
+  "description": "Inspect authorized Blender projects and export preview video safely.",
+  "license": "MIT",
+  "skills": "./skills/",
+  "entryPoint": "scripts/validate_distribution.py"
+}

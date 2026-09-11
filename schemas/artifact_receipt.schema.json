@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "ArtifactReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "producer",
+    "path",
+    "sha256",
+    "codec",
+    "width",
+    "height",
+    "fps",
+    "durationSeconds",
+    "bytes",
+    "camera",
+    "frameRange",
+    "previewMode",
+    "restoration"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "codex-blender.receipt/v1"
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "path": { "type": "string" },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "codec": { "type": "string" },
+    "width": { "type": "integer", "exclusiveMinimum": 0 },
+    "height": { "type": "integer", "exclusiveMinimum": 0 },
+    "fps": { "type": "integer", "exclusiveMinimum": 0 },
+    "durationSeconds": { "type": "number", "exclusiveMinimum": 0 },
+    "bytes": { "type": "integer", "exclusiveMinimum": 0 },
+    "camera": { "type": "string" },
+    "frameRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "integer" },
+        "end": { "type": "integer" }
+      }
+    },
+    "previewMode": { "type": "string" },
+    "restoration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "failed", "unknown"]
+        }
+      }
+    }
+  }
+}
