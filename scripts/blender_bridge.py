@@ -146,7 +146,10 @@ def main(request_path: str) -> int:
         return 1
 
     project = Path(project_path)
-    if not project.is_file():
+    if project.is_symlink():
+        _emit_error("PROJECT_NOT_AUTHORIZED", "project path must not be a symlink")
+        return 1
+    if not project.resolve().is_file():
         _emit_error("PROJECT_NOT_AUTHORIZED", "project file not found")
         return 1
 

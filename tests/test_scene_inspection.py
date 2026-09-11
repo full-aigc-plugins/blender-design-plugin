@@ -110,6 +110,14 @@ def _bpy_invalid_frame_range():
                    app=FakeApp("4.2.0"))
 
 
+def _bpy_frame_start_zero():
+    """Scene with frame_start=0 (below the valid minimum of 1)."""
+    scene = FakeScene(frame_start=0, frame_end=250)
+    data = FakeData(objects=[], materials=[], scenes=[scene])
+    return FakeBpy(data=data, context=FakeContext(scene=scene),
+                   app=FakeApp("4.2.0"))
+
+
 def _bpy_percentage_resolution():
     render = FakeRenderSettings(resolution_x=1920, resolution_y=1080,
                                 resolution_percentage=50)
@@ -216,6 +224,13 @@ class TestFrameRange(unittest.TestCase):
         self.assertIn("INVALID_FRAME_RANGE", r["warnings"])
         # Receipt still includes the raw values
         self.assertEqual(r["frameRange"], {"start": 100, "end": 50})
+
+    def test_frame_start_zero_emits_warning(self):
+        bpy = _bpy_frame_start_zero()
+        with tempfile.TemporaryDirectory() as td:
+            r = inspect_scene(bpy, _make_project(td))
+        self.assertIn("INVALID_FRAME_RANGE", r["warnings"])
+        self.assertEqual(r["frameRange"], {"start": 0, "end": 250})
 
 
 # ===========================================================================
@@ -453,6 +468,41 @@ class TestMainEntryPoint(unittest.TestCase):
         receipt = json.loads(stdout)
         errors = validate_document("scene_receipt", receipt)
         self.assertEqual(errors, [], f"main() output failed schema: {errors}")
+
+    def test_project_not_authorized_nonexistent(self):
+        """Nonexistent project path surfaces PROJECT_NOT_AUTHORIZED."""
+        bpy = _bpy_one_camera()
+        with tempfile.TemporaryDirectory() as td:
+            request_path = Path(td) / "req.json"
+            request_path.write_text(json.dumps({
+                "projectPath": "/nonexistent/path/project.blend",
+            }))
+            out_buf, err_buf = io.StringIO(), io.StringIO()
+            with patch.dict(sys.modules, {"bpy": bpy}):
+                with redirect_stdout(out_buf), redirect_stderr(err_buf):
+                    rc = main(str(request_path))
+        self.assertEqual(rc, 1)
+        err = json.loads(err_buf.getvalue())
+        self.assertEqual(err["category"], "PROJECT_NOT_AUTHORIZED")
+
+    def test_project_not_authorized_symlink(self):
+        """Symlinked project path surfaces PROJECT_NOT_AUTHORIZED."""
+        bpy = _bpy_one_camera()
+        with tempfile.TemporaryDirectory() as td:
+            real_project = _make_project(td, content=b"real")
+            symlink_project = Path(td) / "symlink.blend"
+            symlink_project.symlink_to(real_project)
+            request_path = Path(td) / "req.json"
+            request_path.write_text(json.dumps({
+                "projectPath": str(symlink_project),
+            }))
+            out_buf, err_buf = io.StringIO(), io.StringIO()
+            with patch.dict(sys.modules, {"bpy": bpy}):
+                with redirect_stdout(out_buf), redirect_stderr(err_buf):
+                    rc = main(str(request_path))
+        self.assertEqual(rc, 1)
+        err = json.loads(err_buf.getvalue())
+        self.assertEqual(err["category"], "PROJECT_NOT_AUTHORIZED")
 
 
 if __name__ == "__main__":
