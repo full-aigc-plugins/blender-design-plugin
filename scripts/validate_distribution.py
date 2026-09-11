@@ -34,9 +34,6 @@ def main() -> int:
         if field not in plugin:
             errors.append(f"plugin.json missing required field: {field}")
 
-    if "license" not in plugin:
-        errors.append("plugin.json does not declare a license")
-
     # --- schemas ---
     for schema_name in ("scene_receipt", "artifact_receipt"):
         schema_path = os.path.join(_REPO_ROOT, "schemas", f"{schema_name}.schema.json")

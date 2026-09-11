@@ -131,6 +131,43 @@ class TestSceneReceiptRejectsUnknownFields(_SchemaTestBase):
 
 
 # ===========================================================================
+# C1. Schema version const enforcement
+# ===========================================================================
+
+class TestSchemaVersionConst(_SchemaTestBase):
+
+    def test_wrong_schemaVersion_rejected_in_scene(self):
+        payload = {**VALID_SCENE_RECEIPT, "schemaVersion": "wrong-version"}
+        self._assert_invalid("scene_receipt", payload)
+
+    def test_wrong_schemaVersion_rejected_in_artifact(self):
+        payload = {**VALID_ARTIFACT_RECEIPT, "schemaVersion": "wrong-version"}
+        self._assert_invalid("artifact_receipt", payload)
+
+
+# ===========================================================================
+# C2. Scene receipt schema — missing required fields
+# ===========================================================================
+
+class TestSceneReceiptMissingFields(_SchemaTestBase):
+
+    def _drop(self, field: str) -> dict:
+        return {k: v for k, v in VALID_SCENE_RECEIPT.items() if k != field}
+
+    def test_missing_blenderVersion_rejected(self):
+        self._assert_invalid("scene_receipt", self._drop("blenderVersion"))
+
+    def test_missing_producer_rejected(self):
+        self._assert_invalid("scene_receipt", self._drop("producer"))
+
+    def test_missing_frameRange_rejected(self):
+        self._assert_invalid("scene_receipt", self._drop("frameRange"))
+
+    def test_missing_resolution_rejected(self):
+        self._assert_invalid("scene_receipt", self._drop("resolution"))
+
+
+# ===========================================================================
 # D. Artifact receipt schema — positive path
 # ===========================================================================
 
@@ -154,6 +191,28 @@ class TestArtifactReceiptRejectsUnknownFields(_SchemaTestBase):
         payload = {**VALID_ARTIFACT_RECEIPT}
         payload["restoration"] = {"status": "confirmed", "verified": True}
         self._assert_invalid("artifact_receipt", payload)
+
+
+# ===========================================================================
+# E2. Artifact receipt schema — missing required fields
+# ===========================================================================
+
+class TestArtifactReceiptMissingFields(_SchemaTestBase):
+
+    def _drop(self, field: str) -> dict:
+        return {k: v for k, v in VALID_ARTIFACT_RECEIPT.items() if k != field}
+
+    def test_missing_sha256_rejected(self):
+        self._assert_invalid("artifact_receipt", self._drop("sha256"))
+
+    def test_missing_path_rejected(self):
+        self._assert_invalid("artifact_receipt", self._drop("path"))
+
+    def test_missing_restoration_rejected(self):
+        self._assert_invalid("artifact_receipt", self._drop("restoration"))
+
+    def test_missing_codec_rejected(self):
+        self._assert_invalid("artifact_receipt", self._drop("codec"))
 
 
 # ===========================================================================

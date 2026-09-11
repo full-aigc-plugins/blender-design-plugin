@@ -65,6 +65,10 @@ def _validate_node(value, schema: dict, path: str) -> list[str]:
     if "enum" in schema and value not in schema["enum"]:
         errors.append(f"{path}: value {value!r} not in enum {schema['enum']}")
 
+    # --- const ---
+    if "const" in schema and value != schema["const"]:
+        errors.append(f"{path}: value must be {schema['const']!r}")
+
     # --- pattern (strings) ---
     if "pattern" in schema and isinstance(value, str):
         pat = _get_pattern(schema["pattern"])
