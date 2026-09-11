@@ -1,12 +1,14 @@
 # Codex Blender 插件
 
-> 面向 Codex 的安全、可审查 Blender 自动化插件，目前处于设计阶段。
+<img src="assets/logo.png" alt="Codex Blender Logo" width="128">
+
+> 面向 Codex 的安全、可审查 Blender 自动化兼容基础。
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 ## 当前状态
 
-仓库当前只包含已确认的架构、技术方案和实施计划，尚无可安装 Codex 插件，也不声称已经完成 Blender 运行兼容性验证。
+仓库现已具备兼容插件基础：manifest、Marketplace 元数据、品牌资产、Legal 文档、验证脚本、测试和实施目录。Blender 业务工作流尚未实现，也未声明通过 Blender 运行兼容性验证。
 
 ## 项目定位
 
@@ -53,4 +55,4 @@ Codex 请求
 
 ## 许可证
 
-许可证选择和初始 `LICENSE` 文件属于实施任务；当前仅设计仓库，不构成许可证授权。
+Apache-2.0，见 [LICENSE](LICENSE)。

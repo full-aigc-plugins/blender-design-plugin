@@ -1,0 +1,32 @@
+{
+  "name": "codex-blender",
+  "version": "0.1.0",
+  "description": "Safe, reviewable Blender scene inspection and preview-render workflows for Codex.",
+  "author": {"name": "Full Stack Skills / PartMe.AI", "url": "https://github.com/partme-ai"},
+  "homepage": "https://github.com/partme-ai/codex-blender-plugin",
+  "repository": "https://github.com/partme-ai/codex-blender-plugin",
+  "license": "Apache-2.0",
+  "keywords": ["blender", "3d", "preview-render", "workbench", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Blender",
+    "shortDescription": "Inspect Blender scenes and render safe previews",
+    "longDescription": "Prepare reviewable Blender scene inspections and Workbench or viewport previews with explicit file scopes, media validation, and temporary-setting restoration.",
+    "developerName": "Full Stack Skills / PartMe.AI",
+    "category": "Creativity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://github.com/partme-ai/codex-blender-plugin",
+    "privacyPolicyURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Inspect this Blender scene and summarize its cameras and animation",
+      "Create a safe Workbench preview and restore the scene settings",
+      "Validate this Blender preview for a Dreamina 3D handoff"
+    ],
+    "brandColor": "#F97316",
+    "composerIcon": "./assets/composer-icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "screenshots": []
+  }
+}
