@@ -89,3 +89,160 @@
 - [ ] Run all offline tests, `git diff --check`, plugin validation, and secret scans.
 - [ ] With explicit user authorization and a known Blender path, run one fixture smoke test and record the exact version; otherwise mark runtime acceptance blocked.
 - [ ] Commit with `test: verify Codex Blender distribution`.
+
+---
+
+## Detailed executor contract
+
+The task summaries above define review boundaries. Implementers must follow the concrete steps below; a later task must not begin until the preceding task has a clean review.
+
+### Task 1 detailed steps — package identity and schemas
+
+**Files:**
+- Create: `.codex-plugin/plugin.json`
+- Create: `.agents/plugins/marketplace.json`
+- Create: `schemas/scene_receipt.schema.json`
+- Create: `schemas/artifact_receipt.schema.json`
+- Create: `tests/test_contracts.py`
+- Create: `scripts/validate_distribution.py`
+
+**Produces:** schema version `codex-blender.receipt/v1`; plugin ID `codex-blender`; Python function `validate_document(schema_name: str, payload: dict) -> list[str]`.
+
+- [ ] Create `tests/test_contracts.py` first with fixtures that require `additionalProperties: false`, a 64-character lowercase SHA-256, positive media dimensions, and `restoration.status` in `confirmed|failed|unknown`.
+- [ ] Run `python3 -m unittest tests/test_contracts.py -v`; record missing manifest/schema failures as RED.
+- [ ] Implement manifest metadata with design-stage version `0.1.0`, no fake MCP server, `skills: "./skills/"`, and display name `Codex Blender`.
+- [ ] Define `SceneReceipt` required fields: `schemaVersion`, `producer`, `blenderVersion`, `projectFingerprint`, `cameras`, `frameRange`, `resolution`, `previewModes`, `warnings`.
+- [ ] Define `ArtifactReceipt` required fields: `schemaVersion`, `producer`, `path`, `sha256`, `codec`, `width`, `height`, `fps`, `durationSeconds`, `bytes`, `camera`, `frameRange`, `previewMode`, `restoration`.
+- [ ] Run contract tests, plugin validation, and `python3 scripts/validate_distribution.py`; record GREEN.
+- [ ] Commit only Task 1 files.
+
+### Task 2 detailed steps — discovery and process isolation
+
+**Files:**
+- Create: `scripts/blender_runner.py`
+- Create: `tests/test_blender_runner.py`
+
+**Interface:**
+
+```python
+@dataclass(frozen=True)
+class BlenderRuntime:
+    executable: Path
+    version: str
+    background_supported: bool
+
+def discover_blender(explicit_path: str | None, search_path: str) -> BlenderRuntime: ...
+def build_argv(runtime: BlenderRuntime, project: Path, request: Path) -> list[str]: ...
+def run_blender(argv: list[str], timeout_seconds: int) -> CompletedProcess[str]: ...
+```
+
+- [ ] Write RED tests for explicit executable precedence, PATH discovery, missing executable, version output parsing, paths containing spaces/Unicode, and rejection of symlink escapes.
+- [ ] Add a subprocess spy proving `shell=False`, an allowlisted environment, captured stdout/stderr, and bounded timeout.
+- [ ] Implement discovery without modifying PATH or installing Blender.
+- [ ] Implement cancellation so the child receives graceful termination before forced kill; return `TIMEOUT` or `CANCELLED` without retry.
+- [ ] Run `python3 -m unittest tests/test_blender_runner.py tests/test_contracts.py -v` and commit.
+
+### Task 3 detailed steps — read-only scene inspection
+
+**Files:**
+- Create: `scripts/blender_bridge.py`
+- Create: `tests/fakes/fake_bpy.py`
+- Create: `tests/test_scene_inspection.py`
+
+**Interface:**
+
+```python
+def inspect_scene(bpy_module, approved_project: Path) -> dict: ...
+def main(request_path: str) -> int: ...
+```
+
+- [ ] Build fake scenes with zero/one/multiple cameras, invalid frame ranges, percentage-scaled resolution, no materials, colored materials, image textures, unsupported nodes, and linked assets outside scope.
+- [ ] Capture a serialized scene state before inspection and assert byte-equivalent state afterward.
+- [ ] Implement inspection with no operators that mutate selection or mode.
+- [ ] Emit one JSON receipt to stdout and redacted diagnostics to stderr; never print the project contents or environment.
+- [ ] Run the focused tests twice to prove deterministic receipts and commit.
+
+### Task 4 detailed steps — reversible preview rendering
+
+**Files:**
+- Modify: `scripts/blender_bridge.py`
+- Create: `tests/test_preview_export.py`
+
+**Interface:**
+
+```python
+@contextmanager
+def restored_scene_state(bpy_module): ...
+def export_preview(bpy_module, request: dict) -> dict: ...
+```
+
+- [ ] Write RED tests that inject failures before configuration, during frame rendering, during media assembly, and after artifact creation.
+- [ ] Snapshot render engine, output path, file format, resolution, percentage, fps, frame range, active camera, shading mode, material overrides, selection, active object, mode, and current frame.
+- [ ] Implement `white_model`, `material_preview`, and `existing_video` branches; `existing_video` must not open or mutate the scene.
+- [ ] Write to a unique temporary directory and atomically move only a validated final artifact.
+- [ ] Assert restoration after every terminal path, including `KeyboardInterrupt` and timeout cleanup.
+- [ ] Run `python3 -m unittest tests/test_preview_export.py tests/test_scene_inspection.py -v` and commit.
+
+### Task 5 detailed steps — media validation
+
+**Files:**
+- Create: `scripts/media_probe.py`
+- Create: `tests/test_media_probe.py`
+
+**Interface:**
+
+```python
+def discover_ffprobe(explicit_path: str | None) -> Path | None: ...
+def probe_media(path: Path, ffprobe: Path | None) -> dict: ...
+def validate_media(probe: dict, profile: dict) -> list[str]: ...
+```
+
+- [ ] Use synthetic ffprobe JSON for H.264 success, wrong codec, odd dimensions, zero duration, excessive duration, fps mismatch, empty/partial file, and size overflow.
+- [ ] Prove missing ffprobe produces `DEPENDENCY_MISSING` and never installs software.
+- [ ] Hash the final bytes after validation; reject files changed between probe and hash using pre/post stat checks.
+- [ ] Run focused tests and all Python tests; commit.
+
+### Task 6 detailed steps — Agent Skills
+
+**Files:**
+- Create: `skills/codex-blender-use/SKILL.md`
+- Create: `skills/codex-blender-inspect/SKILL.md`
+- Create: `skills/codex-blender-export-preview/SKILL.md`
+- Create: `skills/codex-blender-validate-media/SKILL.md`
+- Create: `tests/scenarios/*.md`
+
+- [ ] Run and save no-skill baselines for: missing Blender, untrusted embedded scripts, absent camera, output outside scope, render timeout, and request to upload remotely.
+- [ ] Implement `codex-blender-use` as the router; it must not duplicate the three capability Skills.
+- [ ] Implement inspect, export, and validation Skills one at a time; after each, run quick validation, its matching scenario, and strict TRACE.
+- [ ] Verify the router selects `existing_video` without opening Blender and rejects remote-upload ownership.
+- [ ] Run all forward scenarios with fresh contexts and commit.
+
+### Task 7 detailed steps — release evidence
+
+**Files:**
+- Create: `tests/test_distribution.py`
+- Create: `docs/verification/offline.md`
+- Create: `docs/verification/blender-runtime.md`
+- Modify: `.agents/plugins/marketplace.json`
+
+- [ ] Test repository URL `https://github.com/partme-ai/codex-blender-plugin.git`, ID, version, four-Skill inventory, links, licenses, no symlinks, and secret patterns.
+- [ ] Run `python3 -m unittest discover -s tests -v`, quick validation for every Skill, plugin validator, link checker, secret scan, and `git diff --check`.
+- [ ] Record offline evidence without upgrading it to Blender runtime evidence.
+- [ ] If the user supplies an authorized Blender executable, run a fixture scene with no network and compare pre/post scene state plus media receipt; otherwise record `runtimeAcceptance=BLOCKED_MISSING_AUTHORIZED_RUNTIME`.
+- [ ] Install through a local marketplace only after validation, test in a new Codex task, and record source/cache byte parity.
+- [ ] Commit verification evidence and stop for branch integration choice.
+
+## Completion gate
+
+```text
+contract_tests = PASS
+runner_tests = PASS
+scene_inspection_tests = PASS
+restoration_tests = PASS
+media_tests = PASS
+skill_quick_validation = 4/4
+skill_trace = 4/4
+plugin_validation = PASS
+secret_matches = 0
+runtime_acceptance = PASS or explicitly BLOCKED
+```
