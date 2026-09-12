@@ -118,13 +118,16 @@ class TestHeadlessImportability(unittest.TestCase):
 
             # Insert a meta_path finder that blocks bpy.
             class _BpyBlocker:
-                def find_module(self, name, path=None):
+                def find_spec(self, name, path, target=None):
                     if name == 'bpy' or name.startswith('bpy.'):
-                        return self
+                        from importlib.machinery import ModuleSpec
+                        return ModuleSpec(name, self)
                     return None
-                def load_module(self, name):
+                def create_module(self, spec):
+                    return None
+                def exec_module(self, module):
                     raise ImportError(
-                        f"No module named '{name}' (bpy blocked for headless test)"
+                        f"No module named '{module.__name__}' (bpy blocked for headless test)"
                     )
 
             sys.meta_path.insert(0, _BpyBlocker())

@@ -392,7 +392,7 @@ def export_preview(bpy_module, request: dict) -> dict:
     if out:
         resolved_artifact = artifact.resolve()
         resolved_out = out.resolve()
-        if not str(resolved_artifact).startswith(str(resolved_out) + os.sep):
+        if not resolved_artifact.is_relative_to(resolved_out):
             _raise_blender_error(
                 "PROJECT_NOT_AUTHORIZED",
                 f"artifact escapes approved output directory: {resolved_artifact}"

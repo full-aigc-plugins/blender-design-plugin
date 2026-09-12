@@ -41,6 +41,10 @@ produce_jimeng_link(video_path, prompt=None, target_url=None) -> dict
 
 The bridge lives for 30 minutes (configurable via `JIMENG_LOCAL_BRIDGE_TTL_MS`) and shuts down 60 seconds after the first download.
 
+## Known Limitation (v0.1.0)
+
+The vendored `upload_bridge.run_ffmpeg` sets `cwd` to the upstream helper directory, which was excluded from the vendor. This means non-MP4 files (`.mov`, `.webm`, `.avi`) cannot be converted through the vendored path. **In v0.1.0, the local-upload flow accepts `.mp4` files only.** This will be resolved by either restricting the input or patching the vendored code with a documented deviation in `UPSTREAM.md`.
+
 ## Safety Rules
 
 - **Never upload without explicit authorization.** The user must confirm before the link is produced.
