@@ -19,6 +19,10 @@
 - Every scene mutation has a tested restoration path.
 - Real runtime support is claimed only for tested Blender/OS combinations.
 
+## Foundation baseline completed 2026-09-12
+
+The repository already contains the validated `codex-blender` compatibility manifest, URL marketplace entry, Apache-2.0/legal files, transparent brand assets, implementation directories, distribution validator, and RED/GREEN foundation tests. Tasks below must extend these files rather than recreate or overwrite them. This baseline does not implement or validate Blender runtime workflows.
+
 ---
 
 ### Task 1: Plugin and receipt contracts

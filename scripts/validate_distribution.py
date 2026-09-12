@@ -1,57 +1,97 @@
 #!/usr/bin/env python3
-"""Validate that the codex-blender plugin distribution conforms to the Codex plugin spec.
+"""Validate the codex-blender plugin distribution.
 
-The rules implemented here mirror Codex's own manifest handling
-(`codex-rs/plugin/src/plugin_id.rs`, `core-plugins/src/manifest.rs`,
-`core-plugins/src/marketplace.rs`), not an invented schema:
+This validator is the union of two complementary sets of checks.
 
-  - `.codex-plugin/plugin.json` is a discovered manifest path
-  - plugin `name` is a valid identifier segment: ASCII letters, digits, `.`, `_`, `-`;
-    no leading/trailing dot and no `..`; not empty
-  - `skills` is a string or list of strings, each starting with `./`, never `./`,
-    containing no `..`, and staying inside the plugin root
-  - every declared skills directory exists and contains `<skill>/SKILL.md` whose
-    frontmatter `name` matches its directory name
-  - `.agents/plugins/marketplace.json` has a valid `name` and a non-empty `plugins`
-    array whose `name` matches the manifest name and whose `source` resolves
-  - provenance, no oversized binaries, no symlinks, no secrets
+**Project policy** (the compatibility-first foundation rules):
+  - the required structure, legal files, and brand assets exist
+  - brand PNGs have the expected dimensions and alpha channel
+  - the plugin name is a codex-prefixed kebab-case identifier
+  - `mcpServers` is forbidden while no MCP server exists
+  - the marketplace entry pins this repository as a url source on `main`
+  - the portable root `plugin.json` / `mcp.json` stay inactive
 
-A `LICENSE` file is deliberately NOT required (license selection is an open human
-decision), and `license`/`repository`/`entryPoint` are NOT manifest fields.
+**Codex manifest rules** (mirroring Codex's own handling in
+`codex-rs/plugin/src/plugin_id.rs`, `core-plugins/src/manifest.rs`,
+`core-plugins/src/marketplace.rs`):
+  - `name` is a valid identifier segment: ASCII letters, digits, `.`, `_`, `-`,
+    with no leading/trailing dot and no `..`
+  - `skills` entries start with `./`, are never `./`, contain no `..`, and stay
+    inside the plugin root
+  - every declared skills directory contains `<skill>/SKILL.md` whose frontmatter
+    `name` matches its directory name and which carries a `description`
+  - `interface.defaultPrompt` carries 1-3 entries of at most 128 characters
+  - the marketplace manifest declares a valid `name` and a non-empty `plugins`
+    array whose entry name matches the manifest name
+
+A `LICENSE` file is required by project policy, but the license status of the vendored
+third-party source is a separate and unresolved maintainer decision — see
+`THIRD_PARTY_NOTICES.md`.
 """
+
+from __future__ import annotations
 
 import json
 import os
 import re
+import struct
 import sys
+from pathlib import Path
 
-_DEFAULT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# --- project policy -------------------------------------------------------
 
-_MANIFEST_REL = os.path.join(".codex-plugin", "plugin.json")
-_MARKETPLACE_REL = os.path.join(".agents", "plugins", "marketplace.json")
-
-_EXPECTED_SKILLS = [
+NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+REQUIRED_FILES = (
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "NOTICE",
+    "PRIVACY.md",
+    "TERMS.md",
+    "THIRD_PARTY_NOTICES.md",
+    "docs/portable-migration.md",
+)
+REQUIRED_DIRECTORIES = ("assets", "skills", "schemas", "scripts", "tests")
+EXPECTED_ASSETS = {
+    "assets/logo.png": (1024, 1024, 6),
+    "assets/logo-dark.png": (1024, 1024, 6),
+    "assets/composer-icon.png": (256, 256, 6),
+}
+REQUIRED_INTERFACE_FIELDS = (
+    "displayName", "shortDescription", "longDescription", "developerName",
+    "category", "brandColor", "composerIcon", "logo", "logoDark",
+)
+REPO_URL = "https://github.com/partme-ai/codex-blender-plugin"
+EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "main"}
+EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
+EXPECTED_SKILLS = (
     "codex-blender-use",
     "codex-blender-inspect",
     "codex-blender-export-preview",
     "codex-blender-link",
-]
+)
 
-_MAX_BINARY_BYTES = 1024 * 1024  # 1 MiB
+SECRET_PATTERNS = (
+    re.compile(rb"AIza[0-9A-Za-z_-]{20,}"),
+    re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    re.compile(rb"ghp_[A-Za-z0-9]{36}"),
+    re.compile(rb"sk-[A-Za-z0-9]{20,}"),
+    re.compile(rb"(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*['\"][^'\"]{8,}"),
+)
 
-_SECRET_PATTERNS = [
-    re.compile(r"(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*['\"][^'\"]{8,}"),
-    re.compile(r"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----"),
-    re.compile(r"ghp_[A-Za-z0-9]{36}"),
-    re.compile(r"sk-[A-Za-z0-9]{20,}"),
-]
+MAX_BINARY_BYTES = 1024 * 1024
+SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules"}
+BINARY_SUFFIXES = {
+    ".png", ".jpg", ".jpeg", ".gif", ".mp4", ".mov", ".webm", ".avi",
+    ".exe", ".dll", ".so", ".dylib", ".bin", ".zip", ".tar", ".gz",
+}
+SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 
-# Mirrors validate_plugin_segment() in codex-rs/plugin/src/plugin_id.rs
-_SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 
+# --- Codex manifest rules -------------------------------------------------
 
 def validate_segment(value, kind):
-    """Return an error string, or None when the segment is valid."""
+    """Mirror validate_plugin_segment(); return an error string or None."""
     if not value:
         return f"invalid {kind}: must not be empty"
     allow_dots = kind == "plugin name"
@@ -59,16 +99,18 @@ def validate_segment(value, kind):
         return f"invalid {kind}: path traversal is not allowed"
     if allow_dots and (value.startswith(".") or value.endswith(".") or ".." in value):
         return f"invalid {kind}: dots must separate non-empty name segments"
-    allowed = "ASCII letters, digits, `.`, `_`, and `-`" if allow_dots else "ASCII letters, digits, `_`, and `-`"
-    if not _SEGMENT_CHARS.match(value):
-        return f"invalid {kind}: only {allowed} are allowed"
-    if not allow_dots and "." in value:
+    allowed = (
+        "ASCII letters, digits, `.`, `_`, and `-`"
+        if allow_dots
+        else "ASCII letters, digits, `_`, and `-`"
+    )
+    if not SEGMENT_CHARS.match(value) or (not allow_dots and "." in value):
         return f"invalid {kind}: only {allowed} are allowed"
     return None
 
 
 def validate_manifest_path(field, raw):
-    """Mirror resolve_manifest_path(): return (resolved_rel, error)."""
+    """Mirror resolve_manifest_path(); return (relative, error)."""
     if not raw:
         return None, f"{field}: path must not be empty"
     if not raw.startswith("./"):
@@ -83,11 +125,9 @@ def validate_manifest_path(field, raw):
     return relative, None
 
 
-def _read_skill_frontmatter(path):
-    """Return the frontmatter dict of a SKILL.md, or None if absent/malformed."""
+def _skill_frontmatter(path):
     try:
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
+        text = path.read_text(encoding="utf-8")
     except OSError:
         return None
     if not text.startswith("---"):
@@ -103,213 +143,240 @@ def _read_skill_frontmatter(path):
     return fields
 
 
-def _is_binary(path):
-    binary_exts = {".png", ".jpg", ".jpeg", ".gif", ".mp4", ".mov", ".webm", ".avi",
-                   ".exe", ".dll", ".so", ".dylib", ".bin", ".zip", ".tar", ".gz",
-                   ".woff", ".woff2", ".ttf", ".eot"}
-    _, ext = os.path.splitext(path)
-    return ext.lower() in binary_exts
+def png_shape(target: Path):
+    data = target.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG")
+    width, height = struct.unpack(">II", data[16:24])
+    return width, height, data[25]
 
 
-def main(root: str | None = None) -> int:
-    """Validate the distribution rooted at `root` (defaults to this repo)."""
-    root = root or _DEFAULT_ROOT
+# --- validation -----------------------------------------------------------
+
+def _validate_skills(root, manifest, errors):
+    declared = manifest.get("skills")
+    if declared is None:
+        return
+    paths = [declared] if isinstance(declared, str) else declared
+    if not isinstance(paths, list) or not paths:
+        errors.append("skills must be a path string or a non-empty list of paths")
+        return
+    for raw in paths:
+        relative, path_error = validate_manifest_path("skills", raw)
+        if path_error:
+            errors.append(path_error)
+            continue
+        skills_dir = root / relative
+        if not skills_dir.is_dir():
+            errors.append(f"skills directory does not exist: {raw}")
+            continue
+        for entry in sorted(os.listdir(skills_dir)):
+            skill_md = skills_dir / entry / "SKILL.md"
+            if not skill_md.is_file():
+                errors.append(f"skills/{entry} has no SKILL.md")
+                continue
+            front = _skill_frontmatter(skill_md)
+            if front is None:
+                errors.append(f"skills/{entry}/SKILL.md has no frontmatter block")
+                continue
+            if not front.get("name"):
+                errors.append(f"skills/{entry}/SKILL.md frontmatter has no name")
+            elif front["name"] != entry:
+                errors.append(
+                    f"skills/{entry}/SKILL.md name {front['name']!r} does not match its directory"
+                )
+            if not front.get("description"):
+                errors.append(f"skills/{entry}/SKILL.md frontmatter has no description")
+
+
+def _validate_marketplace(root, marketplace, plugin_id, errors):
+    market_name = marketplace.get("name", "")
+    segment_error = validate_segment(market_name, "marketplace name")
+    if segment_error:
+        errors.append(f"marketplace name {market_name!r}: {segment_error}")
+
+    plugins = marketplace.get("plugins")
+    if not isinstance(plugins, list) or not plugins:
+        errors.append("marketplace must declare a non-empty `plugins` array")
+        return
+
+    for index, entry in enumerate(plugins):
+        if not isinstance(entry, dict):
+            errors.append(f"marketplace plugins[{index}] is not an object")
+            continue
+        entry_name = entry.get("name", "")
+        error = validate_segment(entry_name, "plugin name")
+        if error:
+            errors.append(f"marketplace plugins[{index}] name: {error}")
+        elif plugin_id and entry_name != plugin_id:
+            errors.append(
+                f"marketplace plugins[{index}] name {entry_name!r} does not match "
+                f"manifest name {plugin_id!r}"
+            )
+        source = entry.get("source")
+        if source is None:
+            errors.append(f"marketplace plugins[{index}] has no `source`")
+        elif isinstance(source, str):
+            if not source:
+                errors.append(f"marketplace plugins[{index}] source is empty")
+        elif isinstance(source, dict):
+            kind = source.get("source")
+            if kind == "local":
+                raw = source.get("path", "")
+                if raw not in (".", "./"):
+                    _, path_error = validate_manifest_path(
+                        f"plugins[{index}].source.path", raw
+                    )
+                    if path_error:
+                        errors.append(path_error)
+                    elif not (root / raw).is_dir():
+                        errors.append(f"plugins[{index}].source.path does not exist: {raw}")
+            elif kind not in ("url", "git-subdir", "npm", "git"):
+                errors.append(
+                    f"marketplace plugins[{index}] source kind {kind!r} is not supported"
+                )
+        else:
+            errors.append(f"marketplace plugins[{index}] source has an unsupported shape")
+
+    matching = [
+        entry for entry in plugins
+        if isinstance(entry, dict) and entry.get("name") == plugin_id
+    ]
+    if len(matching) != 1:
+        errors.append("marketplace must contain exactly one matching plugin")
+        return
+    if matching[0].get("source") != EXPECTED_SOURCE:
+        errors.append("marketplace source does not match repository")
+    if matching[0].get("policy") != EXPECTED_POLICY:
+        errors.append("marketplace policy mismatch")
+
+
+def _validate_tree(root, errors):
+    for target in sorted(root.rglob("*")):
+        if any(part in SKIP_DIRS for part in target.parts):
+            continue
+        if target.is_symlink():
+            errors.append(f"symlink found: {target.relative_to(root)}")
+            continue
+        if not target.is_file():
+            continue
+        try:
+            size = target.stat().st_size
+            data = target.read_bytes()
+        except OSError:
+            continue
+        if size > MAX_BINARY_BYTES and target.suffix.lower() in BINARY_SUFFIXES:
+            errors.append(
+                f"binary exceeds {MAX_BINARY_BYTES} bytes: "
+                f"{target.relative_to(root)} ({size} bytes)"
+            )
+        if any(pattern.search(data) for pattern in SECRET_PATTERNS):
+            errors.append(f"secret-like content detected: {target.relative_to(root)}")
+
+
+def validate(root: Path) -> list[str]:
     errors: list[str] = []
 
-    # --- plugin manifest ---
-    plugin_path = os.path.join(root, _MANIFEST_REL)
-    if not os.path.isfile(plugin_path):
-        print(f"ERROR: Missing {_MANIFEST_REL}")
-        return 1
-    with open(plugin_path, encoding="utf-8") as handle:
+    manifest_path = root / ".codex-plugin" / "plugin.json"
+    marketplace_path = root / ".agents" / "plugins" / "marketplace.json"
+    for target in (manifest_path, marketplace_path):
+        if not target.is_file():
+            errors.append(f"missing {target.relative_to(root)}")
+    if errors:
+        return errors
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"plugin.json is not valid JSON: {exc}"]
+    try:
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"marketplace.json is not valid JSON: {exc}"]
+
+    plugin_id = manifest.get("name", "")
+
+    # -- project policy: identity, version, forbidden MCP --
+    if NAME_PATTERN.fullmatch(plugin_id) is None or not plugin_id.startswith("codex-"):
+        errors.append("manifest name must be a codex-prefixed kebab-case identifier")
+    if manifest.get("version") != "0.1.0":
+        errors.append("foundation version must be 0.1.0")
+    for field in ("description", "skills"):
+        if not manifest.get(field):
+            errors.append(f"manifest missing required field: {field}")
+    if "mcpServers" in manifest or (root / ".mcp.json").exists():
+        errors.append("MCP configuration is forbidden until an MCP server exists")
+
+    # -- Codex rule: the name must also be a valid identifier segment --
+    segment_error = validate_segment(plugin_id, "plugin name")
+    if segment_error:
+        errors.append(f"manifest name {plugin_id!r}: {segment_error}")
+
+    # -- project policy: required interface fields --
+    interface = manifest.get("interface", {})
+    for field in REQUIRED_INTERFACE_FIELDS:
+        if not interface.get(field):
+            errors.append(f"missing interface.{field}")
+    prompts = interface.get("defaultPrompt", [])
+    if not isinstance(prompts, list) or not 1 <= len(prompts) <= 3:
+        errors.append("defaultPrompt must contain 1-3 entries")
+    elif any(not isinstance(item, str) or len(item) > 128 for item in prompts):
+        errors.append("defaultPrompt entries must be strings of at most 128 characters")
+
+    _validate_skills(root, manifest, errors)
+
+    for skill_name in EXPECTED_SKILLS:
+        if not (root / "skills" / skill_name / "SKILL.md").is_file():
+            errors.append(f"missing expected Skill: skills/{skill_name}/SKILL.md")
+
+    _validate_marketplace(root, marketplace, plugin_id, errors)
+
+    # -- project policy: structure, legal files, brand assets --
+    for directory in REQUIRED_DIRECTORIES:
+        if not (root / directory).is_dir():
+            errors.append(f"missing directory: {directory}")
+    for filename in REQUIRED_FILES:
+        if not (root / filename).is_file():
+            errors.append(f"missing required file: {filename}")
+    if (root / "plugin.json").exists() or (root / "mcp.json").exists():
+        errors.append(
+            "portable manifests must remain inactive during compatibility-first scaffolding"
+        )
+    for filename, expected in EXPECTED_ASSETS.items():
         try:
-            plugin = json.load(handle)
-        except json.JSONDecodeError as exc:
-            print(f"ERROR: {_MANIFEST_REL} is not valid JSON: {exc}")
-            return 1
+            if png_shape(root / filename) != expected:
+                errors.append(f"invalid PNG shape or alpha channel: {filename}")
+        except (OSError, ValueError):
+            errors.append(f"missing or invalid PNG: {filename}")
 
-    name = plugin.get("name", "")
-    error = validate_segment(name, "plugin name")
-    if error:
-        errors.append(f"plugin.json name {name!r}: {error}")
-
-    for field in ("version", "description"):
-        if not plugin.get(field):
-            errors.append(f"plugin.json missing required field: {field}")
-
-    if "skills" not in plugin:
-        errors.append("plugin.json missing required field: skills")
+    # -- vendored provenance --
+    upstream = root / "vendor" / "jimeng_blender_uploader" / "UPSTREAM.md"
+    if not upstream.is_file():
+        errors.append("missing vendor/jimeng_blender_uploader/UPSTREAM.md (provenance record)")
     else:
-        declared = plugin["skills"]
-        if isinstance(declared, str):
-            declared = [declared]
-        if not isinstance(declared, list) or not declared:
-            errors.append("plugin.json skills must be a path string or a non-empty list")
-            declared = []
-        for raw in declared:
-            relative, error = validate_manifest_path("skills", raw)
-            if error:
-                errors.append(error)
-                continue
-            skills_dir = os.path.join(root, relative)
-            if not os.path.isdir(skills_dir):
-                errors.append(f"skills directory does not exist: {raw}")
-                continue
-            for entry in sorted(os.listdir(skills_dir)):
-                skill_md = os.path.join(skills_dir, entry, "SKILL.md")
-                if not os.path.isfile(skill_md):
-                    errors.append(f"skills/{entry} has no SKILL.md")
-                    continue
-                front = _read_skill_frontmatter(skill_md)
-                if front is None:
-                    errors.append(f"skills/{entry}/SKILL.md has no frontmatter block")
-                    continue
-                if not front.get("name"):
-                    errors.append(f"skills/{entry}/SKILL.md frontmatter has no name")
-                elif front["name"] != entry:
-                    errors.append(
-                        f"skills/{entry}/SKILL.md name {front['name']!r} does not match its directory"
-                    )
-                if not front.get("description"):
-                    errors.append(f"skills/{entry}/SKILL.md frontmatter has no description")
-
-    # --- interface.defaultPrompt documented limits (3 prompts, 128 chars each) ---
-    prompts = (plugin.get("interface") or {}).get("defaultPrompt")
-    if prompts is not None:
-        if isinstance(prompts, str):
-            prompts = [prompts]
-        if not isinstance(prompts, list):
-            errors.append("interface.defaultPrompt must be a string or a list of strings")
-        else:
-            if len(prompts) > 3:
-                errors.append("interface.defaultPrompt supports at most 3 prompts")
-            for prompt in prompts:
-                if not isinstance(prompt, str) or len(prompt) > 128:
-                    errors.append(
-                        "interface.defaultPrompt entries must be strings of at most 128 characters"
-                    )
-
-    for skill_name in _EXPECTED_SKILLS:
-        if not os.path.isfile(os.path.join(root, "skills", skill_name, "SKILL.md")):
-            errors.append(f"Missing expected Skill: skills/{skill_name}/SKILL.md")
-
-    # --- marketplace manifest ---
-    marketplace_path = os.path.join(root, _MARKETPLACE_REL)
-    if not os.path.isfile(marketplace_path):
-        errors.append(f"Missing {_MARKETPLACE_REL}")
-    else:
-        with open(marketplace_path, encoding="utf-8") as handle:
-            try:
-                marketplace = json.load(handle)
-            except json.JSONDecodeError as exc:
-                errors.append(f"{_MARKETPLACE_REL} is not valid JSON: {exc}")
-                marketplace = None
-        if marketplace is not None:
-            market_name = marketplace.get("name", "")
-            error = validate_segment(market_name, "marketplace name")
-            if error:
-                errors.append(f"marketplace.json name {market_name!r}: {error}")
-            plugins = marketplace.get("plugins")
-            if not isinstance(plugins, list) or not plugins:
-                errors.append("marketplace.json must declare a non-empty `plugins` array")
-            else:
-                for index, entry in enumerate(plugins):
-                    if not isinstance(entry, dict):
-                        errors.append(f"marketplace.json plugins[{index}] is not an object")
-                        continue
-                    entry_name = entry.get("name", "")
-                    error = validate_segment(entry_name, "plugin name")
-                    if error:
-                        errors.append(f"marketplace.json plugins[{index}] name: {error}")
-                    elif name and entry_name != name:
-                        errors.append(
-                            f"marketplace.json plugins[{index}] name {entry_name!r} "
-                            f"does not match plugin.json name {name!r}"
-                        )
-                    source = entry.get("source")
-                    if source is None:
-                        errors.append(f"marketplace.json plugins[{index}] has no `source`")
-                    elif isinstance(source, str):
-                        if not source:
-                            errors.append(f"marketplace.json plugins[{index}] source is empty")
-                    elif isinstance(source, dict):
-                        kind = source.get("source")
-                        if kind == "local":
-                            raw = source.get("path", "")
-                            if raw not in (".", "./"):
-                                _, error = validate_manifest_path(
-                                    f"plugins[{index}].source.path", raw
-                                )
-                                if error:
-                                    errors.append(error)
-                                else:
-                                    if not os.path.isdir(os.path.join(root, raw)):
-                                        errors.append(
-                                            f"plugins[{index}].source.path does not exist: {raw}"
-                                        )
-                        elif kind not in ("url", "git-subdir", "npm", "git"):
-                            errors.append(
-                                f"marketplace.json plugins[{index}] source kind {kind!r} "
-                                "is not a supported kind"
-                            )
-                    else:
-                        errors.append(
-                            f"marketplace.json plugins[{index}] source has an unsupported shape"
-                        )
-
-    # --- schemas ---
-    for schema_name in ("scene_receipt", "artifact_receipt"):
-        schema_path = os.path.join(root, "schemas", f"{schema_name}.schema.json")
-        if not os.path.isfile(schema_path):
-            errors.append(f"Missing schema file: schemas/{schema_name}.schema.json")
-
-    # --- vendored provenance ---
-    upstream_path = os.path.join(root, "vendor", "jimeng_blender_uploader", "UPSTREAM.md")
-    if not os.path.isfile(upstream_path):
-        errors.append("Missing vendor/jimeng_blender_uploader/UPSTREAM.md (provenance record)")
-    else:
-        with open(upstream_path, encoding="utf-8") as handle:
-            content = handle.read()
+        content = upstream.read_text(encoding="utf-8")
         for vendored in ("dcc_config.py", "upload_bridge.py", "settings.py", "variant.py",
                          "viewport_render.py", "operators.py", "panel.py", "state.py",
                          "__init__.py"):
             if vendored not in content:
                 errors.append(f"UPSTREAM.md missing record for {vendored}")
 
-    # --- no oversized binaries, no symlinks, no secrets ---
-    for root, dirs, files in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in (".git", ".superpowers", "__pycache__", "node_modules")]
-        for entry in files + dirs:
-            path = os.path.join(root, entry)
-            if os.path.islink(path):
-                errors.append(f"Symlink found: {os.path.relpath(path, root)}")
-        for entry in files:
-            path = os.path.join(root, entry)
-            if _is_binary(path) and os.path.getsize(path) > _MAX_BINARY_BYTES:
-                errors.append(
-                    f"Binary exceeds {_MAX_BINARY_BYTES} bytes: "
-                    f"{os.path.relpath(path, root)} ({os.path.getsize(path)} bytes)"
-                )
-            if not entry.endswith((".py", ".json", ".md", ".txt", ".yml", ".yaml", ".js")):
-                continue
-            try:
-                with open(path, encoding="utf-8", errors="replace") as handle:
-                    content = handle.read()
-            except OSError:
-                continue
-            for pattern in _SECRET_PATTERNS:
-                if pattern.search(content):
-                    errors.append(
-                        f"Possible secret in {os.path.relpath(path, root)}"
-                    )
+    # -- tree hygiene --
+    _validate_tree(root, errors)
 
+    return errors
+
+
+def main(root: str | None = None) -> int:
+    base = Path(root if root is not None else ".").resolve()
+    errors = validate(base)
     if errors:
-        print("\n".join(f"ERROR: {error}" for error in errors))
+        print("\n".join(errors), file=sys.stderr)
         return 1
-
-    print("Distribution validation passed.")
+    manifest = json.loads((base / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    print(f"validated {manifest['name']} compatibility foundation {manifest['version']}")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else None))
+    raise SystemExit(main(sys.argv[1] if len(sys.argv) > 1 else None))

@@ -10,7 +10,7 @@
 python3 -m unittest discover -s tests -v
 ```
 
-Result: **125/125 tests pass**, pristine output, no warnings.
+Result: **161/161 tests pass**, pristine output, no warnings.
 
 ## Distribution Validation
 

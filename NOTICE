@@ -1,0 +1,10 @@
+Codex Blender
+Copyright 2026 PartMe.AI contributors
+
+This product includes software developed by PartMe.AI contributors.
+
+This product also includes vendored third-party source: the Python source of the
+jimeng_blender_uploader 1.0.0 Blender add-on, vendored byte-for-byte under
+vendor/jimeng_blender_uploader/. See THIRD_PARTY_NOTICES.md and
+vendor/jimeng_blender_uploader/UPSTREAM.md for provenance. The licensing status of that
+vendored source is unresolved; upstream ships no license file for its Python code.

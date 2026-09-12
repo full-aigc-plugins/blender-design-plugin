@@ -1,12 +1,14 @@
 # Codex Blender Plugin
 
-> Design-stage Codex workflows for safe, reviewable Blender automation.
+<img src="assets/logo.png" alt="Codex Blender logo" width="128">
+
+> Compatibility foundation for safe, reviewable Blender automation in Codex.
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 ## Status
 
-This repository currently contains an approved architecture, technical solution, and implementation plan. It does not yet contain an installable Codex plugin or claim runtime compatibility.
+The compatibility plugin foundation is now present: manifest, marketplace metadata, brand assets, legal documents, validation script, tests, and implementation directories. Blender workflows and runtime compatibility remain unimplemented and unverified.
 
 ## Purpose
 
@@ -53,4 +55,4 @@ The first implementation is accepted only after unit tests, fixture-based scene 
 
 ## License
 
-License selection and the initial `LICENSE` file are implementation tasks. No license grant is implied by this design-only repository.
+Apache-2.0 — see [LICENSE](LICENSE).

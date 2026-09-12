@@ -76,10 +76,11 @@ dependency; the legacy Node bridge is never launched by this repository.
 
 ## License and provenance caveat
 
-This repository has **no LICENSE file yet** — license selection is an open decision for the
-maintainer. Upstream ships no LICENSE for its Python code; the only license file in the upstream
-package covers its bundled ffmpeg binaries (see the exclusion table). Vendoring third-party code
-is therefore a provenance fact a maintainer must resolve before any distribution claim.
+This repository is Apache-2.0 (see `LICENSE`), but that does **not** by itself grant rights to
+this vendored third-party source: upstream ships no license file for its Python code — the only
+license file in the upstream package covers its bundled ffmpeg binaries, which are excluded here.
+Vendoring this directory is therefore a provenance fact a maintainer must resolve with the
+upstream rights holder before any distribution claim. See `THIRD_PARTY_NOTICES.md`.
 
 ## Known limitation
 

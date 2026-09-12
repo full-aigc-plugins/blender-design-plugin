@@ -1,28 +1,32 @@
 {
   "name": "codex-blender",
   "version": "0.1.0",
-  "description": "Inspect authorized Blender projects, render reversible preview videos, and produce Jimeng links by driving the official jimeng_blender_uploader add-on headlessly.",
-  "author": {
-    "name": "Full Stack Skills / PartMe.AI",
-    "url": "https://github.com/partme-ai"
-  },
+  "description": "Drive the official Jimeng Blender add-on headlessly from Codex: inspect scenes, render reversible previews, and produce Jimeng links.",
+  "author": {"name": "Full Stack Skills / PartMe.AI", "url": "https://github.com/partme-ai"},
   "homepage": "https://github.com/partme-ai/codex-blender-plugin",
   "repository": "https://github.com/partme-ai/codex-blender-plugin",
-  "license": "MIT",
-  "keywords": ["blender", "jimeng", "seedance", "preview", "render"],
+  "license": "Apache-2.0",
+  "keywords": ["blender", "jimeng", "seedance", "preview-render", "codex"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Blender",
     "shortDescription": "Headless Jimeng preview render and upload for Blender",
-    "longDescription": "Drives the official Jimeng/Seedance Blender add-on without its UI: inspects a scene, renders a reversible preview from a camera, and produces a ready-to-open Jimeng link for the rendered or an existing video.",
+    "longDescription": "Enables the official Jimeng/Seedance Blender add-on without its UI: inspect a scene, render a reversible white-model or material preview from a camera, and produce a ready-to-open Jimeng link for the rendered or an existing video.",
     "developerName": "Full Stack Skills / PartMe.AI",
     "category": "Creativity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": ["Interactive", "Read", "Write"],
     "websiteURL": "https://github.com/partme-ai/codex-blender-plugin",
+    "privacyPolicyURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Render a white-model preview of this Blender scene and link it to Jimeng",
-      "Make a Jimeng link from this preview video"
+      "Inspect this Blender scene and summarize its cameras and frame range",
+      "Render a white-model preview of the selected camera and link it to Jimeng",
+      "Make a Jimeng link from this existing preview video"
     ],
-    "brandColor": "#2F6FED"
+    "brandColor": "#F97316",
+    "composerIcon": "./assets/composer-icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "screenshots": []
   }
 }

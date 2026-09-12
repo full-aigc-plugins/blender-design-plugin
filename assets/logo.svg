@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Codex Blender">
+  <g fill="none" stroke="#F97316" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M48 76 128 34l80 42-80 42z"/>
+    <path d="M48 76v92l80 48 80-48V76"/>
+    <path d="M128 118v98"/>
+  </g>
+</svg>
