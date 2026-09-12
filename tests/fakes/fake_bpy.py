@@ -1,12 +1,14 @@
 """Fake bpy module for hermetic testing of blender_bridge.
 
-Provides a minimal Blender API surface so that inspect_scene() can be
-driven without a real Blender installation.  Every class carries a
-``snapshot()`` method that returns a JSON-serializable dict of all
-observable state, enabling read-only assertions.
+Provides a minimal Blender API surface so that inspect_scene() and
+export_preview() can be driven without a real Blender installation.
+Every class carries a ``snapshot()`` method that returns a JSON-serializable
+dict of all observable state, enabling read-only assertions.
 
 No real Blender is required; standard library only.
 """
+
+import os
 
 
 # ---------------------------------------------------------------------------
@@ -114,14 +116,26 @@ class FakeObject:
         }
 
 
+class FakeImageSettings:
+    """Mimics render.image_settings."""
+    def __init__(self, file_format="PNG"):
+        self.file_format = file_format
+
+    def snapshot(self):
+        return {"file_format": self.file_format}
+
+
 class FakeRenderSettings:
     """Mimics scene.render settings."""
     def __init__(self, resolution_x=1920, resolution_y=1080,
-                 resolution_percentage=100, engine="BLENDER_EEVEE"):
+                 resolution_percentage=100, engine="BLENDER_EEVEE",
+                 filepath="", file_format="PNG"):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.resolution_percentage = resolution_percentage
         self.engine = engine
+        self.filepath = filepath
+        self.image_settings = FakeImageSettings(file_format)
 
     def snapshot(self):
         return {
@@ -129,21 +143,89 @@ class FakeRenderSettings:
             "resolution_y": self.resolution_y,
             "resolution_percentage": self.resolution_percentage,
             "engine": self.engine,
+            "filepath": self.filepath,
+            "file_format": self.image_settings.file_format,
         }
 
 
+class FakeShading:
+    """Mimics scene.display.shading."""
+    def __init__(self, color_type="SINGLE", single_color=(0.8, 0.8, 0.8),
+                 light="STUDIO", show_xray=False):
+        self.color_type = color_type
+        self.single_color = single_color
+        self.light = light
+        self.show_xray = show_xray
+
+    def snapshot(self):
+        return {
+            "color_type": self.color_type,
+            "single_color": list(self.single_color),
+            "light": self.light,
+            "show_xray": self.show_xray,
+        }
+
+
+class FakeDisplay:
+    """Mimics scene.display."""
+    def __init__(self, shading=None):
+        self.shading = shading or FakeShading()
+
+    def snapshot(self):
+        return {"shading": self.shading.snapshot()}
+
+
+class FakeOpsRender:
+    """Mimics bpy.ops.render.opengl — writes frame PNGs to the output dir."""
+    def __init__(self):
+        self.last_call = None  # records kwargs for test assertions
+
+    def __call__(self, **kwargs):
+        self.last_call = kwargs
+        # In the fake, we do nothing — the test adapter or mock handles file creation.
+
+
+class FakeOps:
+    """Mimics bpy.ops."""
+    def __init__(self):
+        self.render = type("Render", (), {"opengl": FakeOpsRender()})()
+
+
 class FakeScene:
-    """Mimics a Blender scene."""
-    def __init__(self, frame_start=1, frame_end=250, render=None):
+    """Mimics a Blender scene with jimeng_* properties for the export adapter."""
+    def __init__(self, frame_start=1, frame_end=250, render=None,
+                 camera=None, frame_current=None, display=None):
         self.frame_start = frame_start
         self.frame_end = frame_end
         self.render = render or FakeRenderSettings()
+        self.camera = camera
+        self.frame_current = frame_current if frame_current is not None else frame_start
+        self.display = display or FakeDisplay()
+
+        # jimeng_* properties — set by the adapter, read by the vendored core
+        self.jimeng_camera = None
+        self.jimeng_resolution = "origin"
+        self.jimeng_frame_start = frame_start
+        self.jimeng_frame_end = frame_end
+        self.jimeng_output_dir = ""
+
+    def frame_set(self, frame):
+        """Mimics scene.frame_set — sets the current frame."""
+        self.frame_current = frame
 
     def snapshot(self):
         return {
             "frame_start": self.frame_start,
             "frame_end": self.frame_end,
+            "frame_current": self.frame_current,
+            "camera_name": self.camera.name if self.camera else None,
             "render": self.render.snapshot(),
+            "display": self.display.snapshot(),
+            "jimeng_camera_name": self.jimeng_camera.name if self.jimeng_camera else None,
+            "jimeng_resolution": self.jimeng_resolution,
+            "jimeng_frame_start": self.jimeng_frame_start,
+            "jimeng_frame_end": self.jimeng_frame_end,
+            "jimeng_output_dir": self.jimeng_output_dir,
         }
 
 
@@ -228,12 +310,32 @@ class FakeApp:
         return {"version_string": self.version_string}
 
 
+class FakePathModule:
+    """Mimics bpy.path — provides abspath() for the vendored core."""
+    @staticmethod
+    def abspath(path):
+        """Resolve a Blender-relative path to absolute (here: just expand ~ and make absolute)."""
+        if not path:
+            return ""
+        expanded = os.path.expanduser(str(path))
+        if os.path.isabs(expanded):
+            return expanded
+        return os.path.abspath(expanded)
+
+
 class FakeBpy:
-    """Complete fake bpy module for testing."""
-    def __init__(self, data=None, context=None, app=None):
+    """Complete fake bpy module for testing.
+
+    Accepts an optional ops= argument for injecting a FakeOps so the
+    export tests can observe render.opengl calls without touching disk
+    through the fake itself.
+    """
+    def __init__(self, data=None, context=None, app=None, ops=None):
         self.data = data or FakeData()
         self.context = context or FakeContext()
         self.app = app or FakeApp()
+        self.ops = ops or FakeOps()
+        self.path = FakePathModule()
 
     def snapshot(self):
         return {
