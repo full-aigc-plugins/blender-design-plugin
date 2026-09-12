@@ -2,8 +2,9 @@
   "id": "codex-blender",
   "name": "Codex Blender",
   "version": "0.1.0",
-  "description": "Inspect authorized Blender projects and export preview video safely.",
+  "description": "Drive the official Jimeng Blender add-on headlessly: inspect scenes, export previews, and produce Jimeng links through Codex Skills.",
   "license": "MIT",
   "skills": "./skills/",
-  "entryPoint": "scripts/validate_distribution.py"
+  "entryPoint": "scripts/validate_distribution.py",
+  "repository": "https://github.com/partme-ai/codex-blender-plugin.git"
 }
