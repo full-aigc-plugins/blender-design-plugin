@@ -41,6 +41,9 @@ from pathlib import Path
 # --- project policy -------------------------------------------------------
 
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+# Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
+# must not be pinned to a bare literal.
+VERSION_PATTERN = re.compile(r"^0\.1\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -299,8 +302,10 @@ def validate(root: Path) -> list[str]:
     # -- project policy: identity, version, forbidden MCP --
     if NAME_PATTERN.fullmatch(plugin_id) is None or not plugin_id.startswith("codex-"):
         errors.append("manifest name must be a codex-prefixed kebab-case identifier")
-    if manifest.get("version") != "0.1.0":
-        errors.append("foundation version must be 0.1.0")
+    if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
+        errors.append(
+            "foundation version must be 0.1.0, optionally with a +build cachebuster"
+        )
     for field in ("description", "skills"):
         if not manifest.get(field):
             errors.append(f"manifest missing required field: {field}")

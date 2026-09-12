@@ -286,6 +286,22 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         (self.repo / "vendor" / "jimeng_blender_uploader" / "UPSTREAM.md").unlink()
         self._rejects()
 
+    def test_rejects_wrong_base_version(self):
+        self._mutate(self.manifest, lambda d: d.update(version="0.2.0"))
+        self._rejects()
+
+    def test_accepts_cachebuster_build_suffix(self):
+        """Local iteration requires 0.1.0+codex.<cachebuster>.
+
+        Hard-pinning the version would reject the documented form, so this
+        guards against reintroducing that pin.
+        """
+        self._mutate(
+            self.manifest,
+            lambda d: d.update(version="0.1.0+codex.local-20260912-120000"),
+        )
+        self.assertEqual(validate_main(str(self.repo)), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
