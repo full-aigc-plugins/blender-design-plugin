@@ -67,7 +67,11 @@ The official Jimeng Blender add-on offers two flows. This Codex integration expo
 
 ## Files
 
-- `scripts/blender_bridge.py` — inspection and export
-- `scripts/media_probe.py` — media validation
-- `scripts/jimeng_link.py` — link production
-- `vendor/jimeng_blender_uploader/` — vendored render core
+- `scripts/codex_bridge.py` — thin driver that enables the vendored add-on and calls its operators
+- `scripts/blender_bridge.py` — read-only inspection + restoration verification
+- `scripts/blender_runner.py` — launches Blender safely
+- `vendor/jimeng_blender_uploader/` — the vendored official add-on (owns both flows)
+
+Both flows are implemented **inside the vendored add-on**. Our code sets the same inputs the
+Blender panel would set and calls the add-on's operator. If our code looks like it duplicates
+add-on logic, that is a defect — see `vendor/jimeng_blender_uploader/UPSTREAM.md`.

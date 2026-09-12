@@ -1,19 +1,18 @@
 # Scenario: Upload Without Authorization
 
 ## Context
-User requests a Jimeng link but hasn't explicitly authorized the upload.
+The user asks for a Jimeng link but has not explicitly authorized the upload.
 
 ## Expected Behaviour
-- Router requires explicit user confirmation before producing a link
-- Without confirmation, the router does NOT call `produce_jimeng_link()`
-- Reports: "Please confirm you want to upload this video to Jimeng."
-- Does NOT proceed until user confirms
+- The router requires explicit confirmation before running either flow
+- Without confirmation the router does NOT call `codex_bridge.run_flow(...)`
+- It reports that confirmation is needed and waits
 
 ## Skill Path
 `codex-blender-use` → authorization gate → waits for confirmation
 
 ## Test
 ```python
-# Router does not call produce_jimeng_link() without user confirmation
-# Router prompts user for authorization
+# The router does not invoke run_flow() until the user confirms
+# No bridge is started and no link is produced before confirmation
 ```

@@ -10,7 +10,7 @@
 python3 -m unittest discover -s tests -v
 ```
 
-Result: **152/152 tests pass**, pristine output, no warnings.
+Result: **125/125 tests pass**, pristine output, no warnings.
 
 ## Distribution Validation
 
@@ -65,8 +65,7 @@ Blender is not installed on this host (`command -v blender` returns empty). The 
 | `vendor/jimeng_blender_uploader/UPSTREAM.md` | Provenance record |
 | `scripts/blender_bridge.py` | Inspection + export adapter |
 | `scripts/blender_runner.py` | Safe process runner |
-| `scripts/media_probe.py` | ffprobe-based validation |
-| `scripts/jimeng_link.py` | Jimeng link production |
+| `scripts/codex_bridge.py` | Thin driver: enables the vendored add-on, calls its operators |
 | `scripts/validate_document.py` | Schema validator |
 | `scripts/validate_distribution.py` | Distribution validator |
 | `skills/codex-blender-*/SKILL.md` | Four Codex Skills |

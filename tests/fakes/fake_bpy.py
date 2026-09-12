@@ -186,13 +186,19 @@ class FakeOpsRender:
 
 
 class FakeOps:
-    """Mimics bpy.ops."""
-    def __init__(self):
+    """Mimics bpy.ops, including the add-on's jimeng.* operator namespace."""
+    def __init__(self, bpy=None):
         self.render = type("Render", (), {"opengl": FakeOpsRender()})()
+        self.jimeng = FakeJimengOps(bpy) if bpy is not None else None
 
 
 class FakeScene:
-    """Mimics a Blender scene with jimeng_* properties for the export adapter."""
+    """Mimics a Blender scene, including the add-on's full jimeng_* property surface.
+
+    The property names and defaults mirror what the vendored add-on's
+    ``register()`` installs on ``bpy.types.Scene``, because the add-on's
+    operators read and write them directly.
+    """
     def __init__(self, frame_start=1, frame_end=250, render=None,
                  camera=None, frame_current=None, display=None):
         self.frame_start = frame_start
@@ -202,12 +208,40 @@ class FakeScene:
         self.frame_current = frame_current if frame_current is not None else frame_start
         self.display = display or FakeDisplay()
 
-        # jimeng_* properties — set by the adapter, read by the vendored core
+        # --- add-on inputs ---
+        self.jimeng_uploader_mode = "VIEWPORT"
+        self.jimeng_video_path = ""
+        self.jimeng_output_dir = ""
         self.jimeng_camera = None
         self.jimeng_resolution = "origin"
         self.jimeng_frame_start = frame_start
         self.jimeng_frame_end = frame_end
-        self.jimeng_output_dir = ""
+        self.jimeng_frame_range_initialized = False
+        self.jimeng_frame_range_manual = False
+        self.jimeng_default_params_expanded = False
+        self.jimeng_prompt = ""
+
+        # --- add-on outputs / status ---
+        self.jimeng_redirect_url = ""
+        self.jimeng_redirect_url_display = ""
+        self.jimeng_link_ready = False
+        self.jimeng_link_signature = ""
+        self.jimeng_camera_cache_json = ""
+        self.jimeng_active_camera_key = ""
+        self.jimeng_status = ""
+        self.jimeng_status_detail = ""
+        self.jimeng_task_state = "IDLE"
+        self.jimeng_task_message = ""
+        self.jimeng_error_message = ""
+
+        # --- DCC protocol properties ---
+        self.jimeng_dcc_fps = 24
+        self.jimeng_dcc_container_format = "mp4"
+        self.jimeng_dcc_codec = "h264"
+        self.jimeng_dcc_file_size_label = ""
+        self.jimeng_dcc_min_frame_num = 44
+        self.jimeng_dcc_max_frame_num = 720
+        self.jimeng_frame_limit_display = ""
 
     def frame_set(self, frame):
         """Mimics scene.frame_set — sets the current frame."""
@@ -302,9 +336,11 @@ class FakeContext:
 
 
 class FakeApp:
-    """Mimics bpy.app."""
+    """Mimics bpy.app, including the handlers and timers the add-on registers."""
     def __init__(self, version_string="4.2.0"):
         self.version_string = version_string
+        self.handlers = FakeHandlers()
+        self.timers = FakeTimers()
 
     def snapshot(self):
         return {"version_string": self.version_string}
@@ -326,16 +362,18 @@ class FakePathModule:
 class FakeBpy:
     """Complete fake bpy module for testing.
 
-    Accepts an optional ops= argument for injecting a FakeOps so the
-    export tests can observe render.opengl calls without touching disk
-    through the fake itself.
+    Emulates enough of Blender for the vendored add-on's ``register()`` to run
+    and for its operators to be dispatched through ``bpy.ops.jimeng.*``.
     """
     def __init__(self, data=None, context=None, app=None, ops=None):
         self.data = data or FakeData()
         self.context = context or FakeContext()
         self.app = app or FakeApp()
-        self.ops = ops or FakeOps()
         self.path = FakePathModule()
+        self.props = FakeProps()
+        self.types = FakeTypes()
+        self.utils = FakeUtils()
+        self.ops = ops or FakeOps(bpy=self)
 
     def snapshot(self):
         return {
@@ -343,3 +381,125 @@ class FakeBpy:
             "context": self.context.snapshot(),
             "app": self.app.snapshot(),
         }
+
+
+# ---------------------------------------------------------------------------
+# Blender registration surface (props / types / utils / ops dispatch)
+# ---------------------------------------------------------------------------
+
+class _PropStub:
+    """Stands in for bpy.props.XProperty(...) — records kwargs, holds no state."""
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+
+class FakeProps:
+    """Mimics bpy.props property constructors."""
+    EnumProperty = StringProperty = PointerProperty = IntProperty = BoolProperty = _PropStub
+
+
+class FakeOperatorBase:
+    """Mimics bpy.types.Operator — provides the report() the add-on calls."""
+    def __init__(self):
+        self.reported = []
+
+    def report(self, level, message):
+        self.reported.append((level, message))
+
+
+class FakePanelBase:
+    """Mimics bpy.types.Panel (registration only; never drawn)."""
+
+
+class FakeTypes:
+    """Mimics bpy.types — the classes add-ons subclass or reference in props.
+
+    Unknown attributes are auto-created as empty classes so a property
+    constructor's ``type=`` argument (e.g. ``bpy.types.Object``) resolves
+    without having to enumerate Blender's whole type registry here.
+    """
+    def __init__(self):
+        self.Scene = type("FakeSceneType", (), {})
+        self.Operator = FakeOperatorBase
+        self.Panel = FakePanelBase
+        self.Object = type("FakeObjectType", (), {})
+
+    def __getattr__(self, name):
+        # Only reached when the attribute is genuinely missing.
+        created = type(f"Fake{name}Type", (), {})
+        setattr(self, name, created)
+        return created
+
+
+class FakeUtils:
+    """Mimics bpy.utils class registration, keyed by bl_idname."""
+    def __init__(self):
+        self.classes = {}
+        self.registered = []
+
+    def register_class(self, cls):
+        idname = getattr(cls, "bl_idname", None) or getattr(cls, "__name__", str(cls))
+        if idname in self.classes:
+            raise ValueError(f"{idname} is already registered")
+        self.classes[idname] = cls
+        self.registered.append(cls)
+
+    def unregister_class(self, cls):
+        idname = getattr(cls, "bl_idname", None) or getattr(cls, "__name__", str(cls))
+        self.classes.pop(idname, None)
+        if cls in self.registered:
+            self.registered.remove(cls)
+
+
+class FakeJimengOps:
+    """Dispatches bpy.ops.jimeng.* to the classes register_class recorded.
+
+    This runs the REAL vendored operator code, not a stand-in.
+    """
+    def __init__(self, bpy):
+        self._bpy = bpy
+
+    def _invoke(self, idname):
+        cls = self._bpy.utils.classes.get(idname)
+        if cls is None:
+            raise RuntimeError(f"{idname} is not registered")
+        operator = cls()
+        context = FakeOperatorContext(self._bpy)
+        result = operator.execute(context)
+        self._bpy.last_operator = (idname, operator)
+        return result
+
+    def render_upload(self):
+        return self._invoke("jimeng.render_upload")
+
+    def upload_existing(self):
+        return self._invoke("jimeng.upload_existing")
+
+
+class FakeOperatorContext:
+    """Mimics the operator context passed to execute()."""
+    def __init__(self, bpy):
+        self.scene = bpy.context.scene
+        self.preferences = bpy.context.preferences
+
+
+class FakeHandlers:
+    """Mimics bpy.app.handlers."""
+    def __init__(self):
+        self.load_post = []
+
+
+class FakeTimers:
+    """Mimics bpy.app.timers — registration is a no-op that reports unregistered."""
+    def __init__(self):
+        self.registered = []
+
+    def is_registered(self, callback):
+        return callback in self.registered
+
+    def register(self, callback, **kwargs):
+        self.registered.append(callback)
+
+    def unregister(self, callback):
+        if callback in self.registered:
+            self.registered.remove(callback)

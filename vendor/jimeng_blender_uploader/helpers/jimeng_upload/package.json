@@ -1,0 +1,10 @@
+{
+  "name": "jimeng-upload-helper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local bridge helper used by the Blender Jimeng/Dreamina uploader.",
+  "main": "local_bridge.js",
+  "scripts": {
+    "check": "node --check local_bridge.js"
+  }
+}

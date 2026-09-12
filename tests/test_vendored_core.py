@@ -1,11 +1,11 @@
 """Tests for the vendored jimeng_blender_uploader headless core.
 
 Covers:
-  - UPSTREAM.md records all five upstream SHA-256 values
+  - UPSTREAM.md records every upstream SHA-256 (all vendored files)
   - Each vendored file hashes to its recorded value (anti-drift guard)
-  - Four modules (dcc_config, upload_bridge, settings, variant) import
-    in a child process where importing bpy raises ImportError
-  - viewport_render imports against a stub bpy module (no real Blender)
+  - The package legitimately requires bpy (it is the real add-on)
+  - The whole add-on imports against a bpy stub (the headless premise)
+  - Four modules deliberately stay bpy-free
 """
 
 import hashlib
@@ -15,6 +15,7 @@ import subprocess
 import sys
 import textwrap
 import unittest
+from pathlib import Path
 
 # Ensure the repo root is importable so vendor.jimeng_blender_uploader resolves.
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -105,19 +106,41 @@ class TestUpstreamProvenance(unittest.TestCase):
             )
 
 
+
+
 class TestHeadlessImportability(unittest.TestCase):
-    """Prove the vendored package is importable without real Blender."""
+    """The vendored package is the real add-on: it needs bpy, and it must load
+    cleanly once a bpy stub is present — which is how the headless driver runs."""
 
-    def test_four_modules_import_bpy_absent(self):
-        """dcc_config, upload_bridge, settings, variant must import in a
-        child process where ``import bpy`` raises ImportError."""
-        script = textwrap.dedent("""\
-            import importlib
-            import sys
-            import types
+    _MODULES = [
+        "vendor.jimeng_blender_uploader.__init__".replace(".__init__", ""),
+        "vendor.jimeng_blender_uploader.dcc_config",
+        "vendor.jimeng_blender_uploader.operators",
+        "vendor.jimeng_blender_uploader.panel",
+        "vendor.jimeng_blender_uploader.settings",
+        "vendor.jimeng_blender_uploader.state",
+        "vendor.jimeng_blender_uploader.upload_bridge",
+        "vendor.jimeng_blender_uploader.variant",
+        "vendor.jimeng_blender_uploader.viewport_render",
+    ]
 
-            # Insert a meta_path finder that blocks bpy.
-            class _BpyBlocker:
+    def _run_child(self, script):
+        return subprocess.run(
+            [sys.executable, "-c", textwrap.dedent(script)],
+            capture_output=True, text=True,
+            env={**os.environ, "_REPO_ROOT": _REPO_ROOT},
+        )
+
+    def test_package_requires_bpy(self):
+        """With bpy unavailable the add-on must fail to import.
+
+        This proves we vendored the real add-on rather than a stripped copy:
+        if the package imported without bpy, its operator logic would have had
+        to be rewritten — which is exactly what this repository must not do.
+        """
+        script = """\
+            import os, sys
+            class _Blocker:
                 def find_spec(self, name, path, target=None):
                     if name == 'bpy' or name.startswith('bpy.'):
                         from importlib.machinery import ModuleSpec
@@ -126,80 +149,79 @@ class TestHeadlessImportability(unittest.TestCase):
                 def create_module(self, spec):
                     return None
                 def exec_module(self, module):
-                    raise ImportError(
-                        f"No module named '{module.__name__}' (bpy blocked for headless test)"
-                    )
-
-            sys.meta_path.insert(0, _BpyBlocker())
-
-            # Ensure repo root is importable.
-            import os
-            repo_root = os.environ['_REPO_ROOT']
-            if repo_root not in sys.path:
-                sys.path.insert(0, repo_root)
-
-            modules = [
-                'vendor.jimeng_blender_uploader.dcc_config',
-                'vendor.jimeng_blender_uploader.upload_bridge',
-                'vendor.jimeng_blender_uploader.settings',
-                'vendor.jimeng_blender_uploader.variant',
-            ]
-            for mod_name in modules:
-                try:
-                    importlib.import_module(mod_name)
-                except Exception as e:
-                    print(f"FAIL: {mod_name}: {e}", file=sys.stderr)
-                    sys.exit(1)
-            print("OK")
-        """)
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            env={**os.environ, "_REPO_ROOT": _REPO_ROOT},
-        )
-        self.assertEqual(
-            result.returncode, 0,
-            f"Import failed:\nstdout: {result.stdout}\nstderr: {result.stderr}",
-        )
-        self.assertIn("OK", result.stdout)
-
-    def test_viewport_render_imports_with_stub_bpy(self):
-        """viewport_render does ``import bpy`` at the top level but only
-        uses it inside functions.  An empty module object suffices to
-        make the import succeed."""
-        script = textwrap.dedent("""\
-            import importlib
-            import sys
-            import types
-            import os
-
-            repo_root = os.environ['_REPO_ROOT']
-            if repo_root not in sys.path:
-                sys.path.insert(0, repo_root)
-
-            # Provide a stub bpy module so the top-level import succeeds.
-            bpy_stub = types.ModuleType('bpy')
-            sys.modules['bpy'] = bpy_stub
-
+                    raise ImportError('bpy blocked for test')
+            sys.meta_path.insert(0, _Blocker())
+            if os.environ['_REPO_ROOT'] not in sys.path:
+                sys.path.insert(0, os.environ['_REPO_ROOT'])
             try:
-                importlib.import_module('vendor.jimeng_blender_uploader.viewport_render')
-            except Exception as e:
-                print(f"FAIL: {e}", file=sys.stderr)
-                sys.exit(1)
-            print("OK")
-        """)
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            env={**os.environ, "_REPO_ROOT": _REPO_ROOT},
-        )
-        self.assertEqual(
-            result.returncode, 0,
-            f"Import failed:\nstdout: {result.stdout}\nstderr: {result.stderr}",
-        )
+                import vendor.jimeng_blender_uploader  # noqa: F401
+            except ImportError:
+                print('OK'); sys.exit(0)
+            print('FAIL: package imported without bpy', file=sys.stderr); sys.exit(1)
+        """
+        result = self._run_child(script)
+        self.assertEqual(result.returncode, 0,
+                         f"stdout:{result.stdout} stderr:{result.stderr}")
         self.assertIn("OK", result.stdout)
+
+    def test_all_modules_import_with_stub_bpy(self):
+        """With a bpy stub present the whole add-on imports — the headless premise."""
+        script = """\
+            import importlib, os, sys, types
+            if os.environ['_REPO_ROOT'] not in sys.path:
+                sys.path.insert(0, os.environ['_REPO_ROOT'])
+
+            class _Prop:
+                def __init__(self, **kw):
+                    self.kw = kw
+            props = types.SimpleNamespace(
+                EnumProperty=_Prop, StringProperty=_Prop, PointerProperty=_Prop,
+                IntProperty=_Prop, BoolProperty=_Prop,
+            )
+            types_ns = types.SimpleNamespace(
+                Scene=type('Scene', (), {}),
+                Operator=type('Operator', (), {}),
+                Panel=type('Panel', (), {}),
+                Object=type('Object', (), {}),
+            )
+            utils = types.SimpleNamespace(register_class=lambda c: None,
+                                          unregister_class=lambda c: None)
+            handlers = types.ModuleType('bpy.app.handlers')
+            handlers.persistent = lambda fn: fn
+            handlers.load_post = []
+            app = types.ModuleType('bpy.app')
+            app.handlers = handlers
+            app.timers = types.SimpleNamespace(is_registered=lambda cb: False,
+                                               register=lambda cb, **kw: None)
+            bpy = types.ModuleType('bpy')
+            bpy.__path__ = []
+            bpy.props, bpy.types, bpy.utils, bpy.app = props, types_ns, utils, app
+            sys.modules.update({'bpy': bpy, 'bpy.app': app, 'bpy.app.handlers': handlers})
+
+            for mod in %r:
+                try:
+                    importlib.import_module(mod)
+                except Exception as exc:
+                    print(f"FAIL: {mod}: {exc}", file=sys.stderr); sys.exit(1)
+            print('OK')
+        """ % (self._MODULES,)
+        result = self._run_child(script)
+        self.assertEqual(result.returncode, 0,
+                         f"stdout:{result.stdout} stderr:{result.stderr}")
+        self.assertIn("OK", result.stdout)
+
+    def test_bpy_free_modules_do_not_import_bpy(self):
+        """Four vendored modules deliberately have no bpy dependency.
+
+        They are the ones that are safe to exercise without Blender (protocol
+        config, exec discovery, settings, the generated variant), so their
+        bpy-freedom is worth keeping even though the package as a whole needs bpy.
+        """
+        vendor_dir = Path(_REPO_ROOT) / "vendor" / "jimeng_blender_uploader"
+        for name in ("dcc_config.py", "upload_bridge.py", "settings.py", "variant.py"):
+            source = (vendor_dir / name).read_text()
+            self.assertNotIn("import bpy", source,
+                             f"{name} unexpectedly imports bpy")
 
 
 if __name__ == "__main__":
