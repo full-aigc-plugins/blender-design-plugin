@@ -4,25 +4,24 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion",
+    "protocolVersion",
     "producer",
+    "sessionId",
+    "sceneRevision",
+    "snapshotId",
     "path",
     "sha256",
-    "codec",
-    "width",
-    "height",
-    "fps",
-    "durationSeconds",
+    "format",
     "bytes",
-    "camera",
-    "frameRange",
-    "previewMode",
-    "restoration"
+    "parameters",
+    "validation",
+    "restoration",
+    "warnings"
   ],
   "properties": {
-    "schemaVersion": {
+    "protocolVersion": {
       "type": "string",
-      "const": "codex-blender.receipt/v1"
+      "const": "codex-blender/v1"
     },
     "producer": {
       "type": "object",
@@ -33,28 +32,26 @@
         "version": { "type": "string" }
       }
     },
+    "sessionId": {"type": "string"},
+    "sceneRevision": {"type": "integer", "minimum": 0},
+    "snapshotId": {"type": "string"},
     "path": { "type": "string" },
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
-    "codec": { "type": "string" },
-    "width": { "type": "integer", "exclusiveMinimum": 0 },
-    "height": { "type": "integer", "exclusiveMinimum": 0 },
-    "fps": { "type": "integer", "exclusiveMinimum": 0 },
-    "durationSeconds": { "type": "number", "exclusiveMinimum": 0 },
+    "format": {"type": "string", "enum": ["blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"]},
     "bytes": { "type": "integer", "exclusiveMinimum": 0 },
-    "camera": { "type": "string" },
-    "frameRange": {
+    "parameters": {"type": "object"},
+    "validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["start", "end"],
+      "required": ["status", "checks"],
       "properties": {
-        "start": { "type": "integer" },
-        "end": { "type": "integer" }
+        "status": {"type": "string", "enum": ["passed", "failed"]},
+        "checks": {"type": "array", "items": {"type": "string"}}
       }
     },
-    "previewMode": { "type": "string" },
     "restoration": {
       "type": "object",
       "additionalProperties": false,
@@ -65,6 +62,7 @@
           "enum": ["confirmed", "failed", "unknown"]
         }
       }
-    }
+    },
+    "warnings": {"type": "array", "items": {"type": "string"}}
   }
 }

@@ -1,57 +1,78 @@
 # Codex Blender 插件
 
-<img src="assets/logo.png" alt="Codex Blender Logo" width="128">
+<img src="assets/logo.png" alt="Codex Blender" width="128">
 
-> 面向 Codex 的安全、可审查 Blender 自动化兼容基础。
+> 让 Codex 通过安全的本地 Harness 完成 Blender 设计、视觉验收、保存和导出。
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-## 当前状态
+## 能做什么
 
-仓库现已具备兼容插件基础：manifest、Marketplace 元数据、品牌资产、Legal 文档、验证脚本、测试和实施目录。Blender 业务工作流尚未实现，也未声明通过 Blender 运行兼容性验证。
+`codex-blender` 把用户想法转化为 Blender 场景，覆盖结构化建模、材质、灯光、相机、
+动画、里程碑预览、恢复检查点和多格式文件交付。
 
-## 项目定位
-
-`codex-blender` 计划让 Codex 在用户授权范围内检查 `.blend` 项目、准备相机和帧范围、导出 Workbench 或视口预览视频、验证产物，并恢复临时场景设置。它是通用 Blender 适配器，不负责上传到 Dreamina 或其他服务。
-
-```text
-Codex 请求
-  -> 能力与权限检查
-  -> Blender 后台进程 + Python Bridge
-  -> 场景检查 / 预览渲染
-  -> 媒体验证
-  -> 本地 MP4 + 结构化回执
+```mermaid
+flowchart LR
+    Idea[用户想法] --> Codex --> Blender --> Preview[多视图里程碑]
+    Preview --> Review[用户确认]
+    Review --> Blender
+    Review --> Export[验证后的文件]
 ```
 
-## 计划能力
+## 两种运行模式
 
-- 发现 Blender 可执行文件与版本，不自动安装。
-- 只读检查场景、相机、动画、材质和输出设置。
-- 支持白模、材质预览和已有视频三种工作流。
-- 通过 Workbench 导出预览，并保证恢复场景状态。
-- 校验分辨率、帧范围、帧率、编码、时长和文件大小。
-- 输出可被 `dreamina-3d` 消费的稳定回执。
+- **非侵入模式（默认）**：Codex 启动 Blender 并临时加载 Harness，不安装 Blender Add-on。
+- **Connector 模式**：安装可选轻量连接器，控制已经打开的 Blender 场景。
+
+两种模式共用相同的本地认证协议、命令白名单、revision、事务和回执。
+
+## 当前能力
+
+- 场景只读检查
+- 基础网格创建和 Transform
+- 重命名、父子关系、删除和 Modifier
+- PBR 材质和材质分配
+- 相机、灯光、帧范围和关键帧
+- Camera、Front、Side、Top 四视图里程碑
+- BLEND、GLB、GLTF、FBX、OBJ、STL、PNG、JPG、MP4 导出路由
 
 ## 安全边界
 
-- 不自动安装 Blender、插件、ffmpeg 或 Python 包。
-- 不负责远程上传、浏览器控制或付费生成。
-- 未经明确授权，不执行 `.blend` 内的不可信脚本。
-- 临时场景修改必须记录，并在 `finally` 路径恢复。
-- 输出路径必须位于用户批准目录内。
+- 默认只允许封闭结构化命令，不直接运行任意 Python
+- Blender 数据修改只在主线程执行
+- revision 防止基于旧场景继续修改
+- requestId 防止重复执行
+- 删除、覆盖和最终导出需要动作绑定授权
+- macOS 使用私有 UDS，Windows 使用 Named Pipe，loopback TCP 仅作带 token 降级
+- 每个里程碑建立快照并保留恢复证据
 
-## 文档
+## 安装
 
-- [Architecture](docs/Codex-Blender-Plugin-Architecture.md)
-- [架构文档](docs/Codex-Blender-Plugin-Architecture.zh_CN.md)
-- [Technical solution](docs/Codex-Blender-Plugin-Technical-Solution.md)
-- [技术方案](docs/Codex-Blender-Plugin-Technical-Solution.zh_CN.md)
-- [设计规格](docs/superpowers/specs/2026-09-11-codex-blender-plugin-design.md)
-- [实施计划](docs/superpowers/plans/2026-09-11-codex-blender-plugin-implementation.md)
+先从 [Blender 官网](https://www.blender.org/download/) 安装 Blender，再从 GitHub 安装插件：
 
-## 验收目标
+```bash
+codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
+codex plugin add codex-blender@partme-ai-blender
+```
 
-只有单元测试、场景 fixture 测试、媒体验证、恢复测试、插件校验，以及经用户明确授权的 Blender 运行冒烟测试全部通过，首版实现才算完成。
+详细步骤见[安装与使用指南](docs/getting-started.zh-CN.md)。
+
+## 产品边界
+
+本插件止于经过验证的本地 Blender 文件。下游 AI 渲染、账号登录、报价、提交、查询和
+付费行为属于其他编排插件。
+
+## 开发验证
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 scripts/validate_distribution.py
+python3 scripts/package_connector.py dist/codex-blender-connector.zip
+```
+
+- [Harness 设计规格](docs/superpowers/specs/2026-09-12-codex-blender-harness-design.md)
+- [实施计划](docs/superpowers/plans/2026-09-12-codex-blender-harness-implementation.md)
+- [运行验证记录](docs/verification/harness-runtime.md)
 
 ## 许可证
 

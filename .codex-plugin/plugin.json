@@ -1,17 +1,17 @@
 {
   "name": "codex-blender",
   "version": "0.1.0",
-  "description": "Drive the official Jimeng Blender add-on headlessly from Codex: inspect scenes, render reversible previews, and produce Jimeng links.",
+  "description": "Let Codex design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
   "author": {"name": "Full Stack Skills / PartMe.AI", "url": "https://github.com/partme-ai"},
   "homepage": "https://github.com/partme-ai/codex-blender-plugin",
   "repository": "https://github.com/partme-ai/codex-blender-plugin",
   "license": "Apache-2.0",
-  "keywords": ["blender", "jimeng", "seedance", "preview-render", "codex"],
+  "keywords": ["blender", "3d-design", "modeling", "animation", "export", "codex"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Blender",
-    "shortDescription": "Headless Jimeng preview render and upload for Blender",
-    "longDescription": "Enables the official Jimeng/Seedance Blender add-on without its UI: inspect a scene, render a reversible white-model or material preview from a camera, and produce a ready-to-open Jimeng link for the rendered or an existing video.",
+    "shortDescription": "Design, review, and export Blender projects with Codex",
+    "longDescription": "Controls Blender through a guarded local Harness in non-invasive managed or Connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports.",
     "developerName": "Full Stack Skills / PartMe.AI",
     "category": "Creativity",
     "capabilities": ["Interactive", "Read", "Write"],
@@ -19,9 +19,9 @@
     "privacyPolicyURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Inspect this Blender scene and summarize its cameras and frame range",
-      "Render a white-model preview of the selected camera and link it to Jimeng",
-      "Make a Jimeng link from this existing preview video"
+      "Create a Blender scene from this idea and show milestone previews",
+      "Connect to my open Blender project and continue the design safely",
+      "Export the approved Blender design and verify every output file"
     ],
     "brandColor": "#F97316",
     "composerIcon": "./assets/composer-icon.png",
