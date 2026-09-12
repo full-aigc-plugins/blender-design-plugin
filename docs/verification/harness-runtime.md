@@ -49,3 +49,18 @@ These are temporary verification artifacts, not distributed plugin content.
 The preview receipt adapter was executed against the real `codex-dreamina-3d` handoff validator.
 After aligning `producer_version` with the published `0.1.x` range, validation returned no errors.
 This proves receipt compatibility only; a real H.264 preview remains blocked by the encoder gate.
+
+## Idea-to-artifact acceptance
+
+A managed session created an orange desktop speaker from structured commands:
+
+- 12 mutations covering meshes, bevel, two PBR materials, assignment, camera, and two lights;
+- transaction commit at scene revision 12;
+- camera/front/side/top milestone receipt;
+- action-bound authorization for each final export;
+- verified `speaker.blend`, `speaker.glb`, and `speaker.png` receipts;
+- isolated GLB re-import with 5 meshes and 5 materials.
+
+Visual inspection confirmed the body, grille, knob, materials, and lighting were rendered. The
+camera image cropped part of the lower product edge, correctly demonstrating that artifact
+validity and visual-design acceptance remain separate gates.

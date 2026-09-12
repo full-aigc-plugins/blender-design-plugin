@@ -12,6 +12,13 @@ def _unit(value, field):
     return float(value)
 
 
+def _principled(nodes):
+    node = nodes.get("Principled BSDF")
+    if node is not None:
+        return node
+    return next((candidate for candidate in nodes if getattr(candidate, "type", None) == "BSDF_PRINCIPLED"), None)
+
+
 class MaterialCommands:
     def __init__(self, bpy_module, *, asset_policy=None):
         self.bpy = bpy_module
@@ -27,7 +34,7 @@ class MaterialCommands:
         color = tuple(_unit(item, "baseColor") for item in color)
         material = self.bpy.data.materials.new(name=name)
         material.use_nodes = True
-        principled = material.node_tree.nodes.get("Principled BSDF")
+        principled = _principled(material.node_tree.nodes)
         if principled is None:
             raise HarnessError("MATERIAL_NODE_MISSING", "Principled BSDF node is unavailable")
         principled.inputs["Base Color"].default_value = color
@@ -61,7 +68,7 @@ class MaterialCommands:
         if material is None:
             raise HarnessError("MATERIAL_NOT_FOUND", f"material not found: {material_name}")
         material.use_nodes = True
-        principled = material.node_tree.nodes.get("Principled BSDF")
+        principled = _principled(material.node_tree.nodes)
         if principled is None:
             raise HarnessError("MATERIAL_NODE_MISSING", "Principled BSDF node is unavailable")
         image = self.bpy.data.images.load(str(path), check_existing=True)

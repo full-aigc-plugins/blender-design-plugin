@@ -124,6 +124,30 @@ class TestLookdevCommands(unittest.TestCase):
             self.assertEqual(result["result"]["path"], str(image_path.resolve()))
             self.assertEqual(len(linked), 1)
 
+    def test_create_pbr_finds_principled_by_stable_node_type(self):
+        principled = Node()
+        principled.type = "BSDF_PRINCIPLED"
+        nodes = [principled]
+        nodes_get = lambda _name: None
+        nodes_collection = SimpleNamespace(get=nodes_get)
+        nodes_collection.__iter__ = lambda _self: iter(nodes)
+
+        class IterableNodes:
+            def get(self, _name):
+                return None
+            def __iter__(self):
+                return iter(nodes)
+
+        class LocalizedMaterials(dict):
+            def new(self, name):
+                material = SimpleNamespace(name=name, use_nodes=False, node_tree=SimpleNamespace(nodes=IterableNodes()))
+                self[name] = material
+                return material
+
+        self.bpy.data.materials = LocalizedMaterials()
+        result = MaterialCommands(self.bpy).create_pbr({"name": "Localized"})
+        self.assertEqual(result["result"]["name"], "Localized")
+
 
 if __name__ == "__main__":
     unittest.main()
