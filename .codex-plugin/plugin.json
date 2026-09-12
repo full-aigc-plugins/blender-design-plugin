@@ -1,10 +1,28 @@
 {
-  "id": "codex-blender",
-  "name": "Codex Blender",
+  "name": "codex-blender",
   "version": "0.1.0",
-  "description": "Drive the official Jimeng Blender add-on headlessly: inspect scenes, export previews, and produce Jimeng links through Codex Skills.",
+  "description": "Inspect authorized Blender projects, render reversible preview videos, and produce Jimeng links by driving the official jimeng_blender_uploader add-on headlessly.",
+  "author": {
+    "name": "Full Stack Skills / PartMe.AI",
+    "url": "https://github.com/partme-ai"
+  },
+  "homepage": "https://github.com/partme-ai/codex-blender-plugin",
+  "repository": "https://github.com/partme-ai/codex-blender-plugin",
   "license": "MIT",
+  "keywords": ["blender", "jimeng", "seedance", "preview", "render"],
   "skills": "./skills/",
-  "entryPoint": "scripts/validate_distribution.py",
-  "repository": "https://github.com/partme-ai/codex-blender-plugin.git"
+  "interface": {
+    "displayName": "Codex Blender",
+    "shortDescription": "Headless Jimeng preview render and upload for Blender",
+    "longDescription": "Drives the official Jimeng/Seedance Blender add-on without its UI: inspects a scene, renders a reversible preview from a camera, and produces a ready-to-open Jimeng link for the rendered or an existing video.",
+    "developerName": "Full Stack Skills / PartMe.AI",
+    "category": "Creativity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/partme-ai/codex-blender-plugin",
+    "defaultPrompt": [
+      "Render a white-model preview of this Blender scene and link it to Jimeng",
+      "Make a Jimeng link from this preview video"
+    ],
+    "brandColor": "#2F6FED"
+  }
 }

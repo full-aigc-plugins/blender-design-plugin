@@ -84,15 +84,67 @@ class TestPluginManifest(unittest.TestCase):
         path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
         with open(path) as f:
             data = json.load(f)
-        required = ["id", "version", "name", "description", "license", "skills", "entryPoint"]
+        # The Codex manifest schema (codex-rs/core-plugins/src/manifest.rs).
+        required = ["name", "version", "description", "skills"]
         for field in required:
             self.assertIn(field, data, f"plugin.json missing required field: {field}")
 
-    def test_license_field_declared(self):
+    def test_declares_no_meaningless_fields(self):
+        """Extra metadata keys are tolerated by Codex, but these two are meaningless.
+
+        Codex's RawPluginManifest has no `deny_unknown_fields`, so `author`,
+        `license`, `repository` and `homepage` are accepted (and ignored) — they
+        are conventional metadata, not errors. `id` and `entryPoint` are not
+        conventions of this ecosystem, so their presence would be noise.
+        """
         path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
         with open(path) as f:
             data = json.load(f)
-        self.assertIn("license", data)
+        for meaningless in ("id", "entryPoint"):
+            self.assertNotIn(meaningless, data,
+                             f"{meaningless} is not a Codex manifest field or convention")
+
+    def test_display_name_is_in_interface(self):
+        path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
+        with open(path) as f:
+            data = json.load(f)
+        self.assertTrue(data.get("interface", {}).get("displayName"))
+
+    def test_default_prompt_within_documented_limits(self):
+        """Codex supports at most 3 prompts of at most 128 characters each."""
+        path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
+        with open(path) as f:
+            data = json.load(f)
+        prompts = data.get("interface", {}).get("defaultPrompt")
+        if prompts is None:
+            return
+        if isinstance(prompts, str):
+            prompts = [prompts]
+        self.assertLessEqual(len(prompts), 3, "at most 3 default prompts are supported")
+        for prompt in prompts:
+            self.assertLessEqual(len(prompt), 128,
+                                 f"default prompt exceeds 128 characters: {prompt!r}")
+
+    def test_name_is_a_valid_identifier_segment(self):
+        """Codex rejects a display name here; it belongs in interface.displayName."""
+        path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
+        with open(path) as f:
+            data = json.load(f)
+        name = data["name"]
+        self.assertRegex(name, r"^[A-Za-z0-9._-]+$",
+                         "plugin name allows only ASCII letters, digits, `.`, `_`, `-`")
+        self.assertNotIn(" ", name)
+
+    def test_skills_path_uses_required_relative_form(self):
+        path = os.path.join(_REPO_ROOT, ".codex-plugin", "plugin.json")
+        with open(path) as f:
+            data = json.load(f)
+        skills = data["skills"]
+        paths = [skills] if isinstance(skills, str) else skills
+        for raw in paths:
+            self.assertTrue(raw.startswith("./"), f"{raw} must start with `./`")
+            self.assertNotEqual(raw, "./", "path must not be `./`")
+            self.assertNotIn("..", raw.split("/"), "path must not contain `..`")
 
 
 # ===========================================================================
