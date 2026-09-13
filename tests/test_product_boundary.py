@@ -22,6 +22,13 @@ class TestProductBoundary(unittest.TestCase):
         self.assertNotIn("jimeng", text)
         self.assertNotIn("dreamina", text)
 
+    def test_user_guide_defines_missing_asset_and_handoff_decisions(self):
+        guide = (ROOT / "docs" / "getting-started.zh-CN.md").read_text(encoding="utf-8")
+        self.assertIn("素材就绪检查", guide)
+        self.assertIn("要求你补充素材", guide)
+        self.assertIn("白模交付清单", guide)
+        self.assertIn("codex-dreamina-3d-plugin", guide)
+
 
 if __name__ == "__main__":
     unittest.main()

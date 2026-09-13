@@ -2,6 +2,7 @@ import time
 import unittest
 
 from scripts.harness.authorization import AuthorizationManager
+from scripts.harness.execution_policy import ExecutionPolicy
 from scripts.harness.errors import HarnessError
 from scripts.harness.session import HarnessSession
 
@@ -106,6 +107,13 @@ class TestHarnessSession(unittest.TestCase):
             arguments={"action": "object.delete", "requestId": "delete-1"},
         ))
         self.assertEqual(response["error"]["code"], "USER_CONFIRMATION_REQUIRED")
+
+    def test_auto_policy_is_recorded_without_bypassing_authorization(self):
+        policy = ExecutionPolicy.auto_with_budget("/tmp/out", True, "3.20")
+        session = HarnessSession("session-1", dispatch=lambda *_: {}, execution_policy=policy)
+        response = session.handle(request(command="object.delete", expectedSceneRevision=0))
+        self.assertEqual(response["error"]["code"], "AUTHORIZATION_REQUIRED")
+        self.assertEqual(session.audit_entries()[0]["executionPolicy"]["mode"], "auto_with_budget")
 
 
 if __name__ == "__main__":

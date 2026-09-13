@@ -25,6 +25,44 @@ reversible operations, then save and export verified artifacts.
 It does not own Dreamina login, quote, approval, submission, polling, paid generation, or final
 Dreamina artifact download. Those remain in `codex-dreamina-3d` and its design companion.
 
+## Input readiness and delivery decision
+
+Before mutation, Codex converts each request into an implementation brief containing supplied
+assets, required but missing assets, object and uniqueness constraints, scene/environment,
+camera route, animation beats, duration, output formats, and acceptance checks. A missing
+reference asset is a user decision point: Codex asks the user to provide it by default. Codex may
+create a proxy only when the user explicitly asks it to design that asset; the final receipt must
+identify the proxy, assumptions, and deviations so it cannot be mistaken for a supplied reference.
+
+The Blender completion boundary is an artifact inventory, not merely a successful command. The
+inventory lists each saved/exported path, format, bytes, SHA-256, scene revision, snapshot,
+validation evidence, and unresolved deviations. After presenting it, Codex asks the user to
+choose either to end with the local Blender delivery or explicitly request a handoff to
+`codex-dreamina-3d`. No handoff, upload, authentication, quote, task submission, or paid action
+is implied by a Blender export.
+
+## Execution policy
+
+An `ExecutionPolicy` accompanies a design request and is carried in the audit
+record. It controls user-interaction cadence without weakening command or
+path guardrails:
+
+| Policy | Behaviour |
+|---|---|
+| `interactive` | Ask for milestone review and each gated action. |
+| `auto_with_budget` | Default for an end-to-end request. Automatically complete approved design milestones and exports within the declared output roots, proxy-asset rule, and downstream budget. |
+| `review_only` | Inspect, preview, plan, and report without scene mutation or export. |
+
+`auto_with_budget` accepts a one-time request envelope: desired deliverables,
+whether missing assets must be supplied or may become identified Blender
+proxies, permitted output root, optional downstream-render intent, and a
+maximum remote-generation budget. It suppresses per-milestone questions.
+It must still stop for an unapproved destructive overwrite/delete, an
+unapproved path, expert Python, a missing asset when proxies are forbidden,
+a failed validation requiring recovery, or any external action that would
+exceed the envelope. Blender keeps transaction snapshots and visual evidence
+for the final report rather than asking the user to approve each one.
+
 ## Runtime modes
 
 ### Managed mode (non-invasive)
@@ -169,4 +207,7 @@ probed independently.
 - Transaction rollback and crash recovery are proven with injected failures.
 - No Jimeng/Dreamina link, credential, quote, submission, or paid-generation behavior remains.
 - `codex-dreamina-3d` can consume the validated preview artifact without importing this plugin.
-
+- A missing required reference causes a request for user material unless the user explicitly asks
+  for a Blender-designed proxy; that proxy is identified in the final artifact inventory.
+- Every completed design ends by presenting the verified artifact inventory and requesting the
+  user's explicit choice to finish locally or hand off downstream.

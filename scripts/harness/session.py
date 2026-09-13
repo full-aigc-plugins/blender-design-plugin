@@ -7,6 +7,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 
 from .authorization import AuthorizationManager
+from .execution_policy import ExecutionPolicy
 from .errors import HarnessError
 from .protocol import CommandRequest, PROTOCOL_VERSION
 
@@ -37,6 +38,7 @@ class HarnessSession:
         authorization: AuthorizationManager | None = None,
         transactions=None,
         replay_limit: int = 512,
+        execution_policy: ExecutionPolicy | None = None,
     ):
         self.session_id = session_id
         self.scene_revision = 0
@@ -47,6 +49,7 @@ class HarnessSession:
         self._responses: OrderedDict[str, dict] = OrderedDict()
         self._audit: list[dict] = []
         self._approved_snapshots: dict[str, int] = {}
+        self.execution_policy = execution_policy or ExecutionPolicy.interactive()
 
     def handle(self, payload: dict) -> dict:
         request_id = payload.get("requestId", "") if isinstance(payload, dict) else ""
@@ -199,6 +202,7 @@ class HarnessSession:
             sanitized["authorization"] = "[REDACTED]"
         sanitized["status"] = response["status"]
         sanitized["sceneRevision"] = response["sceneRevision"]
+        sanitized["executionPolicy"] = self.execution_policy.to_audit_dict()
         self._audit.append(sanitized)
 
     def audit_entries(self) -> list[dict]:
