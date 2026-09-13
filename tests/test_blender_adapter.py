@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import subprocess
+import shutil
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -273,9 +274,11 @@ class MediaProbeTests(unittest.TestCase):
         self.assertTrue(hasattr(media_probe, "probe_media"), "media probe API must exist")
         with tempfile.TemporaryDirectory() as raw:
             video = Path(raw) / "fixture.mp4"
+            ffmpeg = shutil.which("ffmpeg")
+            self.assertIsNotNone(ffmpeg, "ffmpeg is required for media contract tests")
             subprocess.run(
                 [
-                    "/opt/homebrew/bin/ffmpeg", "-y", "-f", "lavfi",
+                    ffmpeg, "-y", "-f", "lavfi",
                     "-i", "color=c=black:s=320x180:r=24:d=0.5",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", str(video),
                 ],
