@@ -97,6 +97,13 @@ class TestExporter(unittest.TestCase):
                 exporter.export(path, session_id="s1", scene_revision=1, snapshot_id="snap-1")
             self.assertEqual(caught.exception.code, "OVERWRITE_AUTHORIZATION_REQUIRED")
 
+    def test_format_parameters_fail_closed_before_export(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);bpy=FakeBpy();exporter=Exporter(bpy,approved_output_root=root)
+            with self.assertRaises(HarnessError):
+                exporter.export(root/'asset.glb',session_id='s',scene_revision=0,snapshot_id='x',parameters={'unknown':True})
+            self.assertFalse((root/'asset.glb').exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -65,6 +65,36 @@ for the final report rather than asking the user to approve each one.
 
 ## Runtime modes
 
+### Foreground visibility and executable policy (2026-09-13)
+
+This increment implements the approved foreground-control and policy work only.
+Animation-authoring upgrades, motion-quality evaluation and background export
+workers remain subsequent increments. Existing official-uploader routes are preserved.
+
+- Managed startup exposes an ephemeral Codex session panel without installing an
+  Add-on or persisting preferences. Connector uses the same session panel.
+- Registered `view.set`, `view.focus`, `playback.set_frame` and `playback.set`
+  operations support camera/front/side/top inspection and idempotent playback.
+- The panel shows actual scene/session identity, execution policy, stage and
+  progress reported by the caller, last executed command, changed objects and errors.
+  Progress must never be inferred as verified completion from a percentage alone.
+- Pause/takeover acts between commands, cancels queued commands, invalidates active
+  transactions and export approvals, and requires reinspection before further design.
+  It never rolls back edits made by the user. Resume is an explicit UI action or an
+  action-authorized command. Revoke and loading a different file stop the session.
+- ExecutionPolicy travels from launch/Connector options through the server and runtime
+  into the session. `review_only` rejects content mutation, export and authorization
+  escalation even if an action claim is present; viewport/playback inspection remains available.
+- Automatic mode permits fresh-file exports of the specified formats only under its
+  approved root and from a revision-bound committed snapshot. Existing files, destructive
+  actions, expert scripts and external uploader actions retain action authorization.
+- For backwards compatibility, omitted policy remains interactive. The router selects
+  automatic policy for an already-authorized end-to-end local task, without further
+  milestone prompts. No remote charging logic is added to Blender.
+- Main-thread dispatch yields between commands so Blender can repaint. A single
+  synchronous Blender operator cannot be preempted; long export responsiveness is
+  explicitly not claimed in this increment.
+
 ### Managed mode (non-invasive)
 
 Codex launches Blender and loads a temporary bootstrap script. No Blender preference or Add-on
@@ -148,6 +178,9 @@ re-executing the command.
 - `animation.*`: frame range, keyframes, interpolation, playback sampling.
 - `preview.*`: camera/front/side/top screenshots and animation sample frames.
 - `export.*`: save `.blend`, export supported model formats, image, and video previews.
+- `job.*`: snapshot-isolated still, export, simulation bake, durable animation-frame and video-compose tasks with explicit resume.
+- `sequence.*`: editable Scene, image-sequence, movie, image, text and sound strips, visual transitions, sound fades, speed and compositor modifiers.
+- `compositor.*`: named scene/strip node graphs, render passes, authorized File Output and multilayer EXR configuration.
 - `transaction.*`: begin, commit milestone, rollback, list snapshots.
 - `advanced.execute_python`: separately authorized expert mode only.
 
@@ -177,9 +210,11 @@ success alone is not design acceptance. User approval creates the next persisten
 
 ## Export contract
 
-Release formats are `.blend`, `.glb`, `.gltf`, `.fbx`, `.obj`, `.stl`, `.png`, `.jpg`, and
-H.264 `.mp4`. USD/USDZ, Alembic, EXR, multilayer renders, sculpting, complex Geometry Nodes,
-fluid/cloth simulation, and automatic rig generation are later phases.
+Release formats are `.blend`, `.glb`, `.gltf`, `.fbx`, `.obj`, `.stl`, `.png`, `.jpg`, H.264
+`.mp4`, version-probed EXR/USD/Alembic, and persistent PNG or multilayer EXR frame sequences.
+Long animation output uses `RENDER_ANIMATION_FRAMES`; `COMPOSE_VIDEO` consumes only a complete,
+hash-verified FrameSequenceReceipt. Explicit resume reuses verified frames and replaces only missing
+or corrupt entries. Direct synchronous MP4 remains a compatibility preview path.
 
 Every artifact receipt contains producer, session/revision/snapshot, absolute path, format,
 bytes, SHA-256, export parameters, validation status, warnings, and restoration status. Model

@@ -21,6 +21,27 @@ class Timers:
 
 
 class TestHarnessServer(unittest.TestCase):
+    def test_external_file_load_revokes_runtime_but_internal_restore_does_not(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as directory:
+            bpy=FakeBpy()
+            bpy.app=SimpleNamespace(timers=Timers(),handlers=SimpleNamespace(load_pre=[],persistent=lambda callback:callback))
+            runtime=start_harness(bpy,session_id='file-guard',runtime_dir=Path(directory),
+                                  endpoint=Endpoint('tcp',('127.0.0.1',0)))
+            callback=bpy.app.handlers.load_pre[0]
+            try:
+                runtime.executing=True
+                callback(None)
+                self.assertFalse(runtime.closed)
+                runtime.executing=False
+                callback(None)
+                self.assertTrue(runtime.closed)
+                self.assertTrue(runtime.session.revoked)
+                self.assertFalse(runtime.descriptor_path.exists())
+                self.assertEqual(bpy.app.handlers.load_pre,[])
+            finally:
+                runtime.close()
+
     def test_descriptor_is_private_and_server_dispatches_on_timer(self):
         with tempfile.TemporaryDirectory() as directory:
             bpy = FakeBpy()

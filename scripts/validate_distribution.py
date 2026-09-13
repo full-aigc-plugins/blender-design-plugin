@@ -41,7 +41,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.2\.0(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.3\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -307,13 +307,13 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a codex-prefixed kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.2.0, optionally with a +build cachebuster"
+            "release version must be 0.3.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):
             errors.append(f"manifest missing required field: {field}")
-    if manifest.get("receipt_contract_versions") != ["1.0.0"]:
-        errors.append("manifest receipt_contract_versions must be ['1.0.0']")
+    if manifest.get("receipt_contract_versions") != ["1.0.0", "2.0.0", "3.0.0"]:
+        errors.append("manifest receipt_contract_versions must be ['1.0.0', '2.0.0', '3.0.0']")
     if "mcpServers" in manifest or (root / ".mcp.json").exists():
         errors.append("MCP configuration is forbidden until an MCP server exists")
 

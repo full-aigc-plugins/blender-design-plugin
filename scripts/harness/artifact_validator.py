@@ -33,7 +33,7 @@ def artifact_receipt(
         raise HarnessError("ARTIFACT_INVALID", f"artifact is missing or empty: {path}")
     return {
         "protocolVersion": "codex-blender/v1",
-        "producer": {"name": "codex-blender", "version": "0.2.0"},
+        "producer": {"name": "codex-blender", "version": "0.3.0"},
         "sessionId": session_id,
         "sceneRevision": int(scene_revision),
         "snapshotId": snapshot_id,

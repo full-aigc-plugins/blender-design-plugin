@@ -55,6 +55,19 @@ class MainThreadExecutor:
         return processed
 
     def blender_timer_callback(self):
-        self.pump()
-        return 0.01
+        self.pump(limit=1)
+        return 0.02
 
+    @property
+    def pending_count(self):
+        return self._queue.qsize()
+
+    def cancel_pending(self, code="SESSION_REVOKED"):
+        while True:
+            try:
+                item = self._queue.get_nowait()
+            except queue.Empty:
+                return
+            item.cancelled = True
+            item.error = HarnessError(code, "pending command cancelled at a user-control boundary")
+            item.completed.set()

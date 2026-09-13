@@ -19,9 +19,9 @@ def _default_start_function():
     return start_harness
 
 
-def start(bpy_module, *, session_id: str | None = None, runtime_dir: Path | None = None, approved_output_root: Path | None = None, approved_asset_roots=(), start_function=None):
+def start(bpy_module, *, session_id: str | None = None, runtime_dir: Path | None = None, approved_output_root: Path | None = None, approved_asset_roots=(), start_function=None, execution_policy=None):
     global _CURRENT
-    if _CURRENT is not None:
+    if _CURRENT is not None and not getattr(_CURRENT, "closed", False):
         return _CURRENT
     session_id = session_id or "connector-" + secrets.token_hex(8)
     runtime_dir = Path(runtime_dir or os.environ.get("CODEX_BLENDER_RUNTIME_DIR") or (Path(tempfile.gettempdir()) / "codex-blender"))
@@ -32,6 +32,7 @@ def start(bpy_module, *, session_id: str | None = None, runtime_dir: Path | None
         runtime_dir=runtime_dir,
         approved_output_root=approved_output_root,
         approved_asset_roots=approved_asset_roots,
+        execution_policy=execution_policy,
     )
     return _CURRENT
 
@@ -48,9 +49,10 @@ def current():
 
 
 def is_running() -> bool:
-    return _CURRENT is not None
+    return _CURRENT is not None and not getattr(_CURRENT, "closed", False)
 
 
 def on_file_loaded(_unused=None):
     """Revoke the old scene authorization whenever Blender loads another file."""
-    stop()
+    if not getattr(_CURRENT, "executing", False):
+        stop()

@@ -66,7 +66,7 @@ class JsonLineServer:
                 try:
                     response = owner._handle(envelope.get("payload"))
                 except Exception as exc:
-                    response = {"error": {"code": "SERVER_ERROR", "message": str(exc)}}
+                    response = {"error": {"code": getattr(exc, "code", "SERVER_ERROR"), "message": str(exc)}}
                 self._write(response)
 
             def _write(self, payload):
@@ -135,7 +135,7 @@ class JsonLineServer:
                 connection.send_bytes(json.dumps(response, separators=(",", ":")).encode("utf-8"))
             except Exception as exc:
                 try:
-                    connection.send_bytes(json.dumps({"error": {"code": "SERVER_ERROR", "message": str(exc)}}).encode("utf-8"))
+                    connection.send_bytes(json.dumps({"error": {"code": getattr(exc, "code", "SERVER_ERROR"), "message": str(exc)}}).encode("utf-8"))
                 except Exception:
                     pass
             finally:

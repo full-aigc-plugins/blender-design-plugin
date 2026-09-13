@@ -103,8 +103,9 @@ flowchart TB
     H --> T[Blender main-thread commands]
     T --> S[Scene revision + checkpoint]
     S --> V[Preview and validation]
-    V --> J[Snapshot-isolated background export]
-    J --> R[Files + hashes + receipt]
+    V --> J[Snapshot-isolated background jobs]
+    J --> Q[Durable PNG/EXR frames + explicit resume]
+    Q --> R[Verified MP4 or editable files + receipts]
 ```
 
 The hybrid baseline keeps Blender visible and interactive for design work while long exports run safely against committed snapshots in the background. Pause/take over lets an artist edit directly; resume forces a fresh scene inspection before Codex continues.
@@ -115,10 +116,11 @@ The hybrid baseline keeps Blender visible and interactive for design work while 
 - Hard-surface and procedural recipes, UVs, PBR materials, Geometry Nodes, sculpting, Hair Curves, and texture baking
 - Armatures, weights, IK/FK, constraints, Actions, F-Curves, NLA, shape keys, retargeting, and prop handoff
 - Camera paths, handheld response, lighting, Eevee/Cycles, compositor graphs, passes, and EXR delivery
-- Rigid body, cloth, soft body, smoke, isolated cache baking, Grease Pencil, tracking, and VSE timelines
-- Snapshot-isolated background jobs with status, cancellation, and non-restarting recovery
+- Rigid body, cloth, soft body, smoke, isolated cache baking, Grease Pencil, tracking, and editable VSE Scene/image-sequence/text/sound timelines
+- Persistent PNG or multilayer EXR sequences with per-frame hashes, explicit missing-frame resume, and separate FFmpeg composition
+- Snapshot-isolated background jobs with status, cancellation, non-restarting recovery, and explicitly requested frame resume
 
-Running-session truth comes from `capability.list` and `capability.describe`. The current macOS Blender 5.2.1 baseline records 156 tools: 131 with L3 evidence and 25 at L1, routed through 22 Skills. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Rigify generation is unavailable when Rigify is not installed, and Windows is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
+Running-session truth comes from `capability.list` and `capability.describe`. The current macOS Blender 5.2.1 baseline records 162 tools: 137 with L3 evidence and 25 at L1, routed through 22 Skills. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Rigify generation is unavailable when Rigify is not installed, and Windows is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
 
 ## Guardrails are part of the product
 

@@ -85,6 +85,33 @@ class TestLookdevCommands(unittest.TestCase):
         self.assertEqual(result["result"]["name"], "Blue")
         self.assertEqual(self.bpy.data.objects["Body"].data.materials[0].name, "Blue")
 
+    def test_invalid_camera_properties_do_not_leave_objects(self):
+        for lens in (-1, float('nan'), float('inf'), True):
+            with self.subTest(lens=lens):
+                self.setUp()
+                before = set(self.bpy.data.objects.keys())
+                with self.assertRaises(HarnessError):
+                    CameraCommands(self.bpy).create({'name': 'InvalidCamera', 'lens': lens})
+                self.assertEqual(set(self.bpy.data.objects.keys()), before)
+
+    def test_invalid_light_properties_do_not_leave_objects(self):
+        for params in ({'energy': -1}, {'energy': float('nan')}, {'color': [1]}, {'size': -2}):
+            with self.subTest(params=params):
+                self.setUp()
+                before = set(self.bpy.data.objects.keys())
+                with self.assertRaises(HarnessError):
+                    LightCommands(self.bpy).create({'name': 'InvalidLight', **params})
+                self.assertEqual(set(self.bpy.data.objects.keys()), before)
+
+    def test_invalid_material_properties_do_not_leave_datablocks(self):
+        for params in ({'roughness': 2}, {'metallic': float('nan')}, {'alpha': True}):
+            with self.subTest(params=params):
+                self.setUp()
+                before = set(self.bpy.data.materials)
+                with self.assertRaises(HarnessError):
+                    MaterialCommands(self.bpy).create_pbr({'name': 'InvalidMaterial', **params})
+                self.assertEqual(set(self.bpy.data.materials), before)
+
     def test_create_camera_and_make_active(self):
         result = CameraCommands(self.bpy).create({"name": "HeroCamera", "location": [4, -4, 3], "rotation": [1, 0, 0], "lens": 55, "active": True})
         self.assertEqual(result["changedObjects"], ["HeroCamera"])

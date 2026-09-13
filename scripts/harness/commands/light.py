@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .validation import require_name, vector3
+from .validation import require_name, vector3, finite_number
 from ..errors import HarnessError
 
 
@@ -21,6 +21,9 @@ class LightCommands:
         if self.bpy.data.objects.get(name) is not None:
             raise HarnessError("NAME_COLLISION", f"object already exists: {name}")
         location = vector3(arguments.get("location", [0, 0, 0]), "location")
+        energy = finite_number(arguments.get('energy', 1000.0), 'energy', minimum=0)
+        color = tuple(vector3(arguments.get('color', [1, 1, 1]), 'color'))
+        size = finite_number(arguments['size'], 'size', minimum=0) if 'size' in arguments else None
         self.bpy.ops.object.light_add(type=light_type, location=location)
         light = self.bpy.context.object
         old_name = light.name
@@ -28,18 +31,13 @@ class LightCommands:
         if isinstance(self.bpy.data.objects, dict):
             self.bpy.data.objects.pop(old_name)
             self.bpy.data.objects[name] = light
-        energy = float(arguments.get("energy", 1000.0))
-        if energy < 0:
-            raise HarnessError("INVALID_ARGUMENT", "energy must not be negative")
-        color = arguments.get("color", [1, 1, 1])
         light.data.energy = energy
-        light.data.color = tuple(vector3(color, "color"))
+        light.data.color = color
         if hasattr(light.data, "size") and "size" in arguments:
-            light.data.size = float(arguments["size"])
+            light.data.size = size
         return {"changedObjects": [name], "result": {"name": name, "type": light_type}}
 
     def set_world_color(self, arguments: dict) -> dict:
         color = tuple(vector3(arguments.get("color"), "color"))
         self.bpy.context.scene.world.color = color
         return {"changedObjects": []}
-

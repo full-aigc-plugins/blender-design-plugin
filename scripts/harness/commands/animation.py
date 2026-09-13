@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .validation import require_name
+from .validation import require_name,vector3
 from ..errors import HarnessError
 
 
@@ -32,3 +32,13 @@ class AnimationCommands:
         obj.keyframe_insert(data_path=data_path, frame=frame)
         return {"changedObjects": [name]}
 
+    def pose_keyframe(self,arguments):
+        armature=self.bpy.data.objects.get(require_name(arguments.get('armature')))
+        if armature is None or armature.type!='ARMATURE': raise HarnessError('OBJECT_NOT_FOUND','armature was not found')
+        bone=armature.pose.bones.get(require_name(arguments.get('bone')))
+        if bone is None: raise HarnessError('BONE_NOT_FOUND','pose bone was not found')
+        path=require_name(arguments.get('dataPath')); frame=arguments.get('frame'); value=arguments.get('value')
+        if path not in {'location','rotation_euler','scale'} or type(frame) is not int:
+            raise HarnessError('INVALID_ARGUMENT','unsupported pose dataPath or frame')
+        setattr(bone,path,vector3(value,'value')); bone.rotation_mode='XYZ'; bone.keyframe_insert(data_path=path,frame=frame)
+        return {'changedObjects':[armature.name],'result':{'bone':bone.name,'dataPath':path,'frame':frame}}

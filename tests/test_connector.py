@@ -55,6 +55,9 @@ class TestConnectorPackage(unittest.TestCase):
             self.assertIn("codex_blender_connector/__init__.py", names)
             self.assertIn("codex_blender_connector/runtime.py", names)
             self.assertIn("codex_blender_connector/harness/session.py", names)
+            self.assertIn("codex_blender_connector/harness/frame_pipeline.py", names)
+            self.assertIn("codex_blender_connector/harness/frame_worker.py", names)
+            self.assertIn("codex_blender_connector/harness/job_worker.py", names)
             self.assertIn("codex_blender_connector/validate_model_in_blender.py", names)
             self.assertNotIn("codex_blender_connector/harness/__pycache__/session.pyc", names)
 

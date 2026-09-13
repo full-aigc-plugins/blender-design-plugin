@@ -14,12 +14,22 @@ from .media_probe import probe_video
 
 
 SUPPORTED_FORMATS = {"blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"}
+FORMAT_PARAMETERS = {
+    'blend': set(), 'png': set(), 'jpg': set(),
+    'glb': {'use_selection','use_visible','use_renderable','export_apply','export_animations','export_materials'},
+    'gltf': {'use_selection','use_visible','use_renderable','export_apply','export_animations','export_materials'},
+    'fbx': {'use_selection','use_visible','use_active_collection','bake_anim','apply_scale_options'},
+    'obj': {'export_selected_objects','apply_modifiers','export_materials','export_uv'},
+    'stl': {'export_selected_objects','apply_modifiers','global_scale'},
+    'mp4': {'frameStart','frameEnd'},
+}
 
 
 class Exporter:
     def __init__(self, bpy_module, *, approved_output_root: Path, encode_runner=None, video_probe=None):
         self.bpy = bpy_module
         self._encode_runner = encode_runner or self._encode_ffmpeg
+        self._custom_encode_runner = encode_runner is not None
         self._video_probe = video_probe or self._probe_video
         self.root = Path(approved_output_root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
@@ -49,6 +59,14 @@ class Exporter:
         if format_name not in SUPPORTED_FORMATS:
             raise HarnessError("UNSUPPORTED_FORMAT", f"unsupported export format: {format_name}")
         receipt_parameters = dict(parameters or {})
+        unknown=sorted(set(receipt_parameters)-FORMAT_PARAMETERS[format_name])
+        if unknown:
+            raise HarnessError('INVALID_ARGUMENT',f'unsupported {format_name} export parameters: {unknown}')
+        for key,value in receipt_parameters.items():
+            if key in {'frameStart','frameEnd'} and type(value) is not int:
+                raise HarnessError('INVALID_ARGUMENT',f'{key} must be an integer')
+            if key.startswith('use_') or key in {'export_apply','export_animations','bake_anim','export_selected_objects','apply_modifiers','export_uv'}:
+                if type(value) is not bool:raise HarnessError('INVALID_ARGUMENT',f'{key} must be boolean')
         self._run_export(format_name, resolved, receipt_parameters)
         checks = ["exists", "non_empty", "sha256"]
         if format_name == "mp4":
@@ -114,12 +132,16 @@ class Exporter:
                     prefix = Path(directory) / "frame_"
                     render.filepath = str(prefix)
                     self.bpy.ops.render.render(animation=True)
-                    self._encode_runner(
-                        str(prefix) + "%04d.png",
-                        path,
-                        int(getattr(scene.render, "fps", 24) or 24),
-                        int(scene.frame_start),
-                    )
+                    audio_path = None
+                    editor = getattr(scene, 'sequence_editor', None)
+                    if editor is not None and any(strip.type == 'SOUND' and not strip.mute for strip in editor.strips):
+                        audio_path = Path(directory) / 'mix.wav'
+                        self.bpy.ops.sound.mixdown(filepath=str(audio_path), container='WAV', codec='PCM')
+                    base = (str(prefix) + "%04d.png", path, int(getattr(scene.render, "fps", 24) or 24), int(scene.frame_start))
+                    if self._custom_encode_runner:
+                        self._encode_runner(*base)
+                    else:
+                        self._encode_ffmpeg(*base, audio_path=audio_path)
         finally:
             render.filepath = previous["filepath"]
             image_settings.file_format = previous["file_format"]
@@ -131,15 +153,20 @@ class Exporter:
                 ffmpeg.constant_rate_factor = previous["ffmpeg_quality"]
 
     @staticmethod
-    def _encode_ffmpeg(pattern: str, target: Path, fps: int, start_frame: int) -> None:
+    def _encode_ffmpeg(pattern: str, target: Path, fps: int, start_frame: int, audio_path: Path | None = None) -> None:
         executable = os.environ.get("CODEX_BLENDER_FFMPEG") or shutil.which("ffmpeg")
         if not executable or not Path(executable).is_file():
             raise HarnessError("DEPENDENCY_MISSING", "ffmpeg is required for MP4 export")
         command = [
             executable, "-y", "-framerate", str(fps), "-start_number", str(start_frame),
-            "-i", pattern, "-vf", "format=yuv420p", "-c:v", "libx264", "-tag:v", "avc1",
-            "-movflags", "+faststart", str(target),
+            "-i", pattern,
         ]
+        if audio_path is not None:
+            command.extend(['-i', str(audio_path)])
+        command.extend(["-vf", "format=yuv420p", "-c:v", "libx264", "-tag:v", "avc1"])
+        if audio_path is not None:
+            command.extend(['-c:a','aac','-shortest'])
+        command.extend(["-movflags", "+faststart", str(target)])
         try:
             subprocess.run(command, check=True, capture_output=True, timeout=900)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:

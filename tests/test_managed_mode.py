@@ -10,6 +10,20 @@ from scripts.managed_launcher import build_managed_argv, launch_managed, load_de
 
 
 class TestManagedMode(unittest.TestCase):
+    def test_policy_reaches_bootstrap_and_actual_runtime_dispatch(self):
+        from scripts.harness.execution_policy import ExecutionPolicy
+        from scripts.managed_bootstrap import _arguments
+        from scripts.harness.runtime import create_session
+        from tests.test_design_commands import FakeBpy
+        from tests.test_foreground_policy import call
+        policy=ExecutionPolicy.review_only()
+        argv=build_managed_argv(blender=Path('/app/blender'),project=None,session_id='s',
+                                runtime_dir=Path('/tmp/runtime'),execution_policy=policy)
+        args=_arguments(argv[argv.index('--')+1:])
+        loaded=ExecutionPolicy.from_dict(json.loads(args.execution_policy_json))
+        session=create_session(FakeBpy(),'s',execution_policy=loaded)
+        self.assertEqual(call(session,'object.create_mesh',{'primitive':'cube','name':'Denied'})['error']['code'],'READ_ONLY_POLICY')
+
     def test_cli_help_runs_as_a_script(self):
         script = Path(__file__).resolve().parents[1] / "scripts" / "harness_cli.py"
         result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)

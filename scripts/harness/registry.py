@@ -4,8 +4,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections.abc import Callable
+from copy import deepcopy
 
 from .errors import HarnessError
+
+
+# Domain coverage is separate from callable commands: no placeholder handlers.
+DOMAINS = (
+    'scene', 'object', 'collection', 'asset', 'mesh', 'modifier', 'curve',
+    'uv', 'material', 'rig', 'constraint', 'animation', 'camera', 'light',
+    'geometry_nodes', 'sculpt', 'hair', 'simulation', 'render', 'compositor',
+    'grease_pencil', 'tracking', 'sequence', 'validation', 'job',
+    'session', 'capability', 'view', 'playback', 'preview', 'export',
+    'advanced', 'official_uploader',
+    'recipe',
+)
 
 
 @dataclass(frozen=True)
@@ -13,18 +26,35 @@ class CommandDefinition:
     handler: Callable[[dict], dict]
     validate: Callable[[dict], None] | None = None
     risk: str = "standard"
+    metadata: dict | None = None
+    availability: Callable[[], dict] | None = None
 
 
 class CommandRegistry:
     def __init__(self):
         self._commands: dict[str, CommandDefinition] = {}
 
-    def register(self, name: str, handler, *, validate=None, risk: str = "standard") -> None:
+    def register(self, name: str, handler, *, validate=None, risk: str = "standard",
+                 metadata=None, availability=None) -> None:
         if name in self._commands:
             raise HarnessError("DUPLICATE_COMMAND", f"command already registered: {name}")
         if risk not in {"read", "standard", "gated"}:
             raise HarnessError("INVALID_COMMAND_DEFINITION", f"unknown risk: {risk}")
-        self._commands[name] = CommandDefinition(handler=handler, validate=validate, risk=risk)
+        metadata = deepcopy(metadata or {})
+        if set(metadata) & {'id', 'risk', 'input', 'availability'}:
+            raise HarnessError('INVALID_COMMAND_DEFINITION', 'identity, risk, input and probe results are registry-owned')
+        level = metadata.get('maturity', 'L1')
+        if level not in {'L1', 'L2', 'L3', 'L4'}:
+            raise HarnessError('INVALID_COMMAND_DEFINITION', 'registered capabilities must be L1-L4')
+        if level in {'L3', 'L4'} and not (
+            metadata.get('skills') and all(metadata.get('verification', {}).get(key)
+                                          for key in ('runtime', 'visual', 'delivery'))
+        ):
+            raise HarnessError('INVALID_COMMAND_DEFINITION', 'L3 requires Skill, runtime, visual and delivery evidence')
+        if level == 'L4' and not metadata.get('verification', {}).get('recoveryAndCompatibility'):
+            raise HarnessError('INVALID_COMMAND_DEFINITION', 'L4 requires recovery and compatibility evidence')
+        self._commands[name] = CommandDefinition(handler=handler, validate=validate, risk=risk,
+                                                 metadata=metadata, availability=availability)
 
     def dispatch(self, name: str, arguments: dict) -> dict:
         definition = self._commands.get(name)
@@ -47,3 +77,64 @@ class CommandRegistry:
             for name, definition in sorted(self._commands.items())
         ]
 
+    def describe_capability(self, arguments: dict) -> dict:
+        if set(arguments) != {'id'} or not isinstance(arguments.get('id'), str):
+            raise HarnessError('INVALID_ARGUMENT', 'describe requires only a string id')
+        name = arguments['id']
+        definition = self._commands.get(name)
+        if definition is None:
+            raise HarnessError('UNKNOWN_CAPABILITY', f'capability is not registered: {name}')
+        meta = deepcopy(definition.metadata or {})
+        result = {
+            'id': name, 'domain': meta.pop('domain', name.split('.')[0]),
+            'maturity': 'L1', 'risk': definition.risk,
+            'input': deepcopy(getattr(definition.validate, 'schema', None)),
+            'output': {'type': 'object', 'description': 'Command-specific result; see handler documentation'},
+            'context': {'objectTypes': [], 'modes': [], 'requirements': []},
+            'versions': {'verified': [], 'extensions': []},
+            'effects': {'sceneMutation': None, 'longRunning': None, 'cancellable': False},
+            'skills': [], 'tests': [], 'examples': [],
+            'verification': {'runtime': [], 'visual': [], 'delivery': [], 'recoveryAndCompatibility': []},
+            'limitations': ['Registration alone is not production or visual acceptance.'],
+        }
+        result.update(meta)
+        result['availability'] = {'status': 'unknown', 'reason': 'Registered; per-session prerequisites have not been probed'}
+        if definition.availability:
+            try:
+                probe = definition.availability()
+                if not isinstance(probe, dict) or probe.get('status') not in {'available', 'unavailable', 'unknown'}:
+                    raise ValueError('invalid probe result')
+                if probe['status'] != 'available' and not probe.get('reason'):
+                    raise ValueError('missing probe reason')
+                result['availability'] = deepcopy(probe)
+            except Exception:
+                # Diagnostic failure must not hide the rest of the catalog or leak paths/tokens.
+                result['availability'] = {'status': 'unknown', 'reason': 'Capability prerequisite probe failed'}
+        return result
+
+    def list_capabilities(self, arguments: dict) -> dict:
+        if set(arguments) - {'domain', 'maturity', 'offset', 'limit'}:
+            raise HarnessError('INVALID_ARGUMENT', 'unknown capability filter')
+        offset, limit = arguments.get('offset', 0), arguments.get('limit', 50)
+        if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100:
+            raise HarnessError('INVALID_ARGUMENT', 'offset must be >=0; limit must be 1-100')
+        domain, maturity = arguments.get('domain'), arguments.get('maturity')
+        if domain is not None and (not isinstance(domain, str) or domain not in DOMAINS):
+            raise HarnessError('INVALID_ARGUMENT', 'unknown domain')
+        if maturity is not None and (not isinstance(maturity, str) or maturity not in {'L0', 'L1', 'L2', 'L3', 'L4'}):
+            raise HarnessError('INVALID_ARGUMENT', 'unknown maturity')
+        descriptions = [self.describe_capability({'id': name}) for name in sorted(self._commands)]
+        domains = {name: {'maturity': 'L0', 'registeredCommands': 0,
+                          'productionVerifiedCommands': 0} for name in DOMAINS}
+        for item in descriptions:
+            entry = domains.setdefault(item['domain'], {'maturity': 'L0', 'registeredCommands': 0,
+                                                        'productionVerifiedCommands': 0})
+            entry['registeredCommands'] += 1
+            # Partial tool support is never a claim that the entire domain is mature.
+            entry['maturity'] = 'partial'
+            entry['productionVerifiedCommands'] += item['maturity'] in {'L3', 'L4'}
+        filtered = [item for item in descriptions if (domain is None or item['domain'] == domain)
+                    and (maturity is None or item['maturity'] == maturity)]
+        return {'items': filtered[offset:offset + limit], 'total': len(filtered),
+                'nextOffset': offset + limit if offset + limit < len(filtered) else None,
+                'domains': domains}

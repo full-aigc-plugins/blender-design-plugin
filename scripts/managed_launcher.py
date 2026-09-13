@@ -12,7 +12,7 @@ from pathlib import Path
 BOOTSTRAP = Path(__file__).with_name("managed_bootstrap.py")
 
 
-def build_managed_argv(*, blender: Path, project: Path | None, session_id: str, runtime_dir: Path, output_root: Path | None = None, asset_roots=()) -> list[str]:
+def build_managed_argv(*, blender: Path, project: Path | None, session_id: str, runtime_dir: Path, output_root: Path | None = None, asset_roots=(), execution_policy=None) -> list[str]:
     argv = [str(blender), "--disable-autoexec"]
     if project is not None:
         argv.append(str(project))
@@ -31,6 +31,8 @@ def build_managed_argv(*, blender: Path, project: Path | None, session_id: str, 
         argv.extend(["--output-root", str(output_root)])
     for asset_root in asset_roots:
         argv.extend(["--asset-root", str(asset_root)])
+    if execution_policy is not None:
+        argv.extend(["--execution-policy-json", json.dumps(execution_policy.to_audit_dict())])
     return argv
 
 
@@ -65,7 +67,7 @@ def remove_stale_descriptor(path: Path) -> bool:
     return True
 
 
-def launch_managed(*, blender: Path, project: Path | None, session_id: str, runtime_dir: Path, output_root: Path | None = None, asset_roots=(), timeout: float = 30.0):
+def launch_managed(*, blender: Path, project: Path | None, session_id: str, runtime_dir: Path, output_root: Path | None = None, asset_roots=(), timeout: float = 30.0, execution_policy=None):
     runtime_dir = Path(runtime_dir)
     runtime_dir.mkdir(parents=True, exist_ok=True)
     descriptor = runtime_dir / f"{session_id}.json"
@@ -73,7 +75,7 @@ def launch_managed(*, blender: Path, project: Path | None, session_id: str, runt
         if not remove_stale_descriptor(descriptor):
             raise FileExistsError(f"session already exists: {session_id}")
     process = subprocess.Popen(
-        build_managed_argv(blender=blender, project=project, session_id=session_id, runtime_dir=runtime_dir, output_root=output_root, asset_roots=asset_roots),
+        build_managed_argv(blender=blender, project=project, session_id=session_id, runtime_dir=runtime_dir, output_root=output_root, asset_roots=asset_roots, execution_policy=execution_policy),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

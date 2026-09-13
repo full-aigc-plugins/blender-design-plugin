@@ -103,8 +103,9 @@ flowchart TB
     H --> T[Blender 主线程命令]
     T --> S[场景 revision + checkpoint]
     S --> V[预览与验证]
-    V --> J[基于快照的后台导出]
-    J --> R[文件 + 哈希 + 回执]
+    V --> J[基于快照的后台任务]
+    J --> Q[持久 PNG/EXR 帧 + 显式断点恢复]
+    Q --> R[验证后的 MP4 或可编辑文件 + 回执]
 ```
 
 新的混合架构让 Blender 保持前台可见、可交互；耗时导出基于已提交快照安全地放到后台。你可以暂停并接管场景，恢复时 Codex 会重新检查现场，不会拿旧状态覆盖人工修改。
@@ -115,10 +116,11 @@ flowchart TB
 - 硬表面与程序化配方、UV、PBR 材质、Geometry Nodes、雕刻、Hair Curves 和贴图烘焙
 - Armature、权重、IK/FK、约束、Action、F-Curve、NLA、Shape Key、重定向和单一道具交接
 - 相机路径、手持响应、灯光、Eevee/Cycles、合成节点、passes 与 EXR 交付
-- 刚体、布料、软体、Smoke、隔离缓存烘焙、Grease Pencil、跟踪与 VSE 时间线
-- 快照隔离后台任务、状态查询、取消和不自动重跑的恢复
+- 刚体、布料、软体、Smoke、隔离缓存烘焙、Grease Pencil、跟踪，以及可编辑的 VSE Scene/图片序列/文本/声音时间线
+- 持久 PNG 或多层 EXR 序列、逐帧哈希、显式缺帧补渲，以及独立 FFmpeg 合成
+- 快照隔离后台任务、状态查询、取消、不自动重跑的恢复，以及明确调用后的逐帧恢复
 
-运行时事实以 `capability.list` 和 `capability.describe` 为准。当前 macOS Blender 5.2.1 基线共注册 156 条工具，其中 131 条有 L3 证据、25 条保持 L1，并精确路由到 22 个 Skill。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”。Rigify 未安装时 generate 明确不可用，Windows 尚未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
+运行时事实以 `capability.list` 和 `capability.describe` 为准。当前 macOS Blender 5.2.1 基线共注册 162 条工具，其中 137 条有 L3 证据、25 条保持 L1，并精确路由到 22 个 Skill。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”。Rigify 未安装时 generate 明确不可用，Windows 尚未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
 
 ## 安全不是附加项
 

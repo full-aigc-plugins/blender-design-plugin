@@ -15,6 +15,7 @@ if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
 from scripts.managed_launcher import launch_managed
+from scripts.harness.execution_policy import ExecutionMode, ExecutionPolicy
 
 
 def discover_blender(explicit: str | None) -> Path:
@@ -40,6 +41,9 @@ def main(argv=None) -> int:
     parser.add_argument("--runtime-dir")
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--asset-root", action="append", default=[])
+    parser.add_argument("--execution-mode", choices=[mode.value for mode in ExecutionMode], default="interactive")
+    parser.add_argument("--allow-designed-proxies", action="store_true")
+    parser.add_argument("--export-format", action="append", choices=["blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"])
     args = parser.parse_args(argv)
     try:
         blender = discover_blender(args.blender)
@@ -49,6 +53,11 @@ def main(argv=None) -> int:
         output_root = Path(args.output_root).resolve()
         output_root.mkdir(parents=True, exist_ok=True)
         runtime_dir = Path(args.runtime_dir).resolve() if args.runtime_dir else Path(tempfile.gettempdir()) / "codex-blender"
+        policy_data = {"mode": args.execution_mode, "approvedOutputRoot": str(output_root),
+                       "allowDesignedProxies": args.allow_designed_proxies}
+        if args.export_format is not None:
+            policy_data["exportFormats"] = args.export_format
+        policy = ExecutionPolicy.from_dict(policy_data)
         process, descriptor = launch_managed(
             blender=blender,
             project=project,
@@ -56,6 +65,7 @@ def main(argv=None) -> int:
             runtime_dir=runtime_dir,
             output_root=output_root,
             asset_roots=[Path(value).resolve() for value in args.asset_root],
+            execution_policy=policy,
         )
         public = {key: value for key, value in descriptor.items() if key != "token"}
         public["descriptor"] = str(runtime_dir / f"{args.session_id}.json")

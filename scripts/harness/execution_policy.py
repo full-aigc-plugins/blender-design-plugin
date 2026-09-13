@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import Enum
+from pathlib import Path
 
 
 class ExecutionPolicyError(ValueError):
@@ -37,6 +38,39 @@ class ExecutionPolicy:
     approved_output_root: str | None = None
     allow_designed_proxies: bool = False
     downstream_budget_limit: Decimal | None = None
+    export_formats: tuple[str, ...] = ("blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4")
+
+    def __post_init__(self):
+        try:
+            object.__setattr__(self, "mode", ExecutionMode(self.mode))
+        except (ValueError, TypeError) as exc:
+            raise ExecutionPolicyError("unknown execution mode") from exc
+        if type(self.allow_designed_proxies) is not bool:
+            raise ExecutionPolicyError("allow_designed_proxies must be boolean")
+        object.__setattr__(self, "downstream_budget_limit", self._parse_budget(self.downstream_budget_limit))
+        if not isinstance(self.export_formats, (list, tuple)) or not all(
+            isinstance(value, str) and value in {"blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"}
+            for value in self.export_formats
+        ):
+            raise ExecutionPolicyError("invalid export formats")
+        object.__setattr__(self, "export_formats", tuple(self.export_formats))
+        if self.mode is ExecutionMode.AUTO_WITH_BUDGET:
+            if not isinstance(self.approved_output_root, str) or not Path(self.approved_output_root).is_absolute():
+                raise ExecutionPolicyError("automatic execution requires an absolute output root")
+            root = Path(self.approved_output_root).resolve()
+            if root == Path(root.anchor):
+                raise ExecutionPolicyError("filesystem root is not a scoped output directory")
+            object.__setattr__(self, "approved_output_root", str(root))
+
+    @classmethod
+    def from_dict(cls, payload: dict) -> "ExecutionPolicy":
+        if not isinstance(payload, dict) or set(payload) - {
+            "mode", "approvedOutputRoot", "allowDesignedProxies", "downstreamBudgetLimit", "exportFormats"
+        }:
+            raise ExecutionPolicyError("invalid execution policy fields")
+        return cls(payload.get("mode", "interactive"), payload.get("approvedOutputRoot"),
+                   payload.get("allowDesignedProxies", False), payload.get("downstreamBudgetLimit"),
+                   tuple(payload.get("exportFormats", cls.__dataclass_fields__["export_formats"].default)))
 
     @classmethod
     def interactive(cls) -> "ExecutionPolicy":
@@ -62,7 +96,7 @@ class ExecutionPolicy:
         return cls(
             ExecutionMode.AUTO_WITH_BUDGET,
             approved_output_root=approved_output_root,
-            allow_designed_proxies=bool(allow_designed_proxies),
+            allow_designed_proxies=allow_designed_proxies,
             downstream_budget_limit=budget,
         )
 
@@ -86,7 +120,29 @@ class ExecutionPolicy:
             return True
         if self.mode is ExecutionMode.REVIEW_ONLY:
             return True
-        return False
+        if event == "missing_asset":
+            return not self.allow_designed_proxies
+        return event not in {"milestone_complete", "final_artifact_report", "mutation", "export"}
+
+    def permits_fresh_export(self, arguments: dict) -> bool:
+        """An automatic grant covers only a new output under the fixed root and format scope."""
+        if self.mode is not ExecutionMode.AUTO_WITH_BUDGET or arguments.get("overwrite", False) is not False:
+            return False
+        raw = arguments.get("path")
+        if not isinstance(raw, str) or not Path(raw).is_absolute():
+            return False
+        target = Path(raw)
+        if target.suffix.lower().lstrip(".") not in self.export_formats:
+            return False
+        root = Path(self.approved_output_root)
+        if not target.resolve().is_relative_to(root) or target.exists():
+            return False
+        for candidate in (target, *target.parents):
+            if candidate.resolve() == root:
+                break
+            if candidate.is_symlink():
+                return False
+        return True
 
     def to_audit_dict(self) -> dict[str, object]:
         """Return a non-secret, JSON-safe policy record for the session audit."""
@@ -94,6 +150,7 @@ class ExecutionPolicy:
             "mode": self.mode.value,
             "approvedOutputRoot": self.approved_output_root,
             "allowDesignedProxies": self.allow_designed_proxies,
+            "exportFormats": list(self.export_formats),
             "downstreamBudgetLimit": (
                 str(self.downstream_budget_limit) if self.downstream_budget_limit is not None else None
             ),
