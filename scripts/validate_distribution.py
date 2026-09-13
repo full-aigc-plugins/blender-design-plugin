@@ -24,9 +24,7 @@ This validator is the union of two complementary sets of checks.
   - the marketplace manifest declares a valid `name` and a non-empty `plugins`
     array whose entry name matches the manifest name
 
-A `LICENSE` file is required by project policy, but the license status of the vendored
-third-party source is a separate and unresolved maintainer decision — see
-`THIRD_PARTY_NOTICES.md`.
+A `LICENSE` file is required by project policy.
 """
 
 from __future__ import annotations
@@ -70,8 +68,12 @@ EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_SKILLS = (
     "codex-blender-use",
     "codex-blender-inspect",
-    "codex-blender-export-preview",
-    "codex-blender-link",
+    "codex-blender-managed",
+    "codex-blender-connector",
+    "codex-blender-design",
+    "codex-blender-preview",
+    "codex-blender-export",
+    "codex-blender-recover",
 )
 
 SECRET_PATTERNS = (
@@ -358,18 +360,6 @@ def validate(root: Path) -> list[str]:
                 errors.append(f"invalid PNG shape or alpha channel: {filename}")
         except (OSError, ValueError):
             errors.append(f"missing or invalid PNG: {filename}")
-
-    # -- vendored provenance --
-    upstream = root / "vendor" / "jimeng_blender_uploader" / "UPSTREAM.md"
-    if not upstream.is_file():
-        errors.append("missing vendor/jimeng_blender_uploader/UPSTREAM.md (provenance record)")
-    else:
-        content = upstream.read_text(encoding="utf-8")
-        for vendored in ("dcc_config.py", "upload_bridge.py", "settings.py", "variant.py",
-                         "viewport_render.py", "operators.py", "panel.py", "state.py",
-                         "__init__.py"):
-            if vendored not in content:
-                errors.append(f"UPSTREAM.md missing record for {vendored}")
 
     # -- tree hygiene --
     _validate_tree(root, errors)

@@ -34,8 +34,12 @@ BRAND_COLOR = "#F97316"
 EXPECTED_SKILLS = (
     "codex-blender-use",
     "codex-blender-inspect",
-    "codex-blender-export-preview",
-    "codex-blender-link",
+    "codex-blender-managed",
+    "codex-blender-connector",
+    "codex-blender-design",
+    "codex-blender-preview",
+    "codex-blender-export",
+    "codex-blender-recover",
 )
 
 
@@ -153,12 +157,10 @@ class TestStructureLegalAndAssets(unittest.TestCase):
         self.assertEqual(png_shape("assets/logo-dark.png"), (1024, 1024, 6))
         self.assertEqual(png_shape("assets/composer-icon.png"), (256, 256, 6))
 
-    def test_third_party_notices_disclose_the_vendored_source(self) -> None:
-        """The vendored add-on must be disclosed, not described as absent."""
+    def test_third_party_notices_disclose_no_vendor_runtime(self) -> None:
         text = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
-        self.assertIn("jimeng_blender_uploader", text)
-        self.assertIn("UPSTREAM.md", text)
-        self.assertIn("unresolved", text.lower())
+        self.assertIn("does not redistribute", text)
+        self.assertNotIn("jimeng_blender_uploader", text)
 
 
 class TestSegmentRule(unittest.TestCase):
@@ -289,10 +291,6 @@ class TestValidatorRejectsDefects(unittest.TestCase):
 
     def test_rejects_symlink_in_tree(self):
         os.symlink(self.repo / "README.md", self.repo / "link.md")
-        self._rejects()
-
-    def test_rejects_missing_provenance_record(self):
-        (self.repo / "vendor" / "jimeng_blender_uploader" / "UPSTREAM.md").unlink()
         self._rejects()
 
     def test_rejects_wrong_base_version(self):
