@@ -90,4 +90,12 @@
 - [x] Run both full local suites, secret scans, link checks, and `git diff --check`.
 - [x] Run real Blender preview-only acceptance and official-uploader discovery; if the official add-on is absent, record the exact blocker without installing it.
 - [x] Re-query the existing successful Seedance submit ID and verify the downloaded artifact without new credit consumption.
-- [ ] Commit and push each repository, wait for GitHub CI, reinstall from the configured marketplaces, and verify source/cache parity plus fresh Skill discovery.
+- [x] Commit and push each repository, wait for GitHub CI, reinstall from the configured marketplaces, and verify source/cache parity plus fresh Skill discovery.
+
+## Completion Evidence
+
+- `codex-blender` local suite: 152 tests PASS; installed `0.2.0` core parity PASS.
+- `codex-dreamina-3d` local suite: 137 tests PASS; installed `0.2.0` core parity PASS.
+- Latest feature CI: Blender run `34748914389` PASS; Dreamina 3D run `34748914625` PASS.
+- Existing Seedance submit `9f703ef1-3cf2-452a-bfde-4c96433e4434` was queried and downloaded again without resubmission; SHA-256 remained `950e9a25bd773c04aace0bd0ca5e2b72a255f7abf69286c8677637b6b4f79a75`.
+- Official uploader runtime: `BLOCKED_MISSING_OFFICIAL_ADDON`; no installation or enablement was performed.
