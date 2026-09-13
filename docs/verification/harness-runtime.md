@@ -26,7 +26,7 @@
 
 | Gate | Status | Reason |
 |---|---|---|
-| H.264 MP4 | BLOCKED_ENVIRONMENT | PNG-sequence fallback is implemented; Blender 5.2 rejects direct FFMPEG, Homebrew ffmpeg has a broken x265 dylib, and the external vendor binary is killed by macOS |
+| H.264 MP4 | PASS macOS | Blender PNG sequence encoded by ffmpeg 9.0.1/libx264; ffprobe confirmed H.264, even dimensions, 24fps, duration, and size |
 | Transaction integration | PASS macOS | Real managed session created an object, injected a failure, reopened the checkpoint, removed the object, and restored revision 0 |
 | Model re-import validation | PASS macOS | BLEND/GLB/GLTF/FBX/OBJ/STL were independently opened/imported and contained meshes |
 | Windows x64 managed mode | NOT RUN | Requires Windows host and Named Pipe implementation/runtime proof |

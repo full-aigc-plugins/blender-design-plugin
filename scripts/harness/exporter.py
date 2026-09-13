@@ -10,15 +10,17 @@ import tempfile
 
 from .artifact_validator import artifact_receipt
 from .errors import HarnessError
+from .media_probe import probe_video
 
 
 SUPPORTED_FORMATS = {"blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"}
 
 
 class Exporter:
-    def __init__(self, bpy_module, *, approved_output_root: Path, encode_runner=None):
+    def __init__(self, bpy_module, *, approved_output_root: Path, encode_runner=None, video_probe=None):
         self.bpy = bpy_module
         self._encode_runner = encode_runner or self._encode_ffmpeg
+        self._video_probe = video_probe or self._probe_video
         self.root = Path(approved_output_root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
 
@@ -46,14 +48,20 @@ class Exporter:
         format_name = resolved.suffix.lower().lstrip(".")
         if format_name not in SUPPORTED_FORMATS:
             raise HarnessError("UNSUPPORTED_FORMAT", f"unsupported export format: {format_name}")
-        self._run_export(format_name, resolved, dict(parameters or {}))
+        receipt_parameters = dict(parameters or {})
+        self._run_export(format_name, resolved, receipt_parameters)
+        checks = ["exists", "non_empty", "sha256"]
+        if format_name == "mp4":
+            receipt_parameters["media"] = self._video_probe(resolved)
+            checks.append("media")
         return artifact_receipt(
             resolved,
             format_name=format_name,
             session_id=session_id,
             scene_revision=scene_revision,
             snapshot_id=snapshot_id,
-            parameters=parameters,
+            parameters=receipt_parameters,
+            checks=checks,
         )
 
     def _run_export(self, format_name: str, path: Path, parameters: dict) -> None:
@@ -136,3 +144,10 @@ class Exporter:
             subprocess.run(command, check=True, capture_output=True, timeout=900)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
             raise HarnessError("MEDIA_ENCODE_FAILED", f"ffmpeg failed: {exc}") from exc
+
+    @staticmethod
+    def _probe_video(path: Path) -> dict:
+        executable = os.environ.get("CODEX_BLENDER_FFPROBE") or shutil.which("ffprobe")
+        if not executable or not Path(executable).is_file():
+            raise HarnessError("DEPENDENCY_MISSING", "ffprobe is required for MP4 validation")
+        return probe_video(path, Path(executable))

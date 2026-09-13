@@ -26,6 +26,7 @@ def artifact_receipt(
     parameters: dict | None = None,
     restoration: str = "confirmed",
     warnings: list[str] | None = None,
+    checks: list[str] | None = None,
 ) -> dict:
     path = Path(path).resolve()
     if not path.is_file() or path.stat().st_size <= 0:
@@ -41,7 +42,7 @@ def artifact_receipt(
         "format": format_name,
         "bytes": path.stat().st_size,
         "parameters": dict(parameters or {}),
-        "validation": {"status": "passed", "checks": ["exists", "non_empty", "sha256"]},
+        "validation": {"status": "passed", "checks": list(checks or ["exists", "non_empty", "sha256"])},
         "restoration": {"status": restoration},
         "warnings": list(warnings or []),
     }

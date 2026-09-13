@@ -189,7 +189,7 @@ jimeng_or_dreamina_runtime_ownership = 0
 | 5 Lookdev/camera/light/animation | PASS — focused tests and real Blender command smoke |
 | 6 Snapshot/rollback | PASS macOS — persistent checkpoint and real failure rollback |
 | 7 Visual milestones | PASS macOS — four fresh real Blender views and hashes |
-| 8 Multi-format export | PARTIAL — 8 formats pass; MP4 blocked by missing usable ffmpeg |
+| 8 Multi-format export | PASS macOS — all 9 formats pass; MP4 includes independent ffprobe evidence |
 | 9 Managed mode | PASS macOS; Windows runtime not run |
 | 10 Connector mode | PASS macOS; Windows runtime not run |
 | 11 Agent Skills | Structure PASS; upstream quick validator blocked by missing `yaml` |

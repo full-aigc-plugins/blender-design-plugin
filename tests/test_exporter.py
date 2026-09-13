@@ -68,11 +68,15 @@ class TestExporter(unittest.TestCase):
                 bpy,
                 approved_output_root=root,
                 encode_runner=lambda _pattern, target, _fps, _start: Path(target).write_bytes(b"mp4"),
+                video_probe=lambda _path: {"codec": "h264", "width": 320, "height": 240, "fps": 24.0, "duration_seconds": 1.0},
             )
             before = (bpy.context.scene.render.filepath, bpy.context.scene.render.image_settings.file_format)
             for extension in ("png", "jpg", "mp4"):
                 receipt = exporter.export(root / f"preview.{extension}", session_id="s1", scene_revision=1, snapshot_id="snap-1")
                 self.assertEqual(receipt["format"], extension)
+                if extension == "mp4":
+                    self.assertIn("media", receipt["validation"]["checks"])
+                    self.assertEqual(receipt["parameters"]["media"]["codec"], "h264")
             after = (bpy.context.scene.render.filepath, bpy.context.scene.render.image_settings.file_format)
             self.assertEqual(after, before)
 
