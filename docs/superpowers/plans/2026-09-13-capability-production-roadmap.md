@@ -31,7 +31,7 @@ L0=目录；L1=结构化接口；L2=配方与 Skill；L3=真实工程、视觉�
 - [x] P8：持久 PNG/多层 EXR 序列契约、逐帧哈希、显式断点补渲、独立 FFmpeg 合成；Scene/Image Sequence/Text/Speed/完整转场语义及 VSE Compositor Modifier。
 - [ ] 发布门禁：
   - [x] 版本提升到 0.3.0，并同步 manifest、Connector、producer 与回执契约。
-  - [ ] 提交全部当前改动、推送 `main` 并核对本地/tracking/远端 SHA。
+  - [x] 提交全部当前改动、推送 `main` 并核对本地/tracking/远端 SHA。
   - [ ] 重装当前插件缓存并从新缓存复验；该动作需要单独安装授权。
 
 ## 统一验收
