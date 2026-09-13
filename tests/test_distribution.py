@@ -69,6 +69,15 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertNotIn("mcpServers", manifest)
 
+    def test_manifest_advertises_the_shared_receipt_contract(self) -> None:
+        manifest = load_json(".codex-plugin/plugin.json")
+        self.assertEqual(manifest.get("receipt_contract_versions"), ["1.0.0"])
+
+    def test_preview_adapter_is_executable(self) -> None:
+        adapter = ROOT / "bin" / "blender_adapter"
+        self.assertTrue(adapter.is_file())
+        self.assertTrue(os.access(adapter, os.X_OK))
+
     def test_name_is_a_codex_kebab_identifier(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         name = manifest["name"]

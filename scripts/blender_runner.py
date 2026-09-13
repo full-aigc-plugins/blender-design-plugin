@@ -255,6 +255,8 @@ def build_argv(
     runtime: BlenderRuntime,
     project: Path,
     request: Path,
+    *,
+    bridge_path: Path | None = None,
 ) -> list[str]:
     """Build the argv list for a Blender invocation.
 
@@ -286,7 +288,7 @@ def build_argv(
             f"Request path must be a regular file: {request}",
         )
 
-    bridge = str(_BRIDGE_SCRIPT)
+    bridge = str((bridge_path or _BRIDGE_SCRIPT).resolve())
 
     argv: list[str] = [str(runtime.executable)]
 

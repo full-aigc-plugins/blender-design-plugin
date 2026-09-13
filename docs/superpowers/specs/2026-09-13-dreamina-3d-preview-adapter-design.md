@@ -27,15 +27,18 @@ flowchart LR
     R --> S[blender_runner.py]
     S --> B[Blender 5.2.1 background process]
     B --> P[preview_only_bridge.py]
-    P --> V[vendored viewport renderer]
+    P --> V[Workbench background frame renderer]
     V --> M[local MP4]
     M --> C[media probe + shared receipt]
     C -->|atomic receipt JSON| D3
     P -. forbidden .-> U[Jimeng upload bridge]
 ```
 
-The existing `camera_render` and `local_upload` flows remain unchanged. The
-new bridge calls the vendored local renderer directly and never calls
+The existing `camera_render` and `local_upload` flows remain unchanged. Blender
+5.2.1 rejects the vendored renderer's `bpy.ops.render.opengl` call in
+`--background` mode because no OpenGL context exists. The new bridge therefore
+uses `BLENDER_WORKBENCH` with `bpy.ops.render.render(write_still=True)` for each
+frame and reuses the vendored ffmpeg sequence encoder. It never calls
 `start_local_bridge`, `render_upload`, `upload_existing`, Dreamina CLI, or any
 network API.
 

@@ -8,11 +8,11 @@
 
 ## 当前状态
 
-仓库现已具备兼容插件基础：manifest、Marketplace 元数据、品牌资产、Legal 文档、验证脚本、测试和实施目录。Blender 业务工作流尚未实现，也未声明通过 Blender 运行兼容性验证。
+Blender 工作流、分发门禁和面向 Dreamina 3D 的 preview-only 适配器均已实现。Blender 5.2.1 LTS 本地 Workbench MP4 运行验收已通过；Maya 与付费 Seedance 生成仍是独立门禁。
 
 ## 项目定位
 
-`codex-blender` 计划让 Codex 在用户授权范围内检查 `.blend` 项目、准备相机和帧范围、导出 Workbench 或视口预览视频、验证产物，并恢复临时场景设置。它是通用 Blender 适配器，不负责上传到 Dreamina 或其他服务。
+`codex-blender` 支持 Codex 在用户授权范围内检查 `.blend` 项目、准备相机和帧范围、导出 Workbench 或视口预览视频、验证产物，并恢复临时场景设置。其 `bin/blender_adapter` preview-only 契约为 `codex-dreamina-3d` 生成本地 MP4，不启动即梦上传 Bridge。
 
 ```text
 Codex 请求
@@ -23,7 +23,7 @@ Codex 请求
   -> 本地 MP4 + 结构化回执
 ```
 
-## 计划能力
+## 已实现能力
 
 - 发现 Blender 可执行文件与版本，不自动安装。
 - 只读检查场景、相机、动画、材质和输出设置。

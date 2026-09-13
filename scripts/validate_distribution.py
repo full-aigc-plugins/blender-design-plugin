@@ -54,7 +54,7 @@ REQUIRED_FILES = (
     "THIRD_PARTY_NOTICES.md",
     "docs/portable-migration.md",
 )
-REQUIRED_DIRECTORIES = ("assets", "skills", "schemas", "scripts", "tests")
+REQUIRED_DIRECTORIES = ("assets", "bin", "skills", "schemas", "scripts", "tests")
 EXPECTED_ASSETS = {
     "assets/logo.png": (1024, 1024, 6),
     "assets/logo-dark.png": (1024, 1024, 6),
@@ -309,6 +309,8 @@ def validate(root: Path) -> list[str]:
     for field in ("description", "skills"):
         if not manifest.get(field):
             errors.append(f"manifest missing required field: {field}")
+    if manifest.get("receipt_contract_versions") != ["1.0.0"]:
+        errors.append("manifest receipt_contract_versions must be ['1.0.0']")
     if "mcpServers" in manifest or (root / ".mcp.json").exists():
         errors.append("MCP configuration is forbidden until an MCP server exists")
 
@@ -343,6 +345,9 @@ def validate(root: Path) -> list[str]:
     for filename in REQUIRED_FILES:
         if not (root / filename).is_file():
             errors.append(f"missing required file: {filename}")
+    adapter = root / "bin" / "blender_adapter"
+    if not adapter.is_file() or not os.access(adapter, os.X_OK):
+        errors.append("bin/blender_adapter must exist and be executable")
     if (root / "plugin.json").exists() or (root / "mcp.json").exists():
         errors.append(
             "portable manifests must remain inactive during compatibility-first scaffolding"

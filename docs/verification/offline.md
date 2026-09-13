@@ -1,7 +1,7 @@
 # Offline Verification Evidence
 
-**Date:** 2026-09-12
-**Branch:** feat/codex-blender-plugin-v1
+**Date:** 2026-09-13
+**Branch:** main
 **Commit:** (see git log)
 
 ## Test Suite
@@ -10,7 +10,7 @@
 python3 -m unittest discover -s tests -v
 ```
 
-Result: **161/161 tests pass**, pristine output, no warnings.
+Result: **177/177 tests pass**.
 
 ## Distribution Validation
 
@@ -50,9 +50,8 @@ Result: **clean** — no whitespace errors.
 
 ## Runtime Acceptance
 
-**Status:** `BLOCKED_MISSING_AUTHORIZED_RUNTIME`
-
-Blender is not installed on this host (`command -v blender` returns empty). The plan permits this terminal state. A runtime smoke test requires an explicitly authorized Blender executable and cannot be inferred from unit tests.
+**Status:** `PASS` for Blender 5.2.1 LTS preview-only rendering and the
+Dreamina 3D receipt handoff. See [blender-runtime.md](./blender-runtime.md).
 
 ## Files
 
@@ -63,13 +62,16 @@ Blender is not installed on this host (`command -v blender` returns empty). The 
 | `schemas/*.schema.json` | Receipt schemas |
 | `vendor/jimeng_blender_uploader/` | Vendored headless core |
 | `vendor/jimeng_blender_uploader/UPSTREAM.md` | Provenance record |
-| `scripts/blender_bridge.py` | Inspection + export adapter |
+| `scripts/blender_bridge.py` | Inspection + existing Jimeng-flow dispatch |
 | `scripts/blender_runner.py` | Safe process runner |
+| `scripts/blender_adapter.py` | Dreamina 3D preview-only argv/JSON adapter |
+| `scripts/preview_only_bridge.py` | Workbench background rendering without upload |
+| `scripts/media_probe.py` | ffprobe metadata and SHA-256 verification |
 | `scripts/codex_bridge.py` | Thin driver: enables the vendored add-on, calls its operators |
 | `scripts/validate_document.py` | Schema validator |
 | `scripts/validate_distribution.py` | Distribution validator |
 | `skills/codex-blender-*/SKILL.md` | Four Codex Skills |
-| `tests/` | 145 tests |
+| `tests/` | 177 tests |
 | `tests/scenarios/*.md` | Six scenario descriptions |
 
 ## Codex plugin spec conformance (checked against codex-rs)

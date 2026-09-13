@@ -8,11 +8,11 @@
 
 ## Status
 
-The compatibility plugin foundation is now present: manifest, marketplace metadata, brand assets, legal documents, validation script, tests, and implementation directories. Blender workflows and runtime compatibility remain unimplemented and unverified.
+The Blender workflows, distribution, and preview-only Dreamina 3D adapter are implemented. Blender 5.2.1 LTS runtime acceptance passed for a local Workbench MP4; Maya and paid Seedance generation remain separate gates.
 
 ## Purpose
 
-`codex-blender` will let Codex inspect authorized `.blend` projects, prepare cameras and frame ranges, export Workbench or viewport preview video, validate the artifact, and restore temporary scene settings. It is a general Blender adapter and does not upload assets to Dreamina or any other service.
+`codex-blender` lets Codex inspect authorized `.blend` projects, prepare cameras and frame ranges, export Workbench or viewport preview video, validate the artifact, and restore temporary scene settings. Its `bin/blender_adapter` preview-only contract renders a local MP4 for `codex-dreamina-3d` without starting the Jimeng upload bridge.
 
 ```text
 Codex request
@@ -23,7 +23,7 @@ Codex request
   -> local MP4 + structured receipt
 ```
 
-## Planned capabilities
+## Capabilities
 
 - Blender executable and version discovery without automatic installation.
 - Read-only scene, camera, animation, material, and output inspection.

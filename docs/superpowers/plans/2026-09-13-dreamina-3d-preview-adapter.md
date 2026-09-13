@@ -4,7 +4,7 @@
 
 **Goal:** Add a preview-only Blender adapter executable that satisfies the `codex-dreamina-3d` argv/JSON contract without uploading or invoking paid generation.
 
-**Architecture:** A thin executable parses the shared adapter CLI and delegates to a focused Python module. That module uses the existing safe Blender runner, a Blender-side preview-only bridge, media probing, and atomic receipt/status files; the existing Jimeng link flows are unchanged.
+**Architecture:** A thin executable parses the shared adapter CLI and delegates to a focused Python module. That module uses the existing safe Blender runner, Workbench standard background rendering plus the vendored ffmpeg sequence encoder, media probing, and atomic receipt/status files; the existing Jimeng link flows are unchanged.
 
 **Tech Stack:** Python 3, Blender 5.2.1 LTS Python API, vendored viewport renderer, ffprobe, JSON, unittest.
 
@@ -31,10 +31,10 @@
 - Consumes: `--request PATH --receipt PATH --output PATH [--inspect|--status]`.
 - Produces: exit code plus atomic receipt/status JSON.
 
-- [ ] Write tests that execute the real CLI wrapper and assert argument validation, inspect dispatch, export dispatch, and query-only status behavior.
-- [ ] Run `python3 -m unittest tests.test_blender_adapter -v` and confirm failure because the adapter does not exist.
-- [ ] Implement argument parsing, safe path checks, atomic JSON persistence, stable JSON errors, and read-only `--status`.
-- [ ] Run the focused tests and confirm they pass.
+- [x] Write tests that execute the real CLI wrapper and assert argument validation, inspect dispatch, export dispatch, and query-only status behavior.
+- [x] Run `python3 -m unittest tests.test_blender_adapter -v` and confirm failure because the adapter does not exist.
+- [x] Implement argument parsing, safe path checks, atomic JSON persistence, stable JSON errors, and read-only `--status`.
+- [x] Run the focused tests and confirm they pass.
 
 ### Task 2: Preview-only Blender bridge and shared receipt
 
@@ -47,11 +47,11 @@
 - Consumes: normalized scene/camera/frame/output request.
 - Produces: shared `ArtifactReceipt` version `1.0.0` after media verification.
 
-- [ ] Write tests proving the Blender-side flow invokes the vendored renderer but never `start_local_bridge`, `render_upload`, or `upload_existing`.
-- [ ] Write tests for output mismatch, malformed media, unconfirmed restoration, timeout, and duplicate status query without re-render.
-- [ ] Run the focused tests and confirm the expected RED failures.
-- [ ] Implement the preview-only bridge, ffprobe-backed media metadata, SHA-256/stat verification, receipt normalization, and fail-closed restoration.
-- [ ] Run the focused tests and the existing Blender suite.
+- [x] Write tests proving the Blender-side flow uses `bpy.ops.render.render(write_still=True)` plus the vendored sequence encoder, but never `bpy.ops.render.opengl`, `start_local_bridge`, `render_upload`, or `upload_existing`.
+- [x] Write tests for output mismatch, malformed media, unconfirmed restoration, timeout, and duplicate status query without re-render.
+- [x] Run the focused tests and confirm the expected RED failures.
+- [x] Implement the preview-only bridge, ffprobe-backed media metadata, SHA-256/stat verification, receipt normalization, and fail-closed restoration.
+- [x] Run the focused tests and the existing Blender suite.
 
 ### Task 3: Cross-plugin discovery and real Blender acceptance
 
@@ -67,8 +67,8 @@
 - Consumes: `codex-dreamina-3d` companion discovery and DCC handoff.
 - Produces: discoverable executable plus recorded Blender 5.2.1 runtime evidence.
 
-- [ ] Write distribution and cross-plugin tests that fail until `bin/blender_adapter` is executable and advertises receipt contract `1.0.0`.
-- [ ] Add the manifest contract declaration and distribution validation.
-- [ ] Run `codex-dreamina-3d` capability discovery and its Blender fixture handoff through the real adapter executable.
-- [ ] Run one authorized Blender 5.2.1 LTS preview-only smoke test and record exact artifact/hash/restoration evidence; do not run Maya or paid Seedance.
-- [ ] Run both repositories' full suites, validators, secret scans, and `git diff --check`.
+- [x] Write distribution and cross-plugin tests that fail until `bin/blender_adapter` is executable and advertises receipt contract `1.0.0`.
+- [x] Add the manifest contract declaration and distribution validation.
+- [x] Run `codex-dreamina-3d` capability discovery and its Blender fixture handoff through the real adapter executable.
+- [x] Run one authorized Blender 5.2.1 LTS preview-only smoke test and record exact artifact/hash/restoration evidence; do not run Maya or paid Seedance.
+- [x] Run both repositories' full suites, validators, secret scans, and `git diff --check`.

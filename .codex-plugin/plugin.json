@@ -8,6 +8,7 @@
   "license": "Apache-2.0",
   "keywords": ["blender", "jimeng", "seedance", "preview-render", "codex"],
   "skills": "./skills/",
+  "receipt_contract_versions": ["1.0.0"],
   "interface": {
     "displayName": "Codex Blender",
     "shortDescription": "Headless Jimeng preview render and upload for Blender",
