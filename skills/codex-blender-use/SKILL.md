@@ -41,3 +41,20 @@ separately installed downstream-renderer workflow. Do not initiate that handoff,
 quote, submission, or paid operation without the user's separate instruction.
 
 Downstream AI rendering platforms are outside this plugin's responsibility.
+
+## Delivery routes
+
+After the Blender artifact is ready, choose exactly one explicit route:
+
+- `preview_only`: use `codex-blender-preview` or the receipt adapter and stop
+  with a verified local file.
+- `jimeng_web`: use `codex-blender-jimeng-web` against an already enabled
+  official uploader in the foreground Connector session; stop at
+  `JimengLinkReady`.
+- `downstream_seedance`: hand the validated artifact inventory to the
+  separately installed `codex-dreamina-3d` workflow. That workflow owns
+  approval, paid submission, query-only recovery, and final download.
+
+If intent is ambiguous, describe these three outcomes and ask the user to
+choose. Never silently turn a preview export into a web handoff or a paid
+generation.

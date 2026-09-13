@@ -29,7 +29,7 @@ def build_preview_receipt(artifact: dict, request: dict, media: dict) -> dict:
     return {
         "schema_version": "1.0.0",
         "producer_plugin": "codex-blender",
-        "producer_version": "0.1.0",
+        "producer_version": "0.2.0",
         "artifact_id": str(request["artifact_id"]),
         "path": str(artifact["path"]),
         "sha256": str(artifact["sha256"]),

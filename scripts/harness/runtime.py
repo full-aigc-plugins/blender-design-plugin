@@ -7,6 +7,7 @@ from .commands.camera import CameraCommands
 from .commands.light import LightCommands
 from .commands.material import MaterialCommands
 from .commands.object import ObjectCommands
+from .commands.official_uploader import OfficialUploaderCommands
 from .commands.scene import SceneCommands
 from .commands.validation import closed_arguments
 from pathlib import Path
@@ -26,6 +27,7 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
     cameras = CameraCommands(bpy_module)
     lights = LightCommands(bpy_module)
     animation = AnimationCommands(bpy_module)
+    official = OfficialUploaderCommands(bpy_module)
     advanced = AdvancedPythonExecutor(bpy_module)
     exporter = Exporter(bpy_module, approved_output_root=approved_output_root) if approved_output_root else None
     preview = PreviewEngine(bpy_module)
@@ -49,6 +51,24 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
     registry.register("animation.set_frame_range", animation.set_frame_range, validate=closed_arguments(required=("start", "end")))
     registry.register("animation.insert_keyframe", animation.insert_keyframe, validate=closed_arguments(required=("object", "dataPath", "frame")))
     registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated")
+    registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
+    registry.register("official_uploader.status", official.status, validate=closed_arguments(), risk="read")
+    registry.register(
+        "official_uploader.render_and_link",
+        official.render_and_link,
+        validate=closed_arguments(
+            required=("camera", "frameStart", "frameEnd", "outputDir"),
+            optional=("resolution", "prompt"),
+        ),
+        risk="gated",
+    )
+    registry.register(
+        "official_uploader.link_existing",
+        official.link_existing,
+        validate=closed_arguments(required=("videoPath",), optional=("prompt",)),
+        risk="gated",
+    )
+    registry.register("official_uploader.open_link", official.open_link, validate=closed_arguments(), risk="gated")
     def capture_preview(arguments):
         if approved_output_root is None:
             from .errors import HarnessError

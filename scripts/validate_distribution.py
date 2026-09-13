@@ -41,7 +41,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.1\.0(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.2\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -74,6 +74,7 @@ EXPECTED_SKILLS = (
     "codex-blender-preview",
     "codex-blender-export",
     "codex-blender-recover",
+    "codex-blender-jimeng-web",
 )
 
 SECRET_PATTERNS = (
@@ -306,7 +307,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a codex-prefixed kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "foundation version must be 0.1.0, optionally with a +build cachebuster"
+            "release version must be 0.2.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):

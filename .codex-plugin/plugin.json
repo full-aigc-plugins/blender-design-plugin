@@ -1,6 +1,6 @@
 {
   "name": "codex-blender",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Let Codex design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
   "author": {"name": "Full Stack Skills / PartMe.AI", "url": "https://github.com/partme-ai"},
   "homepage": "https://github.com/partme-ai/codex-blender-plugin",

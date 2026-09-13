@@ -14,6 +14,7 @@ from .protocol import CommandRequest, PROTOCOL_VERSION
 
 READ_ONLY_COMMANDS = {
     "session.capabilities", "session.status", "scene.inspect", "preview.capture", "export.file",
+    "official_uploader.inspect", "official_uploader.status",
     "transaction.begin", "transaction.commit", "transaction.rollback", "session.authorize",
 }
 GATED_COMMANDS = {
@@ -26,6 +27,9 @@ GATED_COMMANDS = {
     "export.file",
     "advanced.execute_python",
     "session.close",
+    "official_uploader.render_and_link",
+    "official_uploader.link_existing",
+    "official_uploader.open_link",
 }
 
 

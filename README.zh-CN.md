@@ -36,6 +36,15 @@ flowchart LR
 - Camera、Front、Side、Top 四视图里程碑
 - BLEND、GLB、GLTF、FBX、OBJ、STL、PNG、JPG、MP4 导出路由
 
+## 三个交付入口
+
+- `preview_only`：生成并验证本地 Blender 预览。
+- `jimeng_web`：在前台 Connector 中单次调用用户已启用的官方上传插件，止于 `JimengLinkReady`。
+- `downstream_seedance`：把验证后的回执交给 `codex-dreamina-3d`，执行经过审批的自动生成。
+
+本插件不捆绑或安装官方上传插件。当前 macOS 验证环境未启用该插件，因此即梦网页入口的
+运行门禁明确记录为阻塞；命令与 Skill 契约已通过离线验证。
+
 ## 安全边界
 
 - 默认只允许封闭结构化命令，不直接运行任意 Python
@@ -59,8 +68,9 @@ codex plugin add codex-blender@partme-ai-blender
 
 ## 产品边界
 
-本插件止于经过验证的本地 Blender 文件。下游 AI 渲染、账号登录、报价、提交、查询和
-付费行为属于其他编排插件。若提示词缺少必要参考素材，默认要求用户提供；用户明确要求
+本插件负责 Blender 工作以及对用户已安装官方上传器的可选运行时委托。下游 AI 渲染、
+账号登录、报价、提交、查询和付费行为属于 `codex-dreamina-3d` 与
+`codex-dreamina-design`。若提示词缺少必要参考素材，默认要求用户提供；用户明确要求
 原创设计时，才创建并标记 Blender 设计代理。完成后始终给出可验证的交付清单，并由用户
 选择结束，或交给 `codex-dreamina-3d-plugin` 做下游渲染。
 

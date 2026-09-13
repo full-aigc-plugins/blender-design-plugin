@@ -8,7 +8,7 @@ from scripts.validate_document import validate_document
 ROOT = Path(__file__).resolve().parents[1]
 VALID_ARTIFACT = {
     "protocolVersion": "codex-blender/v1",
-    "producer": {"name": "codex-blender", "version": "0.1.0"},
+    "producer": {"name": "codex-blender", "version": "0.2.0"},
     "sessionId": "s1",
     "sceneRevision": 7,
     "snapshotId": "snapshot-7",
@@ -27,7 +27,7 @@ class TestManifest(unittest.TestCase):
     def test_identity_and_skill_path(self):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text())
         self.assertEqual(manifest["name"], "codex-blender")
-        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["version"], "0.2.0")
         self.assertEqual(manifest["skills"], "./skills/")
 
 

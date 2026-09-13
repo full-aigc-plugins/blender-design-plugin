@@ -37,6 +37,16 @@ artifact receipts. Managed mode is the default.
 - Camera/front/side/top milestone renders
 - BLEND, GLB, GLTF, FBX, OBJ, STL, PNG, JPG, and MP4 export routes
 
+## Three delivery entries
+
+- `preview_only`: generate and verify a local Blender preview.
+- `jimeng_web`: delegate once to an enabled official uploader in the foreground Connector and stop at `JimengLinkReady`.
+- `downstream_seedance`: hand the validated receipt to `codex-dreamina-3d` for approved automatic generation.
+
+The official uploader is not bundled or installed by this plugin. On the current
+macOS verification host it is not enabled, so the Jimeng Web runtime gate is
+recorded as blocked while the command and Skill contracts pass offline.
+
 ## Safety
 
 - Closed command allowlist; no arbitrary Python by default
@@ -59,8 +69,9 @@ See [the Chinese getting-started guide](docs/getting-started.zh-CN.md).
 
 ## Product boundary
 
-This plugin stops at verified local Blender files. Downstream AI rendering, account login,
-pricing, submission, polling, and paid actions belong to their own orchestration plugins.
+This plugin owns Blender work and optional runtime delegation to the user's official uploader.
+Downstream AI rendering, account login, pricing, submission, polling, and paid actions belong
+to `codex-dreamina-3d` and `codex-dreamina-design`.
 
 ## Development
 
