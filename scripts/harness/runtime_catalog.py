@@ -196,9 +196,13 @@ LIFECYCLE_VERIFIED = {
     'production.status',
 }
 
-# Lifecycle commands that require a foreground VIEW_3D window; blocked in
-# background mode and cannot produce runtime evidence on this host.
-LIFECYCLE_FOREGROUND_ONLY = frozenset({
+# Foreground-only lifecycle commands graduated to L3 with evidence from a real
+# macOS arm64 foreground session.  The production-profile validator does NOT
+# check RuntimeIdentity; the acceptance script and run record
+# (docs/verification/foreground-lifecycle-macos-arm64.md) record the scope
+# so a reader can see it.  Task 4's coverage matrix is the mechanism for
+# other versions/platforms.
+LIFECYCLE_FOREGROUND_VERIFIED = frozenset({
     'view.set', 'view.focus', 'view.present',
     'playback.set',
     'preview.capture',
@@ -274,6 +278,8 @@ def command_skills(name, domain, metadata):
 
 
 def runtime_evidence(name):
+    if name in LIFECYCLE_FOREGROUND_VERIFIED:
+        return ['tests/runtime/foreground_lifecycle_acceptance.py']
     if name in LIFECYCLE_VERIFIED:
         return ['tests/runtime/lifecycle_commands_acceptance.py']
     if name in {'rig.rigify_install','rig.rigify_generate'}:
@@ -436,6 +442,17 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'runtime': runtime_evidence(name),
                 'visual': ['docs/verification/capability-catalog-baseline.md'],
                 'delivery': ['tests/runtime/lifecycle_commands_acceptance.py'],
+                'recoveryAndCompatibility': [],
+            }
+        elif name in LIFECYCLE_FOREGROUND_VERIFIED:
+            # Evidence gathered on Blender 5.2.1 / darwin / arm64 / managed
+            # foreground session.  See docs/verification/foreground-lifecycle-macos-arm64.md
+            # for the full run record and milestone PNG sha256 checksums.
+            defaults['maturity'] = 'L3'
+            defaults['verification'] = {
+                'runtime': runtime_evidence(name),
+                'visual': ['docs/verification/foreground-lifecycle-macos-arm64.md'],
+                'delivery': ['tests/runtime/foreground_lifecycle_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
         elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED:
