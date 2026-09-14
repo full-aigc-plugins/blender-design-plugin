@@ -17,7 +17,7 @@ DOMAINS = (
     'grease_pencil', 'tracking', 'sequence', 'validation', 'job',
     'session', 'capability', 'view', 'playback', 'preview', 'export',
     'advanced', 'official_uploader',
-    'recipe',
+    'recipe', 'production',
 )
 
 
@@ -78,6 +78,13 @@ class CommandRegistry:
         ]
 
     def describe_capability(self, arguments: dict) -> dict:
+        """Return a description for one command.
+
+        When *profile* is supplied, a ``productionVerdict`` is added.
+        The verdict is computed against a ``RuntimeIdentity`` built from
+        ``blenderVersion`` / ``platform`` / ``runtimeMode``.  An explicit
+        ``runtime`` object takes precedence over those three fields.
+        """
         allowed = {'id', 'profile', 'runtime', 'blenderVersion', 'platform', 'runtimeMode'}
         extra = set(arguments) - allowed
         if extra or not isinstance(arguments.get('id'), str):
@@ -85,6 +92,22 @@ class CommandRegistry:
         name = arguments['id']
         profile = arguments.get('profile')
         runtime = arguments.get('runtime')
+        # When profile is given without an explicit runtime, build one from
+        # the individual fields so callers can query "how does this look on
+        # 4.2.23 / windows / managed?" without hand-constructing a RuntimeIdentity.
+        if profile is not None and runtime is None:
+            from .production_profile import RuntimeIdentity as _RI
+            bv = arguments.get('blenderVersion', (0, 0, 0))
+            if isinstance(bv, (list, tuple)) and len(bv) >= 3:
+                bv = tuple(int(x) for x in bv[:3])
+            else:
+                bv = (0, 0, 0)
+            runtime = _RI(
+                blender_version=bv,
+                platform=str(arguments.get('platform', 'unknown')),
+                architecture='unknown',
+                runtime_mode=str(arguments.get('runtimeMode', 'managed')),
+            )
         definition = self._commands.get(name)
         if definition is None:
             raise HarnessError('UNKNOWN_CAPABILITY', f'capability is not registered: {name}')
@@ -142,6 +165,11 @@ class CommandRegistry:
             describe_args['profile'] = profile
         if runtime is not None:
             describe_args['runtime'] = runtime
+        # Forward the individual identity fields so describe_capability can
+        # build a RuntimeIdentity when profile is given without explicit runtime.
+        for _key in ('blenderVersion', 'platform', 'runtimeMode'):
+            if _key in arguments:
+                describe_args[_key] = arguments[_key]
         descriptions = []
         for name in sorted(self._commands):
             describe_args['id'] = name

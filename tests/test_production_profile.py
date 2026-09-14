@@ -428,3 +428,39 @@ class BackwardCompatibilityTests(unittest.TestCase):
                 self.assertIn('productionVerdict', item)
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_production_domain_is_filterable(self):
+        """I1: every domain in the catalog's domains payload must be filterable."""
+        from scripts.harness.runtime import build_registry
+        from tests.test_design_commands import FakeBpy
+        reg = build_registry(FakeBpy())
+        catalog = reg.list_capabilities({'limit': 100})
+        for domain_name in catalog['domains']:
+            # Must not raise INVALID_ARGUMENT for a domain that the catalog advertises.
+            result = reg.list_capabilities({'domain': domain_name, 'limit': 100})
+            self.assertIn('items', result)
+
+    def test_blenderVersion_platform_runtimeMode_build_identity(self):
+        """I2: blenderVersion/platform/runtimeMode are used when profile is given."""
+        import tempfile
+        tmpdir = Path(tempfile.mkdtemp())
+        try:
+            profile_path = tmpdir / 'production-profile.json'
+            profile_path.write_text(json.dumps({}))
+            from scripts.harness.runtime import build_registry
+            from tests.test_design_commands import FakeBpy
+            from scripts.harness.production_profile import ProductionProfile
+            reg = build_registry(FakeBpy())
+            profile = ProductionProfile.load(profile_path)
+            # Pass blenderVersion/platform/runtimeMode instead of a runtime object.
+            result = reg.list_capabilities({
+                'limit': 5, 'profile': profile,
+                'blenderVersion': [5, 2, 1],
+                'platform': 'windows',
+                'runtimeMode': 'connector',
+            })
+            self.assertIn('items', result)
+            for item in result['items']:
+                self.assertIn('productionVerdict', item)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
