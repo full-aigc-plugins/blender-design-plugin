@@ -2,12 +2,13 @@
 
 Blender 5.0 introduced the Grease Pencil v3 rewrite (GreasePencil
 data-block with layers/drawings replacing GPencil).  The compositor
-still uses scene.node_tree and CompositorNodeComposite in 5.0–5.1.
+still uses scene.node_tree and CompositorNodeComposite in 5.0-5.1.
 
 Runtime-verified: NO.  Only Blender 5.2.1 is installed.  The adapter
 here is based on changelog analysis, not live testing.
 """
 
+from ..errors import HarnessError
 from .base import BlenderCompatibilityAdapter
 
 
@@ -33,11 +34,13 @@ class Blender5051Adapter(BlenderCompatibilityAdapter):
         return tree
 
     def configure_file_output(self, node, directory, base_name):
-        # In 5.0/5.1 the file output node uses base_path + file_slots.
-        node.base_path = str(directory)
-        slots = getattr(node, 'file_slots', None) or getattr(node, 'layer_slots', None)
-        if slots and len(slots):
-            slots[0].path = base_name + '_'
+        # The only evidence (5.2.1 snapshot) shows directory+file_name, not
+        # base_path+file_slots.  Use the same API until Task 4's matrix
+        # captures a real 5.0/5.1 surface that proves otherwise.
+        node.directory = str(directory)
+        node.file_name = base_name + '_'
+        if not any(getattr(s, 'name', '') == 'Image' for s in node.inputs):
+            node.file_output_items.new('RGBA', 'Image')
 
     def configure_geometry_node_interface(self, modifier, socket_identifier, value):
         # In 5.0/5.1 the properties.inputs interface may be available.
@@ -63,36 +66,17 @@ class Blender5051Adapter(BlenderCompatibilityAdapter):
         return obj
 
     def configure_render_engine(self, scene, requested_engine, available_engines):
+        # Pick whichever Eevee identifier the running Blender actually reports,
+        # rather than hard-coding a preference order.  Task 4's matrix will
+        # codify any real 5.0/5.1 difference if one exists.
         if requested_engine in {'EEVEE', 'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}:
             engine = next(
-                (v for v in ('BLENDER_EEVEE_NEXT', 'BLENDER_EEVEE') if v in available_engines),
+                (v for v in available_engines if v in {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}),
                 None,
             )
             if engine is None:
-                from ..errors import HarnessError
                 raise HarnessError('CAPABILITY_UNAVAILABLE', 'Eevee is unavailable')
             return engine
         if requested_engine == 'CYCLES':
             return 'CYCLES'
-        from ..errors import HarnessError
         raise HarnessError('INVALID_ARGUMENT', 'unsupported render engine')
-
-    def enable_rigify(self, bpy_module):
-        try:
-            import addon_utils
-            bundled = any(m.__name__ == 'rigify' for m in addon_utils.modules())
-        except (ImportError, AttributeError):
-            bundled = False
-        addons = bpy_module.context.preferences.addons
-        modules = [item if isinstance(item, str) else str(getattr(item, 'module', '')) for item in addons]
-        enabled = addons.get('rigify') is not None or any(
-            m == 'rigify' or m.endswith('.rigify') for m in modules
-        )
-        operator = hasattr(bpy_module.ops.pose, 'rigify_generate')
-        return {
-            'installed': bundled or enabled,
-            'bundledAvailable': bundled,
-            'enabled': enabled,
-            'operatorAvailable': operator and enabled,
-            'blenderVersion': bpy_module.app.version_string,
-        }

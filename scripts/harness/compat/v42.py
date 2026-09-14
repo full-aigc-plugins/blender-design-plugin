@@ -7,8 +7,13 @@ Key API differences from later versions:
 - Render engine EEVEE is BLENDER_EEVEE.
 - Grease Pencil uses legacy GPencil data-blocks (not the 5.x rewrite).
 - VSE effect strips use sequences.new_effect with seq1/seq2 kwargs.
+
+Runtime-verified: NO.  Only Blender 5.2.1 is installed.  The adapter
+here is based on changelog analysis and existing codebase patterns,
+not live testing.
 """
 
+from ..errors import HarnessError
 from .base import BlenderCompatibilityAdapter
 
 
@@ -51,30 +56,8 @@ class Blender42Adapter(BlenderCompatibilityAdapter):
                 (v for v in ('BLENDER_EEVEE',) if v in available_engines), None
             )
             if engine is None:
-                from ..errors import HarnessError
                 raise HarnessError('CAPABILITY_UNAVAILABLE', 'Eevee is unavailable')
             return engine
         if requested_engine == 'CYCLES':
             return 'CYCLES'
-        from ..errors import HarnessError
         raise HarnessError('INVALID_ARGUMENT', 'unsupported render engine')
-
-    def enable_rigify(self, bpy_module):
-        try:
-            import addon_utils
-            bundled = any(m.__name__ == 'rigify' for m in addon_utils.modules())
-        except (ImportError, AttributeError):
-            bundled = False
-        addons = bpy_module.context.preferences.addons
-        modules = [item if isinstance(item, str) else str(getattr(item, 'module', '')) for item in addons]
-        enabled = addons.get('rigify') is not None or any(
-            m == 'rigify' or m.endswith('.rigify') for m in modules
-        )
-        operator = hasattr(bpy_module.ops.pose, 'rigify_generate')
-        return {
-            'installed': bundled or enabled,
-            'bundledAvailable': bundled,
-            'enabled': enabled,
-            'operatorAvailable': operator and enabled,
-            'blenderVersion': bpy_module.app.version_string,
-        }

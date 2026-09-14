@@ -126,11 +126,29 @@ class BlenderCompatibilityAdapter:
 
         Keys: installed, bundledAvailable, enabled, operatorAvailable,
         blenderVersion.
+
+        This implementation is version-independent: it probes addon_utils,
+        the preferences addon list, and the rigify_generate operator.  All
+        concrete adapters inherit it unchanged.
         """
-        raise HarnessError(
-            'CAPABILITY_UNAVAILABLE',
-            'enable_rigify is not supported in this Blender version',
+        try:
+            import addon_utils
+            bundled = any(m.__name__ == 'rigify' for m in addon_utils.modules())
+        except (ImportError, AttributeError):
+            bundled = False
+        addons = bpy_module.context.preferences.addons
+        modules = [item if isinstance(item, str) else str(getattr(item, 'module', '')) for item in addons]
+        enabled = addons.get('rigify') is not None or any(
+            m == 'rigify' or m.endswith('.rigify') for m in modules
         )
+        operator = hasattr(bpy_module.ops.pose, 'rigify_generate')
+        return {
+            'installed': bundled or enabled,
+            'bundledAvailable': bundled,
+            'enabled': enabled,
+            'operatorAvailable': operator and enabled,
+            'blenderVersion': bpy_module.app.version_string,
+        }
 
     # ------------------------------------------------------------------
     # Render

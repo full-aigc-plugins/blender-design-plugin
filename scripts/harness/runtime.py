@@ -40,6 +40,7 @@ from .advanced_python import AdvancedPythonExecutor
 from .exporter import Exporter
 from .preview import PreviewEngine
 from .path_policy import PathPolicy
+from .errors import HarnessError
 from .production_profile import ProductionProfile, RuntimeIdentity
 from .compat.selector import select_adapter
 from .registry import CommandRegistry
@@ -60,6 +61,8 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     if runtime_mode not in {"managed", "connector"}:
         raise ValueError("runtime_mode must be managed or connector")
     # Select version adapter once; pass to commands that need it.
+    # Only HarnessError is caught (out-of-range version); unexpected errors
+    # propagate so they are not silently swallowed.
     _version_adapter = None
     try:
         _bv = getattr(getattr(bpy_module, 'app', None), 'version', None)
@@ -72,7 +75,7 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                 runtime_mode=runtime_mode,
             )
             _version_adapter = select_adapter(_identity, bpy_module)
-    except Exception:
+    except HarnessError:
         _version_adapter = None
     official = OfficialUploaderCommands(bpy_module, approved_output_root=approved_output_root, approved_asset_roots=approved_asset_roots)
     organization = OrganizationCommands(bpy_module)

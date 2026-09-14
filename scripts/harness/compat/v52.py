@@ -7,6 +7,7 @@ node is NodeGroupOutput (CompositorNodeComposite was removed).
 Runtime-verified: YES against Blender 5.2.1 (arm64, macOS).
 """
 
+from ..errors import HarnessError
 from .base import BlenderCompatibilityAdapter
 
 
@@ -58,37 +59,16 @@ class Blender52Adapter(BlenderCompatibilityAdapter):
 
     def configure_render_engine(self, scene, requested_engine, available_engines):
         # Evidence from 5.2.1 snapshot: available=['BLENDER_EEVEE'],
-        # has_BLENDER_EEVEE_NEXT=False.  Prefer BLENDER_EEVEE in 5.2.
+        # has_BLENDER_EEVEE_NEXT=False.  Pick whichever the running Blender
+        # actually reports rather than hard-coding a preference order.
         if requested_engine in {'EEVEE', 'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}:
             engine = next(
-                (v for v in ('BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT') if v in available_engines),
+                (v for v in available_engines if v in {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}),
                 None,
             )
             if engine is None:
-                from ..errors import HarnessError
                 raise HarnessError('CAPABILITY_UNAVAILABLE', 'Eevee is unavailable')
             return engine
         if requested_engine == 'CYCLES':
             return 'CYCLES'
-        from ..errors import HarnessError
         raise HarnessError('INVALID_ARGUMENT', 'unsupported render engine')
-
-    def enable_rigify(self, bpy_module):
-        try:
-            import addon_utils
-            bundled = any(m.__name__ == 'rigify' for m in addon_utils.modules())
-        except (ImportError, AttributeError):
-            bundled = False
-        addons = bpy_module.context.preferences.addons
-        modules = [item if isinstance(item, str) else str(getattr(item, 'module', '')) for item in addons]
-        enabled = addons.get('rigify') is not None or any(
-            m == 'rigify' or m.endswith('.rigify') for m in modules
-        )
-        operator = hasattr(bpy_module.ops.pose, 'rigify_generate')
-        return {
-            'installed': bundled or enabled,
-            'bundledAvailable': bundled,
-            'enabled': enabled,
-            'operatorAvailable': operator and enabled,
-            'blenderVersion': bpy_module.app.version_string,
-        }
