@@ -501,6 +501,72 @@ try:
         'rangeCoverage': cloth_cache['rangeCoverage'],
     }
 
+    # ---- Settings-signature checks: quality, mass, restore, frame range ----
+    cloth_obj = bpy.data.objects['CacheCloth']
+    cloth_mod = cloth_obj.modifiers.get('Cloth')
+    assert cloth_mod is not None
+
+    # Row: change quality 5 -> 10 => stale, quality named in settingsDiffs
+    cloth_mod.settings.quality = 10
+    print('  Changed cloth quality: 5 -> 10')
+    val_quality = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    q_cache = val_quality['caches'][0]
+    q_diff_names = [d['setting'] for d in q_cache.get('settingsDiffs', [])]
+    print(f'  After quality change: passed={val_quality["passed"]}, '
+          f'stale={q_cache["stale"]}, diffs={q_diff_names}')
+    assert val_quality['passed'] is False, \
+        'Cache must be invalid after quality change'
+    assert q_cache['stale'] is True, \
+        'Cache must be stale after quality change'
+    assert 'quality' in q_diff_names, \
+        f'quality must appear in settingsDiffs, got {q_diff_names}'
+
+    # Row: change mass 0.3 -> 0.9 => stale, mass named in settingsDiffs
+    cloth_mod.settings.mass = 0.9
+    print('  Changed cloth mass: 0.3 -> 0.9')
+    val_mass = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    m_cache = val_mass['caches'][0]
+    m_diff_names = [d['setting'] for d in m_cache.get('settingsDiffs', [])]
+    print(f'  After mass change: passed={val_mass["passed"]}, '
+          f'stale={m_cache["stale"]}, diffs={m_diff_names}')
+    assert val_mass['passed'] is False, \
+        'Cache must be invalid after mass change'
+    assert m_cache['stale'] is True, \
+        'Cache must be stale after mass change'
+    assert 'mass' in m_diff_names, \
+        f'mass must appear in settingsDiffs, got {m_diff_names}'
+
+    # Row: restore both -> valid again (signature must not report stale forever)
+    cloth_mod.settings.quality = 5
+    cloth_mod.settings.mass = 0.3
+    print('  Restored quality=5, mass=0.3')
+    val_restored_settings = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    rs_cache = val_restored_settings['caches'][0]
+    print(f'  After restore: passed={val_restored_settings["passed"]}, '
+          f'stale={rs_cache["stale"]}')
+    assert val_restored_settings['passed'] is True, \
+        'Cache must be valid after restoring original settings'
+    assert rs_cache['stale'] is False, \
+        'Cache must not be stale after restoring original settings'
+
+    report['bullets']['sim_settings_signature'] = {
+        'quality_stale': val_quality['passed'] is False,
+        'quality_diff_named': 'quality' in q_diff_names,
+        'mass_stale': val_mass['passed'] is False,
+        'mass_diff_named': 'mass' in m_diff_names,
+        'restore_valid': val_restored_settings['passed'] is True,
+    }
+
+    # Row: change frame range -> still stale (range check still works)
     # Change the cache frame range (a real parameter change)
     cloth_obj = bpy.data.objects['CacheCloth']
     cloth_mod = cloth_obj.modifiers.get('Cloth')
@@ -524,20 +590,27 @@ try:
         'stale': val_after_param['caches'][0]['stale'],
     }
 
-    # Mutation: prove the invalidation check bites by patching _read_bake_range
-    # to always return the current config (making staleness undetectable).
+    # Mutation 2a: prove the range-staleness check bites by patching
+    # _read_bake_range (and _compare_signatures) to no-ops so that range
+    # staleness is the only thing that *could* be detected but is suppressed.
     print('--- Mutation 2: staleness detection bites ---')
     sim_obj = registry._commands['simulation.validate'].handler.__self__
     original_read = sim_obj._read_bake_range
+    original_compare = sim_obj._compare_signatures
 
     def _no_stale_read(obj, mod_name, fallback_start, fallback_end):
-        """Always return current config -- staleness never detected."""
+        """Always return current config -- range staleness never detected."""
         return fallback_start, fallback_end
+
+    def _no_diff_compare(baked_sig, current_sig):
+        """Always return no diffs -- settings staleness never detected."""
+        return []
 
     mutation_caught_failure = False
     mutation_failure_detail = None
     try:
         sim_obj._read_bake_range = _no_stale_read
+        sim_obj._compare_signatures = staticmethod(_no_diff_compare)
         # With the mutation, validate should report stale=False even though
         # the cache IS stale (frame_end was changed after baking).
         val_mutated = registry.dispatch('simulation.validate', {
@@ -557,6 +630,7 @@ try:
             print(f'  MUTATION CONFIRMED: assertion failed as expected: {ae}')
     finally:
         sim_obj._read_bake_range = original_read
+        sim_obj._compare_signatures = original_compare
 
     # Verify the restore worked
     val_restored = registry.dispatch('simulation.validate', {
@@ -579,6 +653,74 @@ try:
     }
     assert mutation_caught_failure, \
         'Mutation test must prove the staleness check bites'
+
+    # Mutation 2b: prove the settings-signature check bites by patching
+    # _compare_signatures to always return [] (no diffs detected).
+    print('--- Mutation 2b: settings signature detection bites ---')
+    # Restore frame range so only settings staleness remains
+    cloth_mod.point_cache.frame_end = 20  # back to baked range
+    # Verify frame range is no longer stale
+    val_range_ok = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    assert val_range_ok['caches'][0]['stale'] is False, \
+        'Frame range must be valid after restore'
+    # Now change quality to trigger settings staleness
+    cloth_mod.settings.quality = 10
+    val_before_mut = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    assert val_before_mut['caches'][0]['stale'] is True, \
+        'Quality change must make cache stale before mutation'
+
+    original_compare = sim_obj._compare_signatures
+    sig_mutation_caught = False
+    sig_mutation_detail = None
+
+    def _no_sig_diff(baked_sig, current_sig):
+        """Always return no diffs -- settings staleness never detected."""
+        return []
+
+    try:
+        sim_obj._compare_signatures = staticmethod(_no_sig_diff)
+        val_sig_mut = registry.dispatch('simulation.validate', {
+            'objectId': cloth['objectId'],
+            'metrics': {'staleness': True}
+        })['result']
+        print(f'  With sig mutation: stale={val_sig_mut["caches"][0]["stale"]}, '
+              f'passed={val_sig_mut["passed"]}')
+        # This assertion should FAIL: the mutation makes settings check a no-op
+        try:
+            assert val_sig_mut['caches'][0]['stale'] is True, \
+                'Expected stale=True but sig mutation made it False'
+        except AssertionError as ae:
+            sig_mutation_caught = True
+            sig_mutation_detail = str(ae)
+            print(f'  SIG MUTATION CONFIRMED: assertion failed as expected: {ae}')
+    finally:
+        sim_obj._compare_signatures = original_compare
+
+    # Restore quality for clean state
+    cloth_mod.settings.quality = 5
+    val_sig_restored = registry.dispatch('simulation.validate', {
+        'objectId': cloth['objectId'],
+        'metrics': {'staleness': True}
+    })['result']
+    assert val_sig_restored['caches'][0]['stale'] is False, \
+        'After restore, settings must be valid again'
+
+    report['mutations']['sim_sig_check'] = {
+        'quality_stale_before_mutation': val_before_mut['caches'][0]['stale'],
+        'quality_stale_with_mutation': val_sig_mut['caches'][0]['stale'],
+        'mutation_caught_failure': sig_mutation_caught,
+        'mutation_failure_detail': sig_mutation_detail,
+        'verified': sig_mutation_caught,
+    }
+    assert sig_mutation_caught, \
+        'Signature mutation test must prove the settings check bites'
+    print('SETTINGS SIGNATURE INVALIDATION CONFIRMED')
     print('CACHE INVALIDATION CONFIRMED')
 
     # =================================================================

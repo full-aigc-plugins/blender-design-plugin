@@ -1,4 +1,5 @@
 """Typed rigid-body, cloth, soft-body, collision, fluid and cache controls."""
+import json
 from pathlib import Path
 from ..errors import HarnessError
 from ..identity import ObjectResolver
@@ -72,6 +73,152 @@ class SimulationCommands:
         baked_start = int(obj[sk]) if sk in obj else fallback_start
         baked_end = int(obj[ek]) if ek in obj else fallback_end
         return baked_start, baked_end
+
+    # -- Settings signature for cache invalidation on parameter change --
+
+    @staticmethod
+    def _settings_source(mod):
+        """Return the settings object whose properties affect the bake result.
+
+        Returns *None* when the modifier type has no known settings object,
+        so the caller can record that fact rather than silently skipping.
+        """
+        if mod.type in ('CLOTH', 'SOFT_BODY'):
+            return mod.settings
+        if mod.type == 'PARTICLE_SYSTEM':
+            ps = getattr(mod, 'particle_system', None)
+            return getattr(ps, 'settings', None) if ps else None
+        if mod.type == 'RIGID_BODY':
+            return mod.rigid_body
+        return None
+
+    @staticmethod
+    def _capture_settings_signature(mod):
+        """Capture every writable, non-pointer property from *mod*'s settings.
+
+        Returns a JSON-serialisable dict ``{identifier: value}`` where
+        unreadable properties are recorded as the string ``"<unreadable>"``
+        instead of being silently omitted.  The cache frame range is included
+        with ``_cache_frame_start`` / ``_cache_frame_end`` keys so that a
+        single signature covers both settings and range.
+        """
+        source = SimulationCommands._settings_source(mod)
+        sig = {}
+        if source is None:
+            sig['<settings_object>'] = '<not_available>'
+        else:
+            for prop in source.bl_rna.properties:
+                if prop.is_readonly:
+                    continue
+                if prop.type in ('POINTER', 'COLLECTION'):
+                    continue
+                try:
+                    val = getattr(source, prop.identifier)
+                except Exception:
+                    sig[prop.identifier] = '<unreadable>'
+                    continue
+                # Convert to JSON-safe primitives
+                if prop.type in ('FLOAT_VECTOR', 'FLOAT_COLOR'):
+                    try:
+                        sig[prop.identifier] = [round(float(v), 10) for v in val]
+                    except Exception:
+                        sig[prop.identifier] = '<unreadable_vector>'
+                elif prop.type == 'BOOLEAN_VECTOR':
+                    try:
+                        sig[prop.identifier] = [bool(v) for v in val]
+                    except Exception:
+                        sig[prop.identifier] = '<unreadable_vector>'
+                elif getattr(prop, 'is_array', False):
+                    # Array of FLOAT or INT (e.g. gravity as a 3-float vector)
+                    try:
+                        if prop.type == 'FLOAT':
+                            sig[prop.identifier] = [round(float(v), 10) for v in val]
+                        else:
+                            sig[prop.identifier] = [int(v) for v in val]
+                    except Exception:
+                        sig[prop.identifier] = '<unreadable_array>'
+                elif prop.type == 'ENUM':
+                    sig[prop.identifier] = str(val)
+                elif prop.type == 'BOOLEAN':
+                    sig[prop.identifier] = bool(val)
+                elif prop.type == 'INT':
+                    sig[prop.identifier] = int(val)
+                elif prop.type == 'FLOAT':
+                    sig[prop.identifier] = round(float(val), 10)
+                elif prop.type == 'STRING':
+                    sig[prop.identifier] = str(val)
+                else:
+                    try:
+                        sig[prop.identifier] = repr(val)
+                    except Exception:
+                        sig[prop.identifier] = '<unreadable>'
+        # Include cache frame range
+        cache = getattr(mod, 'point_cache', None)
+        if cache is not None:
+            sig['_cache_frame_start'] = int(cache.frame_start)
+            sig['_cache_frame_end'] = int(cache.frame_end)
+        return sig
+
+    def _store_settings_signature(self, obj, mod_name, sig):
+        """Persist the settings signature as a JSON string custom property."""
+        key = f'_harness_baked_{mod_name}_sig'
+        obj[key] = json.dumps(sig, sort_keys=True, separators=(',', ':'))
+
+    def _read_settings_signature(self, obj, mod_name):
+        """Read stored settings signature; returns dict or *None* if absent."""
+        key = f'_harness_baked_{mod_name}_sig'
+        raw = obj.get(key)
+        if raw is None:
+            return None
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return None
+
+    def _clear_settings_signature(self, obj, mod_name):
+        """Remove stored settings signature after freeing a cache."""
+        key = f'_harness_baked_{mod_name}_sig'
+        if key in obj:
+            del obj[key]
+
+    @staticmethod
+    def _compare_signatures(baked_sig, current_sig):
+        """Return a list of ``{setting, bakedValue, currentValue}`` diffs.
+
+        Only keys present in *baked_sig* are compared; keys present only in
+        *current_sig* (new properties added by Blender) are ignored so that a
+        Blender upgrade does not produce spurious staleness.
+        """
+        diffs = []
+        if baked_sig is None or current_sig is None:
+            return diffs
+        for key in sorted(baked_sig):
+            baked_val = baked_sig.get(key)
+            curr_val = current_sig.get(key, '<missing_in_current>')
+            # Compare with type-aware equality: JSON round-trip may coerce
+            # int to float, so compare after normalising to the baked type.
+            if isinstance(baked_val, float):
+                try:
+                    curr_val_cmp = round(float(curr_val), 10)
+                except (TypeError, ValueError):
+                    curr_val_cmp = curr_val
+                if baked_val != curr_val_cmp:
+                    diffs.append({'setting': key, 'bakedValue': baked_val, 'currentValue': curr_val})
+            elif isinstance(baked_val, list):
+                # Compare element-wise for vectors
+                try:
+                    curr_list = [round(float(v), 10) for v in curr_val]
+                    baked_list = [round(float(v), 10) for v in baked_val]
+                except (TypeError, ValueError):
+                    curr_list = curr_val
+                    baked_list = baked_val
+                if baked_list != curr_list:
+                    diffs.append({'setting': key, 'bakedValue': baked_val, 'currentValue': curr_val})
+            else:
+                if baked_val != curr_val:
+                    diffs.append({'setting': key, 'bakedValue': baked_val, 'currentValue': curr_val})
+        return diffs
+
     def quick_smoke(self,args):
         flows=args.get('flows')
         if not isinstance(flows,list) or not flows:raise HarnessError('INVALID_ARGUMENT','flows must contain object locators')
@@ -116,6 +263,7 @@ class SimulationCommands:
                     with self.bpy.context.temp_override(point_cache=cache):self.bpy.ops.ptcache.free_bake()
                     freed.append(name)
                     self._clear_bake_range(obj, name)
+                    self._clear_settings_signature(obj, name)
                 except Exception as exc:raise HarnessError('OPERATION_FAILED',f'could not free cache: {name}') from exc
         for modifier in obj.modifiers:
             settings=getattr(modifier,'domain_settings',None)
@@ -200,6 +348,9 @@ class SimulationCommands:
                         self.bpy.ops.ptcache.bake(bake=True)
                     baked.append(mod_name)
                     self._store_bake_range(obj, mod_name, frame_start, frame_end)
+                    # Capture and store settings signature for staleness detection
+                    sig = self._capture_settings_signature(mod)
+                    self._store_settings_signature(obj, mod_name, sig)
                 except Exception as exc:
                     cancelled = True
                 finally:
@@ -265,7 +416,11 @@ class SimulationCommands:
             * ``rangeCoverage`` (float) -- fraction of requested frames that
               are covered by the baked range (0.0 to 1.0).
             * ``stale`` (bool) -- True if the baked range differs from the
-              modifier's configured range.
+              modifier's configured range, or if the modifier's simulation
+              settings changed since baking.
+            * ``settingsDiffs`` (list, optional) -- present only when stale
+              due to settings change.  Each entry: {setting, bakedValue,
+              currentValue}.
         """
         oid = args.get('objectId')
         obj = self.objects.resolve(oid if isinstance(oid, dict) else {'objectId': oid})
@@ -311,7 +466,18 @@ class SimulationCommands:
 
             if check_staleness:
                 if is_baked:
-                    entry['stale'] = (baked_start != requested_start or baked_end != requested_end)
+                    range_stale = (baked_start != requested_start or baked_end != requested_end)
+                    # Compare settings signature for parameter-change detection
+                    settings_diffs = []
+                    baked_sig = self._read_settings_signature(obj, mod_name)
+                    if baked_sig is not None:
+                        mod = obj.modifiers.get(mod_name)
+                        if mod is not None:
+                            current_sig = self._capture_settings_signature(mod)
+                            settings_diffs = self._compare_signatures(baked_sig, current_sig)
+                    entry['stale'] = range_stale or len(settings_diffs) > 0
+                    if settings_diffs:
+                        entry['settingsDiffs'] = settings_diffs
                     if entry['stale']:
                         all_passed = False
                 else:
