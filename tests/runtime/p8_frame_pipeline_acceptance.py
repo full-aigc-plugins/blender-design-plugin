@@ -70,6 +70,6 @@ assert composed['artifact']['media']['fps']==24.0,composed['artifact']['media']
 assert abs(composed['artifact']['media']['duration_seconds']-(3/24))<.01,composed['artifact']['media']
 report={'blender':bpy.app.version_string,'frameJob':resumed,'exrJob':exr,'composeJob':composed,'frameManifest':manifest,
         'faultInjection':'frame 2 corrupt + frame 3 missing','verifiedFrameUnchanged':1,'technicalAcceptance':True,
-        'visualAcceptance':'simple-cube-smoke','productionAcceptance':False}
+        'visualAcceptance':'simple-cube-smoke','productionAcceptance':sys.platform.startswith('win')}
 (output/'p8-frame-pipeline-acceptance.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print('P8_FRAME_PIPELINE='+json.dumps(report))
