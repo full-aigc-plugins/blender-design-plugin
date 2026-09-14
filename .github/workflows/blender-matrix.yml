@@ -55,18 +55,21 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ffmpeg
 
-      - name: Download and verify Blender (${{ matrix.version }} / ${{ matrix.platform }})
+      - name: Download Blender (${{ matrix.version }} / ${{ matrix.platform }})
         shell: bash
+        run: curl -fSL "${{ matrix.url }}" -o "${{ matrix.artifact }}"
+
+      - name: Verify SHA-256
+        shell: python
         run: |
-          archive="${{ matrix.artifact }}"
-          curl -fSL "${{ matrix.url }}" -o "$archive"
-          actual=$(shasum -a 256 "$archive" | awk '{print $1}')
-          expected="${{ matrix.sha256 }}"
-          if [ "$actual" != "$expected" ]; then
-            echo "SHA-256 mismatch: $actual (expected $expected)"
-            exit 1
-          fi
-          echo "SHA-256 verified: $actual"
+          import hashlib, sys
+          expected = "${{ matrix.sha256 }}"
+          with open("${{ matrix.artifact }}", "rb") as f:
+              actual = hashlib.sha256(f.read()).hexdigest()
+          if actual != expected:
+              print(f"SHA-256 mismatch: {actual} (expected {expected})", file=sys.stderr)
+              sys.exit(1)
+          print(f"SHA-256 verified: {actual}")
 
       - name: Extract Blender (Windows)
         if: runner.os == 'Windows'
@@ -93,10 +96,7 @@ jobs:
           "$BLENDER_BIN" --version
           mkdir -p artifacts/certification
           "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 \
-            --python scripts/api_surface_snapshot.py -- "$(pwd)/artifacts/certification"
-        # Note: api_surface_snapshot.py must exist for this step to succeed.
-        # If it does not yet exist, this step will fail and the matrix will
-        # report which combinations are blocked.
+            --python tests/runtime/api_surface_snapshot.py -- "$(pwd)/artifacts/certification"
 
       - name: Build connector package
         shell: bash

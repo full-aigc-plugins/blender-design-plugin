@@ -71,10 +71,6 @@ def parse_sha256_content(
             continue
         m = SHA256_LINE_RE.match(line)
         if not m:
-            # Check if it looks like a hash + filename but hash is wrong length
-            parts = line.split(None, 1)
-            if len(parts) == 2 and not SHA256_LINE_RE.match(line):
-                raise MalformedLineError(f"malformed sha256 line: {line!r}")
             raise MalformedLineError(f"malformed sha256 line: {line!r}")
         entries.append(Sha256Entry(sha256=m.group(1), filename=m.group(2)))
 
@@ -125,11 +121,6 @@ def update_combinations(
         )
 
         matching = [e for e in entries if e.filename == expected_artifact]
-        if not matching:
-            raise MissingArtifactError(
-                f"artifact {expected_artifact!r} not found after parsing"
-            )
-
         combo["sha256"] = matching[0].sha256
         combo["artifact"] = matching[0].filename
         print(f"  {version}/{platform}: {matching[0].sha256[:16]}... OK")
@@ -153,7 +144,7 @@ def main() -> int:
     print(f"Updating {len(combinations)} combinations...")
     try:
         update_combinations(combinations)
-    except (MissingArtifactError, MalformedLineError) as exc:
+    except (MissingArtifactError, MalformedLineError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
