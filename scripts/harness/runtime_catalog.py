@@ -161,6 +161,9 @@ TESTS = {
     'rig':'runtime/p2_character_acceptance.py','constraint':'runtime/p2_character_acceptance.py',
     'validation':'runtime/p3_animation_validation_smoke.py',
     'job':'runtime/p3_job_smoke.py',
+    'job.estimate': 'test_job_scheduler.py',
+    'job.list': 'test_job_scheduler.py',
+    'job.events': 'test_job_scheduler.py',
     'geometry_nodes':'runtime/p4_courtyard_acceptance.py',
     'sculpt':'runtime/p5_surface_simulation_acceptance.py','hair':'runtime/p5_surface_simulation_acceptance.py',
     'simulation':'runtime/p5_surface_simulation_acceptance.py',
@@ -235,6 +238,13 @@ PORTABILITY_VERIFIED = {
     'asset.dependencies',
     'asset.validate_portability',
     'asset.package_project',
+}
+
+# Task 12: scheduler, estimate, list, events verified by test_job_scheduler.py.
+SCHEDULER_VERIFIED = {
+    'job.estimate',
+    'job.list',
+    'job.events',
 }
 
 # Lifecycle commands graduated to L3 with runtime acceptance evidence.
@@ -345,6 +355,8 @@ def runtime_evidence(name):
                 'tests/runtime/p8_frame_pipeline_acceptance.py']
     if name == 'job.resume':
         return ['tests/runtime/p8_frame_pipeline_acceptance.py']
+    if name in SCHEDULER_VERIFIED:
+        return ['tests/test_job_scheduler.py']
     if name in {'sequence.set_speed','sequence.keyframe_volume'}:
         return ['tests/runtime/p8_vse_extended_acceptance.py']
     if name in {'sequence.add_compositor_modifier','compositor.add_file_output','compositor.create_strip_group'}:
@@ -534,7 +546,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'delivery': ['tests/runtime/foreground_lifecycle_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
-        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED or name in POSTPRODUCTION_VERIFIED or name in PORTABILITY_VERIFIED:
+        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED or name in POSTPRODUCTION_VERIFIED or name in PORTABILITY_VERIFIED or name in SCHEDULER_VERIFIED:
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),
@@ -549,8 +561,10 @@ class RuntimeCommandRegistry(CommandRegistry):
                            'docs/verification/p5-surface-simulation-acceptance.md' if name in SURFACE_MOTION_VERIFIED else
                            'docs/verification/postproduction-acceptance.md' if name in POSTPRODUCTION_VERIFIED else
                            'docs/verification/project-portability-acceptance.md' if name in PORTABILITY_VERIFIED else
+                           'docs/verification/scheduler-policy.md' if name in SCHEDULER_VERIFIED else
                            'docs/verification/blender-domain-coverage-matrix.md#sceneobjectcollection'],
-                'delivery': [('tests/runtime/p8_frame_pipeline_acceptance.py' if name.startswith('job.') else
+                'delivery': [('tests/test_job_scheduler.py' if name in SCHEDULER_VERIFIED else
+                             'tests/runtime/p8_frame_pipeline_acceptance.py' if name.startswith('job.') else
                               'tests/runtime/p8_vse_extended_acceptance.py' if name in {'sequence.set_speed','sequence.keyframe_volume'} else
                               'tests/runtime/p8_compositor_delivery_acceptance.py') if name in P8_VERIFIED else
                              'tests/runtime/p7_extension_status.py' if name=='rig.rigify_status' else

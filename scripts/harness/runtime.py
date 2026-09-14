@@ -90,7 +90,11 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     constraints = ConstraintCommands(bpy_module)
     advanced_animation = AdvancedAnimationCommands(bpy_module)
     quality = QualityCommands(bpy_module)
-    jobs = JobManager(bpy_module, approved_output_root)
+    from .scheduler import Scheduler as _Scheduler
+    _production_scheduler = _Scheduler(
+        process_factory=__import__('subprocess').Popen,
+    )
+    jobs = JobManager(bpy_module, approved_output_root, scheduler=_production_scheduler)
     geometry_nodes = GeometryNodeCommands(bpy_module, adapter=_version_adapter)
     sculpt = SculptCommands(bpy_module)
     retopo = RetopoCommands(bpy_module)
@@ -321,11 +325,20 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('validation.motion_discontinuity',quality.motion_discontinuity,
                       validate=closed_arguments(required=('object','frameStart','frameEnd','positionLimit','angleLimitDegrees')),risk='read')
     registry.register('job.submit',jobs.submit,
-                      validate=closed_arguments(required=('kind',),optional=('jobId','format','parameters')))
+                      validate=closed_arguments(required=('kind',),optional=('jobId','format','parameters','priority')))
     registry.register('job.status',jobs.status,validate=closed_arguments(required=('jobId',)),risk='read')
     registry.register('job.cancel',jobs.cancel,validate=closed_arguments(required=('jobId',)),risk='read')
     registry.register('job.recover',jobs.recover,validate=closed_arguments(required=('jobId',)),risk='read')
     registry.register('job.resume',jobs.resume,validate=closed_arguments(required=('jobId',)))
+    registry.register('job.estimate',jobs.estimate,
+                      validate=closed_arguments(required=('kind',),optional=('parameters',)),
+                      risk='read')
+    registry.register('job.list',jobs.list,
+                      validate=closed_arguments(optional=('state','offset','limit')),
+                      risk='read')
+    registry.register('job.events',jobs.events,
+                      validate=closed_arguments(optional=('jobId','afterRevision')),
+                      risk='read')
     registry.register('geometry_nodes.create_group',geometry_nodes.create_group,
                       validate=closed_arguments(required=('object','groupName','modifierName'),optional=('inputs',)))
     registry.register('geometry_nodes.add_node',geometry_nodes.add_node,

@@ -122,8 +122,8 @@ flowchart TB
 
 运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，且由注册表生成、不手工维护——下方数字可由 `docs/verification/capability-counts.json` 复现。
 
-- **Managed** 共注册 189 条命令：172 条 L3、3 条恢复/Rigify 工具通过 Windows 达到 L4、14 条 L1，横跨 35 个域，路由到 23 个 Skill。
-- **Connector** 在此之上增加 5 条可选 `official_uploader.*` 命令：191 条命令、169 条 L3、3 条 L4、19 条 L1，横跨 36 个域，路由到 24 个 Skill。
+- **Managed** 共注册 192 条命令：175 条 L3、3 条恢复/Rigify 工具通过 Windows 达到 L4、14 条 L1，横跨 35 个域，路由到 23 个 Skill。
+- **Connector** 在此之上增加 5 条可选 `official_uploader.*` 命令：197 条命令、175 条 L3、3 条 L4、19 条 L1，横跨 36 个域，路由到 24 个 Skill。
 
 两种模式**不合并为单一总数**。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”；Windows 前台 UI 接管仍未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
 

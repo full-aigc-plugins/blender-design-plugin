@@ -3,10 +3,10 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 189,
+      "total": 192,
       "L1": 14,
       "L2": 0,
-      "L3": 172,
+      "L3": 175,
       "L4": 3
     },
     "domains": {
@@ -141,6 +141,9 @@
       "hair.inspect",
       "hair.validate",
       "job.cancel",
+      "job.estimate",
+      "job.events",
+      "job.list",
       "job.recover",
       "job.resume",
       "job.status",
@@ -273,10 +276,10 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 194,
+      "total": 197,
       "L1": 19,
       "L2": 0,
-      "L3": 172,
+      "L3": 175,
       "L4": 3
     },
     "domains": {
@@ -413,6 +416,9 @@
       "hair.inspect",
       "hair.validate",
       "job.cancel",
+      "job.estimate",
+      "job.events",
+      "job.list",
       "job.recover",
       "job.resume",
       "job.status",
