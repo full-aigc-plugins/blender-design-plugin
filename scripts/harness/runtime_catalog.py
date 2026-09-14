@@ -40,6 +40,7 @@ FIELDS = {
     **{key: {'type': 'number'} for key in ('tolerance', 'angleDegrees', 'thickness', 'depth', 'width', 'distance')},
     **{key: {'type': 'integer', 'minimum': 1} for key in ('seedVertex', 'segments', 'cuts')},
     'allowOpenSurface': {'type': 'boolean'},
+    'allowDownload': {'type':'boolean'}, 'savePreferences': {'type':'boolean'},
     'modifierName': {'type': 'string', 'minLength': 1},
     'targetIndex': {'type': 'integer', 'minimum': 0},
     'objects': {'type': 'array', 'minItems': 2, 'items': {'type': 'object'}},
@@ -387,7 +388,7 @@ class RuntimeCommandRegistry(CommandRegistry):
         elif domain=='grease_pencil':context_types=['GREASEPENCIL']
         elif domain=='hair':context_types=['CURVES','MESH']
         defaults['context']={'objectTypes':context_types,'modes':['OBJECT'] if context_types else [],'requirements':requirements}
-        if name.startswith('rig.rigify_'):defaults['versions']['extensions']=['Rigify (optional, must already be installed)']
+        if name.startswith('rig.rigify_'):defaults['versions']['extensions']=['Rigify (bundled enable preferred; official download requires explicit authorization)']
         if name == 'job.submit':
             defaults['skillRouting'] = {'byArguments': {'kind': {
                 'EXPORT': ['codex-blender-render-compositing'],

@@ -29,6 +29,9 @@ L0=目录；L1=结构化接口；L2=配方与 Skill；L3=真实工程、视觉�
 - [x] P6：完整材质/纹理/烘焙/依赖打包、设备探测与 CPU 降级、passes/色彩/合成；探测 EXR/USD/Alembic，独立目录重开验证。
 - [x] P7：Grease Pencil、已知素材运动跟踪误差、VSE 时间线与输出、高级合成、已安装 Rigify 可选适配。
 - [x] P8：持久 PNG/多层 EXR 序列契约、逐帧哈希、显式断点补渲、独立 FFmpeg 合成；Scene/Image Sequence/Text/Speed/完整转场语义及 VSE Compositor Modifier。
+- [ ] P9：Rigify 受授权自动启用/官方安装降级与 Windows x64 L4。
+  - [x] macOS Blender 5.2.1 检测并启用捆绑 Rigify、保存偏好、生成 Human Meta-Rig 控制骨架；无下载。
+  - [ ] Windows 5.2.1 x64 官方 ZIP/SHA-256、后台恢复、FFmpeg、Rigify 与 Connector workflow 成功。
 - [ ] 发布门禁：
   - [x] 版本提升到 0.3.0，并同步 manifest、Connector、producer 与回执契约。
   - [x] 提交全部当前改动、推送 `main` 并核对本地/tracking/远端 SHA。

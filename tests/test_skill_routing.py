@@ -41,6 +41,7 @@ class SkillRoutingTests(unittest.TestCase):
         self.assertEqual(self.skills('simulation.cloth'),['codex-blender-simulation'])
         self.assertEqual(self.skills('tracking.solve_camera'),['codex-blender-tracking'])
         self.assertEqual(self.skills('sequence.transition'),['codex-blender-sequence-editing'])
+        self.assertEqual(self.skills('rig.rigify_install'),['codex-blender-character-rigging'])
 
     def test_cross_domain_commands_can_load_multiple_relevant_skills(self):
         self.assertEqual(self.skills('export.extended'),

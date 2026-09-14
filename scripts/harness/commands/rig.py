@@ -80,13 +80,53 @@ class RigCommands:
         return {'changedObjects':[],'result':self.objects.receipt(arm)|{'bones':bones,'boundMeshes':sorted(bound)}}
 
     def rigify_status(self,_arguments):
-        addon=self.bpy.context.preferences.addons.get('rigify');operator=hasattr(self.bpy.ops.pose,'rigify_generate')
-        return {'changedObjects':[],'result':{'installed':addon is not None,'enabled':addon is not None,
-          'operatorAvailable':operator and addon is not None,'blenderVersion':self.bpy.app.version_string}}
+        try:
+            import addon_utils
+            bundled=any(module.__name__=='rigify' for module in addon_utils.modules())
+        except (ImportError,AttributeError):bundled=False
+        addons=self.bpy.context.preferences.addons
+        modules=[item if isinstance(item,str) else str(getattr(item,'module','')) for item in addons]
+        enabled=addons.get('rigify') is not None or any(module=='rigify' or module.endswith('.rigify') for module in modules)
+        operator=hasattr(self.bpy.ops.pose,'rigify_generate')
+        return {'changedObjects':[],'result':{'installed':bundled or enabled,'bundledAvailable':bundled,'enabled':enabled,
+          'operatorAvailable':operator and enabled,'blenderVersion':self.bpy.app.version_string}}
+
+    def rigify_install(self,arguments):
+        allow_download=arguments.get('allowDownload',False);save_preferences=arguments.get('savePreferences',True)
+        if type(allow_download) is not bool or type(save_preferences) is not bool:
+            raise HarnessError('INVALID_ARGUMENT','allowDownload and savePreferences must be boolean')
+        before=self.rigify_status({})['result']
+        if before['enabled']:
+            return {'changedObjects':[],'result':before|{'mode':'already-enabled','preferencesSaved':False}}
+        if before['bundledAvailable']:
+            result=self.bpy.ops.preferences.addon_enable(module='rigify')
+            if result!={'FINISHED'}:raise HarnessError('EXTENSION_INSTALL_FAILED','bundled Rigify could not be enabled')
+            mode='bundled-enable'
+        else:
+            if not allow_download:
+                raise HarnessError('EXTENSION_INSTALL_AUTHORIZATION_REQUIRED','Rigify is not bundled; explicit allowDownload is required')
+            if not self.bpy.context.preferences.system.use_online_access:
+                raise HarnessError('ONLINE_ACCESS_DISABLED','enable Blender online access before downloading Rigify')
+            repositories=list(self.bpy.context.preferences.extensions.repos)
+            repo_index=next((index for index,repo in enumerate(repositories)
+                             if repo.enabled and str(repo.remote_url).startswith('https://extensions.blender.org/')),None)
+            if repo_index is None:raise HarnessError('CAPABILITY_UNAVAILABLE','official Blender Extensions repository is unavailable')
+            synced=self.bpy.ops.extensions.repo_sync_all()
+            if synced!={'FINISHED'}:raise HarnessError('EXTENSION_INSTALL_FAILED','official repository sync failed')
+            installed=self.bpy.ops.extensions.package_install(repo_index=repo_index,pkg_id='rigify',enable_on_install=True)
+            if installed!={'FINISHED'}:raise HarnessError('EXTENSION_INSTALL_FAILED','official Rigify installation failed')
+            mode='official-extension-download'
+        saved=False
+        if save_preferences:
+            saved=self.bpy.ops.wm.save_userpref()=={'FINISHED'}
+            if not saved:raise HarnessError('EXTENSION_INSTALL_FAILED','Rigify enabled but preferences could not be saved')
+        after=self.rigify_status({})['result']
+        if not after['operatorAvailable']:raise HarnessError('EXTENSION_INSTALL_FAILED','Rigify enabled but its generation operator is unavailable')
+        return {'changedObjects':[],'result':after|{'mode':mode,'preferencesSaved':saved,'downloadAttempted':mode=='official-extension-download'}}
 
     def rigify_generate(self,arguments):
         status=self.rigify_status({})['result']
-        if not status['operatorAvailable']:raise HarnessError('CAPABILITY_UNAVAILABLE','Rigify is not installed and enabled; no installation was attempted')
+        if not status['operatorAvailable']:raise HarnessError('CAPABILITY_UNAVAILABLE','Rigify is not enabled; run authorized rig.rigify_install first')
         metarig=self.objects.resolve(arguments,required_type={'ARMATURE'});before=set(self.bpy.data.objects)
         try:
             with self.context.active_object(metarig):result=self.bpy.ops.pose.rigify_generate()

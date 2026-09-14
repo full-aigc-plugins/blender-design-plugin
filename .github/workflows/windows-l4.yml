@@ -1,0 +1,58 @@
+name: Windows L4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  blender-windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install FFmpeg
+        shell: pwsh
+        run: choco install ffmpeg --no-progress -y
+      - name: Download and verify Blender 5.2.1 x64
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "blender-5.2.1-windows-x64.zip"
+          Invoke-WebRequest "https://download.blender.org/release/Blender5.2/blender-5.2.1-windows-x64.zip" -OutFile $archive
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = "0e631dad7d0cad6d5d18abdd2e2550f6c0213215334eda00ddbd3d22b96ecb2c"
+          if ($actual -ne $expected) { throw "Blender SHA-256 mismatch: $actual" }
+          $destination = Join-Path $env:RUNNER_TEMP "blender"
+          Expand-Archive $archive -DestinationPath $destination
+          $binary = Get-ChildItem $destination -Filter blender.exe -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $binary) { throw "blender.exe not found" }
+          "BLENDER_BIN=$binary" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Run Windows Python and distribution tests
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests
+          python scripts/validate_distribution.py .
+          python scripts/package_connector.py dist/codex-blender-connector-0.3.0-windows-l4.zip
+      - name: Run real Blender recovery and Rigify acceptance
+        shell: pwsh
+        run: |
+          & $env:BLENDER_BIN --version
+          New-Item -ItemType Directory -Path artifacts/frame-pipeline | Out-Null
+          New-Item -ItemType Directory -Path artifacts/rigify | Out-Null
+          & $env:BLENDER_BIN --background --factory-startup --python-exit-code 1 --python tests/runtime/p8_frame_pipeline_acceptance.py -- "$(Resolve-Path artifacts/frame-pipeline)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:BLENDER_BIN --background --factory-startup --python-exit-code 1 --python tests/runtime/p9_rigify_install_acceptance.py -- "$(Resolve-Path artifacts/rigify)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: codex-blender-windows-l4
+          path: |
+            artifacts
+            dist/codex-blender-connector-0.3.0-windows-l4.zip
+          if-no-files-found: warn
+          retention-days: 14

@@ -316,6 +316,8 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
     registry.register('tracking.setup_scene',tracking.setup_scene,validate=closed_arguments(required=('clip',)))
     registry.register('tracking.inspect',tracking.inspect,validate=closed_arguments(required=('clip',)),risk='read')
     registry.register('rig.rigify_status',rigs.rigify_status,validate=closed_arguments(),risk='read')
+    registry.register('rig.rigify_install',rigs.rigify_install,
+                      validate=closed_arguments(optional=('allowDownload','savePreferences')),risk='gated')
     registry.register('rig.rigify_generate',rigs.rigify_generate,validate=closed_arguments(optional=('name','objectId')))
     registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated")
     registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
