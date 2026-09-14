@@ -88,7 +88,12 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 | **非侵入模式（默认）** | 不需要 | 从零开始，Codex 启动 Blender 并临时加载 Harness |
 | **Connector 模式** | 安装可选轻量 Add-on | 继续操作已经打开的 Blender 工程 |
 
-非侵入模式注册 164 条命令、横跨 35 个域、路由到 23 个 Skill。Connector 模式额外加入 5 条可选 `official_uploader.*` 命令，合计 169 条命令、36 个域、24 个 Skill。两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。
+运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，由命令注册表生成，并可由 `docs/verification/capability-counts.json` 复现。
+
+- **非侵入模式（Managed）** 注册 164 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、7 条 L1、0 条 L2，横跨 35 个域，路由到 27 个内置 Skill 中的 23 个。
+- **Connector 模式** 额外加入 5 条可选 `official_uploader.*` 命令：合计 169 条命令，154 条 L3、3 条 L4、12 条 L1、0 条 L2，横跨 36 个域，路由到 24 个 Skill。
+
+两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。Windows 前台 UI 接管未达到 L4 验证，详见[运行证据](docs/verification/harness-runtime.md)。
 
 ### 不负责
 

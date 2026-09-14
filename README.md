@@ -88,7 +88,12 @@ Editable Blender scene + verified local exports
 | **Managed — default** | Not required | Starting a fresh task with a non-invasive temporary Harness |
 | **Connector** | Optional lightweight Add-on | Continuing work in an already-open Blender window |
 
-Managed mode registers 164 commands across 35 domains routed through 23 Skills. Connector mode adds the 5 optional `official_uploader.*` commands, for 169 commands, 36 domains, and 24 Skills. The two modes are never merged into a single count, and no combined coverage percentage is claimed.
+Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
+
+- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 27 bundled Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 169 commands, 154 at L3, 3 at L4, 12 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
+
+The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
 
 ### Not responsible for
 
