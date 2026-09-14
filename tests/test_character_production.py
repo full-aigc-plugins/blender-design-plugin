@@ -147,10 +147,11 @@ class FakeDepsgraph:
 class FakeEvaluatedMeshProxy:
     """Proxy returned by evaluated_get() that applies pose-bone transforms.
 
-    When to_mesh() is called, scale and location from pose bones are applied
-    per-vertex using vertex-group weights.  This is a simplified model that
-    is sufficient for testing the edge-shrinkage collapse metric:
+    When to_mesh() is called, scale, rotation and location from pose bones
+    are applied per-vertex using vertex-group weights.  This is a simplified
+    model that is sufficient for testing the edge-shrinkage collapse metric:
     - scale < 1 on weighted vertices -> edge shrinkage -> collapse > 0
+    - rotation with nonzero extent -> edge length change -> collapse > 0
     - location change with uniform weights -> rigid shift -> collapse == 0
     - no transform -> identity -> collapse == 0
     """
@@ -167,22 +168,43 @@ class FakeEvaluatedMeshProxy:
                     continue
                 sx, sy, sz = pose_bone.scale
                 lx, ly, lz = pose_bone.location
+                erx, ery, erz = pose_bone.rotation_euler
                 has_scale = abs(sx - 1.0) > 1e-6 or abs(sy - 1.0) > 1e-6 or abs(sz - 1.0) > 1e-6
                 has_loc = abs(lx) > 1e-6 or abs(ly) > 1e-6 or abs(lz) > 1e-6
-                if not has_scale and not has_loc:
+                has_rot = abs(erx) > 1e-6 or abs(ery) > 1e-6 or abs(erz) > 1e-6
+                if not has_scale and not has_loc and not has_rot:
                     continue
+                # Precompute rotation matrix (Euler XYZ).
+                cx, cy, cz = math.cos(erx), math.cos(ery), math.cos(erz)
+                sxr, syr, szr = math.sin(erx), math.sin(ery), math.sin(erz)
+                # R = Rz * Ry * Rx
+                r00 = cz * cy;  r01 = cz * syr * sxr - szr * cx;  r02 = cz * syr * cx + szr * sxr
+                r10 = szr * cy; r11 = szr * syr * sxr + cz * cx;  r12 = szr * syr * cx - cz * sxr
+                r20 = -syr;     r21 = cy * sxr;                    r22 = cy * cx
                 for v in vertices:
                     w = group._weights.get(v.index, 0)
                     if w <= 0:
                         continue
+                    px, py, pz = v.co
                     if has_scale:
-                        v.co[0] *= 1.0 + (sx - 1.0) * w
-                        v.co[1] *= 1.0 + (sy - 1.0) * w
-                        v.co[2] *= 1.0 + (sz - 1.0) * w
+                        px *= 1.0 + (sx - 1.0) * w
+                        py *= 1.0 + (sy - 1.0) * w
+                        pz *= 1.0 + (sz - 1.0) * w
+                    if has_rot:
+                        # Apply weighted rotation: lerp between identity and R.
+                        iw = 1.0 - w
+                        mr00 = iw + r00 * w; mr01 = r01 * w;       mr02 = r02 * w
+                        mr10 = r10 * w;       mr11 = iw + r11 * w; mr12 = r12 * w
+                        mr20 = r20 * w;       mr21 = r21 * w;       mr22 = iw + r22 * w
+                        nx = mr00 * px + mr01 * py + mr02 * pz
+                        ny = mr10 * px + mr11 * py + mr12 * pz
+                        nz = mr20 * px + mr21 * py + mr22 * pz
+                        px, py, pz = nx, ny, nz
                     if has_loc:
-                        v.co[0] += lx * w
-                        v.co[1] += ly * w
-                        v.co[2] += lz * w
+                        px += lx * w
+                        py += ly * w
+                        pz += lz * w
+                    v.co = [px, py, pz]
         # Build edges: chain vertices sequentially (same topology as the base mesh).
         edges = [FakeEdge(i, i + 1) for i in range(max(0, len(vertices) - 1))]
         return FakeEvaluatedMesh(vertices, edges)
@@ -202,16 +224,73 @@ class FakeBone:
         self.length = math.sqrt(sum((a - b) ** 2 for a, b in zip(head, tail)))
 
 
+class _LiveBoneProperty:
+    """Mimics Blender's mathutils live-wrapper: reads through to the bone's
+    current storage so that ``old = bone.scale; bone.scale = [0.1,0.1,0.1]``
+    makes ``old`` read back ``[0.1,0.1,0.1]`` -- exactly as in real Blender."""
+    __slots__ = ('_bone', '_slot')
+
+    def __init__(self, bone, slot):
+        object.__setattr__(self, '_bone', bone)
+        object.__setattr__(self, '_slot', slot)
+
+    def __getitem__(self, index):
+        return getattr(self._bone, '_' + self._slot)[index]
+
+    def __setitem__(self, index, value):
+        getattr(self._bone, '_' + self._slot)[index] = value
+
+    def __iter__(self):
+        return iter(getattr(self._bone, '_' + self._slot))
+
+    def __len__(self):
+        return len(getattr(self._bone, '_' + self._slot))
+
+    def __repr__(self):
+        return repr(getattr(self._bone, '_' + self._slot))
+
+    def __eq__(self, other):
+        if isinstance(other, (list, tuple)):
+            return list(self) == list(other)
+        return NotImplemented
+
+
+class _LiveBoneDescriptor:
+    """Descriptor that returns a _LiveBoneProperty, making getattr(bone, attr)
+    return a live wrapper that reads through to the bone's storage."""
+    def __init__(self, slot):
+        self._slot = slot
+
+    def __set_name__(self, owner, name):
+        self._name = name
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        return _LiveBoneProperty(obj, self._slot)
+
+    def __set__(self, obj, value):
+        target = getattr(obj, '_' + self._slot)
+        for i in range(len(target)):
+            target[i] = value[i]
+
+
 class FakePoseBone:
+    location = _LiveBoneDescriptor('location')
+    rotation_euler = _LiveBoneDescriptor('rotation_euler')
+    rotation_quaternion = _LiveBoneDescriptor('rotation_quaternion')
+    rotation_axis_angle = _LiveBoneDescriptor('rotation_axis_angle')
+    scale = _LiveBoneDescriptor('scale')
+
     def __init__(self, name, rotation_mode='XYZ'):
         self.name = name
         self.matrix = FakeMatrix()
         self.constraints = []
-        self.location = [0, 0, 0]
-        self.rotation_euler = [0, 0, 0]
-        self.rotation_quaternion = [1, 0, 0, 0]
-        self.rotation_axis_angle = [0, 0, 0, 1]
-        self.scale = [1, 1, 1]
+        self._location = [0, 0, 0]
+        self._rotation_euler = [0, 0, 0]
+        self._rotation_quaternion = [1, 0, 0, 0]
+        self._rotation_axis_angle = [0, 0, 0, 1]
+        self._scale = [1, 1, 1]
         self.rotation_mode = rotation_mode
         self.animation_data = None
 
@@ -1023,6 +1102,132 @@ class TestCollapseTripCase(unittest.TestCase):
                 'thresholds': {'collapse': 0.5},
             })
         self.assertEqual(ctx.exception.code, 'ROTATION_MODE_MISMATCH')
+
+
+class TestPoseRestorationLeak(unittest.TestCase):
+    """Detect the live-wrapper pose restoration bug.
+
+    In Blender, ``getattr(pose_bone, 'scale')`` returns a live mathutils
+    reference, not a copy.  If the code does ``old = getattr(bone, attr);
+    setattr(bone, attr, new_value)`` and later ``setattr(bone, attr, old)``,
+    the restore is a no-op because ``old`` now reads the new value.
+
+    This test applies a non-trivial pose first, then an identity pose, and
+    asserts the identity pose reports collapse == 0 (proving the bone was
+    properly restored between calls).  It also asserts the bone is back to
+    its original value after all calls.
+    """
+
+    def _make_weighted_scene(self):
+        bpy = FakeBpy()
+        bones = [FakeBone('bone_main', [0, 0, 0], [0, 0, 1])]
+        arm_obj = FakeArmatureObject('Rig', bones)
+        mesh_obj = FakeMeshObject('Body', 8, armature=arm_obj)
+        group = mesh_obj.vertex_groups.new('bone_main')
+        for v in mesh_obj.data.vertices:
+            group.add([v.index], 1.0, 'REPLACE')
+        bpy.data.objects[mesh_obj.name] = mesh_obj
+        bpy.data.objects[arm_obj.name] = arm_obj
+        return bpy, mesh_obj, arm_obj
+
+    def test_identity_after_rotation_gives_zero_collapse_and_restores_bone(self):
+        """Ordered control: rotation pose then identity pose.
+
+        After the rotation pose, the bone must be restored to its original
+        value (catches the live-wrapper leak).  The identity pose must then
+        report collapse == 0.
+        """
+        bpy, _, arm_obj = self._make_weighted_scene()
+        cmds = RigCommands(bpy)
+        bone = arm_obj.pose.bones['bone_main']
+        orig_rot = list(bone.rotation_euler)
+
+        # First: apply a non-trivial rotation.
+        cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'rotation_euler', 'value': [2.8, 0, 0]}],
+            'thresholds': {'collapse': 1.0},
+        })
+        # Bone must be restored after the rotation pose.
+        self.assertEqual(list(bone.rotation_euler), orig_rot,
+                         msg='Bone rotation_euler was not restored after rotation pose; '
+                             'live-wrapper leak detected')
+
+        # Second: apply an identity rotation -- must see no residual deformation.
+        result = cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'rotation_euler', 'value': [0, 0, 0]}],
+            'thresholds': {'collapse': 1.0},
+        })
+        collapse = result['result']['results'][0]['collapse']
+        self.assertAlmostEqual(collapse, 0.0, delta=1e-6,
+                               msg='Identity pose after rotation must give collapse == 0')
+        # Bone must still be restored after the identity pose.
+        self.assertEqual(list(bone.rotation_euler), orig_rot,
+                         msg='Bone rotation_euler was not restored after identity pose')
+
+    def test_pose_bone_restored_after_validation(self):
+        """The pose bone must be back to its original value after validation."""
+        bpy, _, arm_obj = self._make_weighted_scene()
+        cmds = RigCommands(bpy)
+        bone = arm_obj.pose.bones['bone_main']
+
+        # Record original values.
+        orig_scale = list(bone.scale)
+        orig_loc = list(bone.location)
+
+        # Apply a scale pose.
+        cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [0.1, 0.1, 0.1]}],
+            'thresholds': {'collapse': 1.0},
+        })
+
+        # Bone must be restored.
+        self.assertEqual(list(bone.scale), orig_scale,
+                         msg='Bone scale was not restored after validate_deformation')
+        self.assertEqual(list(bone.location), orig_loc,
+                         msg='Bone location was not restored after validate_deformation')
+
+    def test_identity_after_scale_restores_bone_and_gives_zero_collapse(self):
+        """Ordered control: scale-to-0.1 then identity scale.
+
+        After the scale pose, the bone must be restored.  The identity pose
+        must then report collapse == 0.
+        """
+        bpy, _, arm_obj = self._make_weighted_scene()
+        cmds = RigCommands(bpy)
+        bone = arm_obj.pose.bones['bone_main']
+        orig_scale = list(bone.scale)
+
+        # First: scale to 0.1.
+        cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [0.1, 0.1, 0.1]}],
+            'thresholds': {'collapse': 1.0},
+        })
+        # Bone must be restored after the scale pose.
+        self.assertEqual(list(bone.scale), orig_scale,
+                         msg='Bone scale was not restored after scale pose; '
+                             'live-wrapper leak detected')
+
+        # Second: identity scale -- must see no residual deformation.
+        result = cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [1, 1, 1]}],
+            'thresholds': {'collapse': 1.0},
+        })
+        collapse = result['result']['results'][0]['collapse']
+        self.assertAlmostEqual(collapse, 0.0, delta=1e-6,
+                               msg='Identity scale after scale-to-0.1 must give collapse == 0')
+        # Bone must still be restored after the identity pose.
+        self.assertEqual(list(bone.scale), orig_scale,
+                         msg='Bone scale was not restored after identity pose')
 
 
 if __name__ == '__main__':

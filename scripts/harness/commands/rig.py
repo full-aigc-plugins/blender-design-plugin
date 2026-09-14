@@ -291,6 +291,14 @@ class RigCommands:
 
         collapse = max over edges of max(0, 1 - posedLen / restLen)
 
+        **Known limitation**: the ``max over edges`` formulation is dominated
+        by the shortest edge above the floor (1e-4 scene units).  A mesh with
+        near-degenerate edges (e.g. 0.1 mm) will register large shrinkage from
+        sub-micron deformation on that edge alone.  The ``p99Shrinkage`` field
+        gives the 99th-percentile shrinkage, which is more robust for
+        production gating when short edges are present.  Use ``collapse``
+        (the max) for regression detection and ``p99Shrinkage`` for acceptance.
+
         Each pose dict must contain *bone*, *dataPath* and *value*.  If
         *dataPath* is a rotation channel incompatible with the bone's
         *rotation_mode*, a ``ROTATION_MODE_MISMATCH`` error is raised.
@@ -330,55 +338,82 @@ class RigCommands:
 
             parsed_value=_pose_value(value,data_path)
             temp_frame=9000+pose_index
-            old_value=getattr(pose_bone,data_path,None)
-            setattr(pose_bone,data_path,parsed_value)
-            pose_bone.keyframe_insert(data_path=data_path,frame=temp_frame)
-            scene.frame_set(temp_frame)
-            self.bpy.context.view_layer.update()
+            # Snapshot the current value before writing.  Blender's
+            # mathutils properties return a live reference, not a copy;
+            # getattr(bone, 'scale') reads through to whatever the bone
+            # currently holds.  We must capture a plain copy so the
+            # restore below actually resets the bone to its pre-pose state.
+            old_raw=getattr(pose_bone,data_path,None)
+            if old_raw is not None:
+                old_value=list(old_raw)
+            else:
+                old_value=None
+            try:
+                setattr(pose_bone,data_path,parsed_value)
+                pose_bone.keyframe_insert(data_path=data_path,frame=temp_frame)
+                scene.frame_set(temp_frame)
+                self.bpy.context.view_layer.update()
 
-            # ---- posed evaluated mesh ----
-            depsgraph=self.bpy.context.evaluated_depsgraph_get()
-            eval_posed=mesh.evaluated_get(depsgraph)
-            posed_mesh=eval_posed.to_mesh()
+                # ---- posed evaluated mesh ----
+                depsgraph=self.bpy.context.evaluated_depsgraph_get()
+                eval_posed=mesh.evaluated_get(depsgraph)
+                posed_mesh=eval_posed.to_mesh()
 
-            # Topology must not change under armature deformation.
-            if len(neutral_verts)!=len(posed_mesh.vertices):
-                raise HarnessError('TOPOLOGY_MISMATCH',
-                    f'neutral has {len(neutral_verts)} vertices but posed has '
-                    f'{len(posed_mesh.vertices)} -- armature changed topology')
+                # Topology must not change under armature deformation.
+                if len(neutral_verts)!=len(posed_mesh.vertices):
+                    raise HarnessError('TOPOLOGY_MISMATCH',
+                        f'neutral has {len(neutral_verts)} vertices but posed has '
+                        f'{len(posed_mesh.vertices)} -- armature changed topology')
 
-            # ---- edge-shrinkage metric ----
-            max_collapse=0.0
-            max_stretch=0.0
-            edges_compared=0
-            for i,j in neutral_edges:
-                ni=neutral_verts[i]; nj=neutral_verts[j]
-                pi=posed_mesh.vertices[i].co; pj=posed_mesh.vertices[j].co
-                rest_len=math.sqrt(sum((a-b)**2 for a,b in zip(ni,nj)))
-                posed_len=math.sqrt(sum((a-b)**2 for a,b in zip(pi,pj)))
-                if rest_len>1e-12:
-                    edges_compared+=1
-                    ratio=posed_len/rest_len
-                    shrinkage=max(0.0,1.0-ratio)
-                    stretch=max(0.0,ratio-1.0)
-                    if shrinkage>max_collapse: max_collapse=shrinkage
-                    if stretch>max_stretch: max_stretch=stretch
+                # ---- edge-shrinkage metric ----
+                # Edge-length floor: edges shorter than this are excluded.
+                # 1e-4 (0.1 mm) avoids degenerate short edges dominating the
+                # max collapse; the floor is deliberately above the old 1e-12
+                # guard to make the metric meaningful on production meshes.
+                edge_floor=1e-4
+                max_collapse=0.0
+                max_stretch=0.0
+                edges_compared=0
+                shrinkages=[]
+                for i,j in neutral_edges:
+                    ni=neutral_verts[i]; nj=neutral_verts[j]
+                    pi=posed_mesh.vertices[i].co; pj=posed_mesh.vertices[j].co
+                    rest_len=math.sqrt(sum((a-b)**2 for a,b in zip(ni,nj)))
+                    posed_len=math.sqrt(sum((a-b)**2 for a,b in zip(pi,pj)))
+                    if rest_len>edge_floor:
+                        edges_compared+=1
+                        ratio=posed_len/rest_len
+                        shrinkage=max(0.0,1.0-ratio)
+                        stretch=max(0.0,ratio-1.0)
+                        shrinkages.append(shrinkage)
+                        if shrinkage>max_collapse: max_collapse=shrinkage
+                        if stretch>max_stretch: max_stretch=stretch
 
-            eval_posed.to_mesh_clear()
+                eval_posed.to_mesh_clear()
 
-            # ---- clean up temporary keyframe (slotted-action safe) ----
-            arm_action=getattr(getattr(armature,'animation_data',None),'action',None)
-            bone_path=f'pose.bones["{bone_name}"].{data_path}'
-            _cleanup_temp_keyframes(arm_action,bone_path,temp_frame)
-            if old_value is not None:
-                setattr(pose_bone,data_path,old_value)
+                # p99 shrinkage: more robust than max on meshes with
+                # near-degenerate edges.
+                if shrinkages:
+                    shrinkages.sort()
+                    p99_index=max(0,int(len(shrinkages)*0.99)-1)
+                    p99_shrinkage=shrinkages[p99_index]
+                else:
+                    p99_shrinkage=0.0
 
-            passed=max_collapse<=collapse_threshold
-            results.append({'bone':bone_name,'dataPath':data_path,
-                            'collapse':max_collapse,'maxStretch':max_stretch,
-                            'edgesCompared':edges_compared,
-                            'verticesCompared':len(neutral_verts),
-                            'passed':passed})
+                passed=max_collapse<=collapse_threshold
+                results.append({'bone':bone_name,'dataPath':data_path,
+                                'collapse':max_collapse,'maxStretch':max_stretch,
+                                'p99Shrinkage':p99_shrinkage,
+                                'edgesCompared':edges_compared,
+                                'verticesCompared':len(neutral_verts),
+                                'passed':passed})
+            finally:
+                # ---- clean up temporary keyframe (slotted-action safe) ----
+                arm_action=getattr(getattr(armature,'animation_data',None),'action',None)
+                bone_path=f'pose.bones["{bone_name}"].{data_path}'
+                _cleanup_temp_keyframes(arm_action,bone_path,temp_frame)
+                if old_value is not None:
+                    setattr(pose_bone,data_path,old_value)
 
         # Restore original frame.
         scene.frame_set(original_frame)

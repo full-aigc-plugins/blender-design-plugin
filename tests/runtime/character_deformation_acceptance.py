@@ -234,8 +234,17 @@ deform_arm_obj = bpy.data.objects[deform_arm['name']]
 for pb in deform_arm_obj.pose.bones:
     pb.rotation_mode = 'XYZ'
 
-# --- No-op control: identity pose must give collapse == 0 ---
-print("  --- No-op control (identity pose) ---")
+# Record rest pose values for restoration checks.
+rest_pose_values = {}
+for pb in deform_arm_obj.pose.bones:
+    rest_pose_values[pb.name] = {
+        'location': list(pb.location),
+        'rotation_euler': list(pb.rotation_euler),
+        'scale': list(pb.scale),
+    }
+
+# --- No-op control BEFORE extreme poses: identity pose must give collapse == 0 ---
+print("  --- No-op control before extreme poses (identity rotation) ---")
 noop_result = registry_d.dispatch('rig.validate_deformation', {
     'mesh': {'objectId': deform_body['objectId']},
     'armature': {'objectId': deform_arm['objectId']},
@@ -265,6 +274,38 @@ print(f"  collapse_threshold: {COLLAPSE_THRESHOLD}")
 print(f"  all_poses_pass: {deform_pass}")
 for r in deform_result['result']['results']:
     print(f"    {r['bone']}: collapse={r['collapse']:.6f}, edgesCompared={r['edgesCompared']}")
+
+# --- Verify pose bones were restored after extreme poses ---
+print("  --- Pose bone restoration check after extreme poses ---")
+bones_restored_after_extreme = True
+for pb in deform_arm_obj.pose.bones:
+    rest = rest_pose_values.get(pb.name)
+    if rest is None:
+        continue
+    for attr in ('location', 'rotation_euler', 'scale'):
+        actual = list(getattr(pb, attr))
+        expected = rest[attr]
+        if any(abs(a - e) > 1e-6 for a, e in zip(actual, expected)):
+            print(f"    FAIL: {pb.name}.{attr} = {actual}, expected {expected}")
+            bones_restored_after_extreme = False
+if bones_restored_after_extreme:
+    print("    all pose bones restored OK")
+else:
+    print("    FAIL: one or more pose bones were NOT restored")
+
+# --- No-op control AFTER extreme poses: identity rotation must give collapse == 0 ---
+# This catches the live-wrapper leak: if the extreme poses failed to restore,
+# the identity pose will see residual deformation.
+print("  --- No-op control after extreme poses (identity rotation) ---")
+noop_after_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
+    'poses': [{'bone': 'upper_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 0, 0]}],
+    'thresholds': {'collapse': COLLAPSE_THRESHOLD},
+})
+noop_after_collapse = noop_after_result['result']['results'][0]['collapse']
+noop_after_pass = abs(noop_after_collapse) < 1e-6
+print(f"    collapse={noop_after_collapse:.10f}, pass={noop_after_pass}")
 
 # --- Verify no temp keyframes (frame >= 9000) remain ---
 arm_action = getattr(getattr(deform_arm_obj, 'animation_data', None), 'action', None)
@@ -320,6 +361,32 @@ print(f"  max_collapse: {trip_max_collapse:.6f}")
 print(f"  any_failed: {trip_any_failed}")
 for r in trip_result['result']['results']:
     print(f"    {r['bone']}: collapse={r['collapse']:.6f}, edgesCompared={r['edgesCompared']}")
+
+# --- Verify bone was restored after trip case ---
+print("  --- Bone restoration check after trip case ---")
+trip_bone_restored = True
+for attr in ('location', 'rotation_euler', 'scale'):
+    actual = list(getattr(deform_arm_obj.pose.bones['upper_arm.R'], attr))
+    expected = rest_pose_values['upper_arm.R'][attr]
+    if any(abs(a - e) > 1e-6 for a, e in zip(actual, expected)):
+        print(f"    FAIL: upper_arm.R.{attr} = {actual}, expected {expected}")
+        trip_bone_restored = False
+if trip_bone_restored:
+    print("    upper_arm.R restored OK after trip case")
+else:
+    print("    FAIL: upper_arm.R was NOT restored after trip case")
+
+# --- No-op control AFTER trip case: identity scale must give collapse == 0 ---
+print("  --- No-op control after trip case (identity scale) ---")
+noop_trip_after_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
+    'poses': [{'bone': 'upper_arm.R', 'dataPath': 'scale', 'value': [1, 1, 1]}],
+    'thresholds': {'collapse': TRIP_THRESHOLD},
+})
+noop_trip_after_collapse = noop_trip_after_result['result']['results'][0]['collapse']
+noop_trip_after_pass = abs(noop_trip_after_collapse) < 1e-6
+print(f"    collapse={noop_trip_after_collapse:.10f}, pass={noop_trip_after_pass}")
 
 # -------------------------------------------------------------------
 # Bullet 5: Save/reopen for three body types (fresh scene)
@@ -445,7 +512,9 @@ print(f"  root_motion: keyframes={root_motion_res['result']['keyframeCount']}, o
 # -------------------------------------------------------------------
 all_passed = (weight_sum_pass and influence_cap_pass and no_unweighted_pass
               and noop_pass and deform_pass and keyframe_cleanup_pass
+              and bones_restored_after_extreme and noop_after_pass
               and noop_trip_pass and trip_any_failed
+              and trip_bone_restored and noop_trip_after_pass
               and all(v['passed'] for v in save_reopen_results.values())
               and p2_pass)
 
@@ -465,6 +534,8 @@ report = {
         'results': deform_result['result']['results'],
         'allPassed': deform_pass,
         'keyframeCleanupPass': keyframe_cleanup_pass,
+        'bonesRestoredAfterExtreme': bones_restored_after_extreme,
+        'noopAfterExtreme': {'collapse': noop_after_collapse, 'pass': noop_after_pass},
     },
     'collapseTripCase': {
         'tripThreshold': TRIP_THRESHOLD,
@@ -472,6 +543,8 @@ report = {
         'maxCollapse': trip_max_collapse,
         'anyFailed': trip_any_failed,
         'results': trip_result['result']['results'],
+        'boneRestored': trip_bone_restored,
+        'noopAfterTrip': {'collapse': noop_trip_after_collapse, 'pass': noop_trip_after_pass},
     },
     'saveReopen': save_reopen_results,
     'p2Compatibility': {
