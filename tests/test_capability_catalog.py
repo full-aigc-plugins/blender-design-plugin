@@ -122,7 +122,16 @@ class CapabilityCatalogTests(unittest.TestCase):
                 self.assertTrue((root / resource).is_file(), resource)
             for skill in entry['skills']:
                 self.assertTrue((root / 'skills' / skill / 'SKILL.md').is_file(), skill)
-            self.assertIn(entry['maturity'], {'L1','L2','L3'})
+            self.assertIn(entry['maturity'], {'L1','L2','L3','L4'})
+
+    def test_windows_verified_recovery_and_rigify_commands_are_l4(self):
+        from scripts.harness.runtime import build_registry
+        from tests.test_design_commands import FakeBpy
+        registry=build_registry(FakeBpy())
+        for name in ('job.resume','rig.rigify_install','rig.rigify_generate'):
+            capability=registry.describe_capability({'id':name})
+            self.assertEqual(capability['maturity'],'L4',name)
+            self.assertTrue(capability['verification']['recoveryAndCompatibility'],name)
 
     def test_unimplemented_domains_are_not_commands(self):
         catalog = self.registry().list_capabilities({})

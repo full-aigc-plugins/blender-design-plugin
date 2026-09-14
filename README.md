@@ -120,7 +120,7 @@ The hybrid baseline keeps Blender visible and interactive for design work while 
 - Persistent PNG or multilayer EXR sequences with per-frame hashes, explicit missing-frame resume, and separate FFmpeg composition
 - Snapshot-isolated background jobs with status, cancellation, non-restarting recovery, and explicitly requested frame resume
 
-Running-session truth comes from `capability.list` and `capability.describe`. The current macOS Blender 5.2.1 baseline records 162 tools: 137 with L3 evidence and 25 at L1, routed through 22 Skills. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Rigify generation is unavailable when Rigify is not installed, and Windows is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
+Running-session truth comes from `capability.list` and `capability.describe`. The current catalog records 163 tools: 136 at L3, 3 Windows-verified recovery/Rigify tools at L4, and 24 at L1, routed through 22 Skills. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
 
 ## Guardrails are part of the product
 

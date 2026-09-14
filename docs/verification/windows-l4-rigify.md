@@ -4,7 +4,9 @@
 
 `.github/workflows/windows-l4.yml` 在真实 `windows-2025` Runner 下载 Blender 官方 5.2.1 x64 ZIP，并以官方 SHA-256 `0e631dad7d0cad6d5d18abdd2e2550f6c0213215334eda00ddbd3d22b96ecb2c` 校验。流程运行完整 Python 回归、分发校验、Connector 打包、持久帧故障恢复、FFmpeg 合成和 Rigify 生成。
 
-Windows L4 只在该 workflow 成功且 artifact 可读取后成立。它证明 Windows x64 后台 Blender、FFmpeg、恢复和打包兼容；GitHub Runner 没有交互桌面，因此不把前台 Blender UI/人工接管标成 L4。
+Windows L4 已由 [GitHub Actions run 34798159616](https://github.com/partme-ai/codex-blender-plugin/actions/runs/34798159616) 验证。远端 artifact 下载并复核后，补帧恢复和 Rigify 报告均为 `productionAcceptance: true`。本地证据镜像位于 `/Users/wandl/workspaces/workspace-partme-ai/deliverables/codex-blender-windows-l4-34798159616/`。
+
+该证据证明 Windows Server 2025 x64、Blender 5.2.1、Python 3.13、真实 Named Pipe 认证往返、Cycles CPU 后台渲染、缺帧恢复、多层 EXR、FFmpeg/ffprobe、Rigify 和 Connector 打包兼容。GitHub Runner 没有交互桌面，因此不把前台 Blender UI/人工接管标成 L4。
 
 ## Rigify 自动安装边界
 

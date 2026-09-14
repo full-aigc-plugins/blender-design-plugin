@@ -180,6 +180,7 @@ P7_VERIFIED = {'grease_pencil.create','grease_pencil.add_material','grease_penci
  'tracking.inspect','compositor.add_tracking_mask','rig.rigify_status'}
 P8_VERIFIED = {'job.submit','job.resume','sequence.set_speed','sequence.keyframe_volume',
  'sequence.add_compositor_modifier','compositor.add_file_output','compositor.create_strip_group'}
+P9_L4_VERIFIED = {'job.resume','rig.rigify_install','rig.rigify_generate'}
 
 UI_COMMANDS = {'view.set', 'view.focus', 'view.present', 'playback.set', 'sculpt.brush_stroke'}
 LONG_COMMANDS = {'preview.capture', 'export.file', 'official_uploader.render_and_link'}
@@ -251,6 +252,8 @@ def command_skills(name, domain, metadata):
 
 
 def runtime_evidence(name):
+    if name in {'rig.rigify_install','rig.rigify_generate'}:
+        return ['tests/runtime/p9_rigify_install_acceptance.py']
     if name == 'job.submit':
         return ['tests/runtime/p3_job_smoke.py','tests/runtime/p3_foreground_job_bootstrap.py',
                 'tests/runtime/p8_frame_pipeline_acceptance.py']
@@ -428,6 +431,17 @@ class RuntimeCommandRegistry(CommandRegistry):
                              'tests/runtime/p1_delivery_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
+        if name in P9_L4_VERIFIED:
+            defaults['maturity']='L4'
+            defaults['verification']={
+                'runtime':runtime_evidence(name),
+                'visual':['docs/verification/windows-l4-rigify.md'],
+                'delivery':['.github/workflows/windows-l4.yml',
+                            'tests/runtime/p8_frame_pipeline_acceptance.py' if name=='job.resume'
+                            else 'tests/runtime/p9_rigify_install_acceptance.py'],
+                'recoveryAndCompatibility':['docs/verification/windows-l4-rigify.md',
+                                            '.github/workflows/windows-l4.yml'],
+            }
         super().register(name, handler, validate=validate, risk=risk, metadata=defaults,
                          availability=availability or (lambda: self._probe(name)))
 
@@ -448,7 +462,7 @@ class RuntimeCommandRegistry(CommandRegistry):
         if name in {'tracking.solve_camera','tracking.setup_scene'}:
             if getattr(getattr(self.bpy,'app',None),'background',False):return {'status':'unavailable','reason':'Foreground CLIP_EDITOR required'}
         if name=='rig.rigify_generate' and self.bpy.context.preferences.addons.get('rigify') is None:
-            return {'status':'unavailable','reason':'Rigify is not installed and enabled'}
+            return {'status':'unavailable','reason':'Rigify is not enabled; run authorized rig.rigify_install'}
         if name.startswith('official_uploader.'):
             return {'status': 'unknown', 'reason': 'Run official_uploader.inspect to verify the optional adapter'}
         if name in {'scene.inspect', 'session.status', 'session.capabilities'}:
