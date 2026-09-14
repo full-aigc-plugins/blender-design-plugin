@@ -4,7 +4,9 @@ These describe existing commands, not additional supported Blender operations.
 Argument-specific object/path/authorization checks remain in the command/session.
 """
 from copy import deepcopy
+from pathlib import Path
 
+from .errors import HarnessError
 from .registry import CommandRegistry
 from .commands.validation import closed_arguments
 
@@ -468,3 +470,118 @@ class RuntimeCommandRegistry(CommandRegistry):
         if name in {'scene.inspect', 'session.status', 'session.capabilities'}:
             return {'status': 'available', 'reason': None}
         return {'status': 'unknown', 'reason': 'Basic environment checked; target arguments and session policy still require validation'}
+
+
+# ---------------------------------------------------------------------------
+# Generated coverage summaries (1.0 production baseline)
+#
+# The documented command/Skill counts are generated from the registry, never
+# hand-maintained: the 0.3.x docs carried a single merged figure that matched
+# neither runtime mode and drifted unnoticed. Managed and Connector are counted
+# separately on purpose -- a combined total is forbidden by the 1.0 spec.
+# ---------------------------------------------------------------------------
+
+SUPPORTED_RUNTIME_MODES = ('managed', 'connector')
+_MATURITY_GRADES = ('L1', 'L2', 'L3', 'L4')
+_COUNT_PAGE_LIMIT = 100
+
+
+def _registration_only_bpy():
+    """A stub sufficient to *register* commands for counting.
+
+    A coverage count describes the catalog, not a live Blender. Registration
+    only needs the attributes handlers close over, so no scene is involved and
+    availability probes are never run.
+    """
+    import os
+    import types
+
+    module = types.ModuleType('bpy')
+    module.app = types.SimpleNamespace(
+        version_string='0.0.0', version=(0, 0, 0), version_file=(0, 0, 0), background=True)
+    module.path = types.SimpleNamespace(abspath=lambda value: os.path.abspath(str(value)))
+    module.context = types.SimpleNamespace(scene=None, preferences=None)
+    module.data = types.SimpleNamespace(objects=[], materials=[], scenes=[])
+    module.ops = types.SimpleNamespace()
+    return module
+
+
+def generate_coverage_summary(runtime_mode):
+    """Count the registered capability surface for one runtime mode.
+
+    Returns a dict with the command total and per-maturity counts, the domain
+    names, the Skill counts (on disk vs referenced by the catalog), and the
+    command ids (so a caller can diff the two modes).
+    """
+    if runtime_mode not in SUPPORTED_RUNTIME_MODES:
+        raise HarnessError(
+            'INVALID_ARGUMENT',
+            'runtime_mode must be one of {0}'.format(', '.join(SUPPORTED_RUNTIME_MODES)),
+        )
+    # Imported lazily: runtime.py imports this module at import time.
+    from .runtime import build_registry
+
+    registry = build_registry(_registration_only_bpy(), runtime_mode=runtime_mode)
+
+    commands = {grade: 0 for grade in _MATURITY_GRADES}
+    domain_names = set()
+    referenced_skills = set()
+    command_ids = []
+    offset = 0
+    while True:
+        page = registry.list_capabilities({'offset': offset, 'limit': _COUNT_PAGE_LIMIT})
+        batch = page.get('items', [])
+        if not batch:
+            break
+        for item in batch:
+            command_ids.append(item['id'])
+            grade = item.get('maturity', 'L1')
+            commands[grade] = commands.get(grade, 0) + 1
+            if item.get('domain'):
+                domain_names.add(item['domain'])
+            for skill in item.get('skills') or ():
+                referenced_skills.add(skill)
+        offset = page.get('nextOffset')
+        if offset is None:
+            break
+
+    skills_dir = Path(__file__).resolve().parents[2] / 'skills'
+    on_disk = sorted(entry.name for entry in skills_dir.iterdir() if entry.is_dir()) \
+        if skills_dir.is_dir() else []
+
+    return {
+        'runtimeMode': runtime_mode,
+        'commands': dict(
+            {'total': len(command_ids)},
+            **{grade: commands.get(grade, 0) for grade in _MATURITY_GRADES}
+        ),
+        'domains': {'total': len(domain_names), 'names': sorted(domain_names)},
+        'skills': {
+            'onDisk': len(on_disk),
+            'referenced': len(referenced_skills),
+            'referencedNames': sorted(referenced_skills),
+        },
+        'commandIds': sorted(command_ids),
+    }
+
+
+def generate_coverage_summaries():
+    """Both runtime modes plus their difference.
+
+    The difference is reported explicitly because the Connector adds the
+    optional official uploader surface; folding it into a single number would
+    hide exactly the distinction the 1.0 spec requires.
+    """
+    managed = generate_coverage_summary('managed')
+    connector = generate_coverage_summary('connector')
+    managed_ids = set(managed['commandIds'])
+    connector_ids = set(connector['commandIds'])
+    return {
+        'generatedFrom': 'scripts/harness/runtime_catalog.py',
+        'managed': managed,
+        'connector': connector,
+        'modeDifference': {
+            'onlyManaged': sorted(managed_ids - connector_ids),
+            'onlyConnector': sorted(connector_ids - managed_ids),
+        },
+    }
