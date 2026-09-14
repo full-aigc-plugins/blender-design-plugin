@@ -1,0 +1,115 @@
+name: Blender Certification Matrix
+
+on:
+  workflow_dispatch:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly on Monday at 06:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blender-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: set-matrix
+        shell: bash
+        run: |
+          # PR triggers: subset (4.2.23, 4.5.13, 5.2.1)
+          # schedule/workflow_dispatch: all 14
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            filter='[.combinations[] | select(.version == "4.2.23" or .version == "4.5.13" or .version == "5.2.1")]'
+          else
+            filter='.combinations'
+          fi
+          matrix=$(jq -c "$filter" config/blender-release-matrix.json)
+          echo "matrix={\"include\":$matrix}" >> "$GITHUB_OUTPUT"
+
+  certify:
+    needs: build-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.platform == 'windows-x64' && 'windows-2025' || 'macos-latest' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install ffmpeg --no-progress -y
+
+      - name: Install FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - name: Download Blender (${{ matrix.version }} / ${{ matrix.platform }})
+        shell: bash
+        run: curl -fSL "${{ matrix.url }}" -o "${{ matrix.artifact }}"
+
+      - name: Verify SHA-256
+        shell: python
+        run: |
+          import hashlib, sys
+          expected = "${{ matrix.sha256 }}"
+          with open("${{ matrix.artifact }}", "rb") as f:
+              actual = hashlib.sha256(f.read()).hexdigest()
+          if actual != expected:
+              print(f"SHA-256 mismatch: {actual} (expected {expected})", file=sys.stderr)
+              sys.exit(1)
+          print(f"SHA-256 verified: {actual}")
+
+      - name: Extract Blender (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $archive = "${{ matrix.artifact }}"
+          $destination = Join-Path $env:RUNNER_TEMP "blender"
+          Expand-Archive $archive -DestinationPath $destination
+          $binary = Get-ChildItem $destination -Filter blender.exe -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $binary) { throw "blender.exe not found" }
+          "BLENDER_BIN=$binary" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Extract Blender (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil attach "${{ matrix.artifact }}" -nobrowse -mountpoint /Volumes/Blender
+          binary=$(find /Volumes/Blender -name blender -type f | head -1)
+          if [ -z "$binary" ]; then echo "blender binary not found"; exit 1; fi
+          echo "BLENDER_BIN=$binary" >> "$GITHUB_ENV"
+
+      - name: Run certification tests
+        shell: bash
+        run: |
+          "$BLENDER_BIN" --version
+          mkdir -p artifacts/certification
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 \
+            --python tests/runtime/api_surface_snapshot.py -- "$(pwd)/artifacts/certification"
+
+      - name: Build connector package
+        shell: bash
+        run: |
+          python scripts/package_connector.py \
+            "dist/codex-blender-connector-0.3.0-${{ matrix.platform }}.zip"
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: blender-cert-${{ matrix.version }}-${{ matrix.platform }}
+          path: |
+            artifacts
+            dist/codex-blender-connector-0.3.0-${{ matrix.platform }}.zip
+          if-no-files-found: warn
+          retention-days: 14

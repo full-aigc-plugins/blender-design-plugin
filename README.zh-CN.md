@@ -120,7 +120,12 @@ flowchart TB
 - 持久 PNG 或多层 EXR 序列、逐帧哈希、显式缺帧补渲，以及独立 FFmpeg 合成
 - 快照隔离后台任务、状态查询、取消、不自动重跑的恢复，以及明确调用后的逐帧恢复
 
-运行时事实以 `capability.list` 和 `capability.describe` 为准。当前目录共注册 163 条工具：136 条为 L3，3 条恢复/Rigify 工具通过 Windows 达到 L4，24 条保持 L1，并精确路由到 22 个 Skill。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”；Windows 前台 UI 接管仍未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
+运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，且由注册表生成、不手工维护——下方数字可由 `docs/verification/capability-counts.json` 复现。
+
+- **Managed** 共注册 164 条命令：154 条 L3、3 条恢复/Rigify 工具通过 Windows 达到 L4、7 条 L1，横跨 35 个域，路由到 23 个 Skill。
+- **Connector** 在此之上增加 5 条可选 `official_uploader.*` 命令：169 条命令、154 条 L3、3 条 L4、12 条 L1，横跨 36 个域，路由到 24 个 Skill。
+
+两种模式**不合并为单一总数**。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”；Windows 前台 UI 接管仍未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
 
 ## 安全不是附加项
 

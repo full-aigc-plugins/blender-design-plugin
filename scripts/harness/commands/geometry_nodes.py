@@ -11,7 +11,7 @@ NODE_TYPES={'GeometryNodeDistributePointsOnFaces','GeometryNodeInstanceOnPoints'
 
 
 class GeometryNodeCommands:
-    def __init__(self,bpy_module):self.bpy=bpy_module;self.objects=ObjectResolver(bpy_module)
+    def __init__(self,bpy_module,adapter=None):self.bpy=bpy_module;self.objects=ObjectResolver(bpy_module);self.adapter=adapter
     def _group(self,name):
         group=self.bpy.data.node_groups.get(require_name(name))
         if group is None or group.bl_idname!='GeometryNodeTree':raise HarnessError('NODE_GROUP_NOT_FOUND','Geometry node group was not found')
@@ -80,11 +80,14 @@ class GeometryNodeCommands:
         if socket is None or socket.socket_type=='NodeSocketGeometry':raise HarnessError('SOCKET_NOT_FOUND','editable modifier input was not found')
         try:
             value=arguments.get('value')
-            interface_inputs=getattr(getattr(modifier,'properties',None),'inputs',None)
-            if interface_inputs is not None and hasattr(interface_inputs,socket.identifier):
-                property_socket=getattr(interface_inputs,socket.identifier);property_socket.value=value;actual=property_socket.value
+            if self.adapter is not None:
+                actual=self.adapter.configure_geometry_node_interface(modifier,socket.identifier,value)
             else:
-                modifier[socket.identifier]=value;actual=modifier[socket.identifier]
+                interface_inputs=getattr(getattr(modifier,'properties',None),'inputs',None)
+                if interface_inputs is not None and hasattr(interface_inputs,socket.identifier):
+                    property_socket=getattr(interface_inputs,socket.identifier);property_socket.value=value;actual=property_socket.value
+                else:
+                    modifier[socket.identifier]=value;actual=modifier[socket.identifier]
             self.bpy.context.view_layer.update()
         except Exception as exc:raise HarnessError('INVALID_ARGUMENT','value is incompatible with modifier input') from exc
         return {'changedObjects':[obj.name],'result':{'object':self.objects.receipt(obj),'modifierName':modifier.name,

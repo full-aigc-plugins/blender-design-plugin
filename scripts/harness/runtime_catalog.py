@@ -4,7 +4,9 @@ These describe existing commands, not additional supported Blender operations.
 Argument-specific object/path/authorization checks remain in the command/session.
 """
 from copy import deepcopy
+from pathlib import Path
 
+from .errors import HarnessError
 from .registry import CommandRegistry
 from .commands.validation import closed_arguments
 
@@ -16,7 +18,7 @@ FIELDS = {
         'name', 'newName', 'object', 'child', 'parent', 'material', 'primitive',
         'modifier', 'type', 'path', 'videoPath', 'outputDir', 'snapshotId', 'sessionId',
         'camera', 'dataPath', 'text', 'script', 'milestone', 'prompt', 'id', 'domain', 'maturity', 'view',
-        'baseName', 'groupName', 'strip', 'colorDepth')},
+        'baseName', 'groupName', 'strip', 'colorDepth', 'uvLayer')},
     **{key: VECTOR for key in ('location', 'rotation', 'scale', 'color')},
     'baseColor': {'type': 'array', 'minItems': 4, 'maxItems': 4,
                   'items': {'type': 'number', 'minimum': 0, 'maximum': 1}},
@@ -39,6 +41,9 @@ FIELDS = {
     **{key: {'type': 'array', 'items': {'type': 'integer', 'minimum': 0}} for key in ('vertices', 'edges', 'faces')},
     **{key: {'type': 'number'} for key in ('tolerance', 'angleDegrees', 'thickness', 'depth', 'width', 'distance')},
     **{key: {'type': 'integer', 'minimum': 1} for key in ('seedVertex', 'segments', 'cuts')},
+    'textureWidth': {'type': 'integer', 'minimum': 1},
+    'textureHeight': {'type': 'integer', 'minimum': 1},
+    'targetDensity': {'type': 'number', 'exclusiveMinimum': 0},
     'allowOpenSurface': {'type': 'boolean'},
     'allowDownload': {'type':'boolean'}, 'savePreferences': {'type':'boolean'},
     'modifierName': {'type': 'string', 'minLength': 1},
@@ -114,6 +119,13 @@ FIELDS = {
     'maskName': {'type':'string'},
     'threshold': {'type':'number','minimum':0}, 'translationStrength': {'type':'number','minimum':0},
     'rotationStrength': {'type':'number','minimum':0}, 'noiseScale': {'type':'number','exclusiveMinimum':0}, 'seed': {'type':'integer'},
+    'sourceObjectId': {'type':'object','description':'Object locator for the source mesh'},
+    'targetObjectId': {'type':'object','description':'Object locator for the target mesh'},
+    'targetName': {'type':'string','minLength':1},
+    'symmetry': {'type':'string','enum':['none','x','y','z']},
+    'maxDistance': {'type':'number','exclusiveMinimum':0},
+    'maxDeviation': {'type':'number','exclusiveMinimum':0},
+    'maxPoleValence': {'type':'integer','minimum':3},
     'dimensions': VECTOR,
     **{key:{'type':'number','exclusiveMinimum':0} for key in ('wallThickness','bevelWidth','length','shaftRadius','headLength','headRadius')},
     'settings': {'type': 'object', 'description': 'Existing modifier RNA properties; not a typed modifier workflow'},
@@ -138,6 +150,7 @@ TESTS = {
     'render':'runtime/p6_lookdev_render_acceptance.py','compositor':'runtime/p6_lookdev_render_acceptance.py',
     'grease_pencil':'runtime/p7_gp_sequence_acceptance.py','sequence':'runtime/p7_gp_sequence_acceptance.py',
     'tracking':'runtime/p7_tracking_foreground.py',
+    'retopo': 'runtime/retopo_acceptance.py',
     'modifier': 'test_design_commands.py', 'material': 'test_lookdev_commands.py',
     'camera': 'test_lookdev_commands.py', 'light': 'test_lookdev_commands.py',
     'animation': 'test_lookdev_commands.py', 'advanced': 'test_advanced_python.py',
@@ -145,6 +158,7 @@ TESTS = {
     'export': 'test_exporter.py', 'view': 'test_foreground_controls.py',
     'playback': 'test_foreground_controls.py', 'session': 'test_harness_session.py',
     'capability': 'test_capability_catalog.py',
+    'production': 'test_production_profile.py',
 }
 P1_VERIFIED = {
     'scene.set_units', 'collection.create', 'collection.move_object', 'collection.set_visibility',
@@ -181,6 +195,29 @@ P7_VERIFIED = {'grease_pencil.create','grease_pencil.add_material','grease_penci
 P8_VERIFIED = {'job.submit','job.resume','sequence.set_speed','sequence.keyframe_volume',
  'sequence.add_compositor_modifier','compositor.add_file_output','compositor.create_strip_group'}
 P9_L4_VERIFIED = {'job.resume','rig.rigify_install','rig.rigify_generate'}
+
+# Lifecycle commands graduated to L3 with runtime acceptance evidence.
+LIFECYCLE_VERIFIED = {
+    'capability.list', 'capability.describe',
+    'session.status', 'session.capabilities', 'session.pause', 'session.resume', 'session.set_progress',
+    'scene.inspect',
+    'object.create_curve', 'object.create_text',
+    'material.attach_image_texture',
+    'playback.set_frame',
+    'production.status',
+}
+
+# Foreground-only lifecycle commands graduated to L3 with evidence from a real
+# macOS arm64 foreground session.  The production-profile validator does NOT
+# check RuntimeIdentity; the acceptance script and run record
+# (docs/verification/foreground-lifecycle-macos-arm64.md) record the scope
+# so a reader can see it.  Task 4's coverage matrix is the mechanism for
+# other versions/platforms.
+LIFECYCLE_FOREGROUND_VERIFIED = frozenset({
+    'view.set', 'view.focus', 'view.present',
+    'playback.set',
+    'preview.capture',
+})
 
 UI_COMMANDS = {'view.set', 'view.focus', 'view.present', 'playback.set', 'sculpt.brush_stroke'}
 LONG_COMMANDS = {'preview.capture', 'export.file', 'official_uploader.render_and_link'}
@@ -221,6 +258,7 @@ DOMAIN_SKILLS = {
     'session': ['codex-blender-use'],
     'view': ['codex-blender-use'],
     'playback': ['codex-blender-use'],
+    'retopo': ['codex-blender-retopology'],
 }
 
 COMMAND_SKILLS = {
@@ -252,6 +290,10 @@ def command_skills(name, domain, metadata):
 
 
 def runtime_evidence(name):
+    if name in LIFECYCLE_FOREGROUND_VERIFIED:
+        return ['tests/runtime/foreground_lifecycle_acceptance.py']
+    if name in LIFECYCLE_VERIFIED:
+        return ['tests/runtime/lifecycle_commands_acceptance.py']
     if name in {'rig.rigify_install','rig.rigify_generate'}:
         return ['tests/runtime/p9_rigify_install_acceptance.py']
     if name == 'job.submit':
@@ -384,7 +426,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                             'Probe does not validate a particular object, path, authorization or artistic outcome.'],
         }
         context_types=[]
-        if domain in {'mesh','uv','sculpt'}:context_types=['MESH']
+        if domain in {'mesh','uv','sculpt','retopo'}:context_types=['MESH']
         elif domain=='rig':context_types=['ARMATURE','MESH','EMPTY']
         elif domain=='constraint':context_types=['ARMATURE','MESH']
         elif domain=='curve':context_types=['CURVE']
@@ -401,7 +443,31 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'COMPOSE_VIDEO': ['codex-blender-sequence-editing','codex-blender-background-jobs'],
             }}}
         defaults.update(metadata or {})
-        if name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED:
+        if name in LIFECYCLE_VERIFIED:
+            # Evidence gathered on Blender 5.2.1 / darwin / arm64 / managed.
+            # The production-profile validator does NOT check RuntimeIdentity;
+            # the acceptance script records the identity in its output artifact
+            # (lifecycle_acceptance.json) so a reader can see the scope.
+            # Task 4's coverage matrix is the mechanism for other versions/platforms.
+            defaults['maturity'] = 'L3'
+            defaults['verification'] = {
+                'runtime': runtime_evidence(name),
+                'visual': ['docs/verification/capability-catalog-baseline.md'],
+                'delivery': ['tests/runtime/lifecycle_commands_acceptance.py'],
+                'recoveryAndCompatibility': [],
+            }
+        elif name in LIFECYCLE_FOREGROUND_VERIFIED:
+            # Evidence gathered on Blender 5.2.1 / darwin / arm64 / managed
+            # foreground session.  See docs/verification/foreground-lifecycle-macos-arm64.md
+            # for the full run record and milestone PNG sha256 checksums.
+            defaults['maturity'] = 'L3'
+            defaults['verification'] = {
+                'runtime': runtime_evidence(name),
+                'visual': ['docs/verification/foreground-lifecycle-macos-arm64.md'],
+                'delivery': ['tests/runtime/foreground_lifecycle_acceptance.py'],
+                'recoveryAndCompatibility': [],
+            }
+        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED:
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),
@@ -468,3 +534,126 @@ class RuntimeCommandRegistry(CommandRegistry):
         if name in {'scene.inspect', 'session.status', 'session.capabilities'}:
             return {'status': 'available', 'reason': None}
         return {'status': 'unknown', 'reason': 'Basic environment checked; target arguments and session policy still require validation'}
+
+
+# ---------------------------------------------------------------------------
+# Generated coverage summaries (1.0 production baseline)
+#
+# The documented command/Skill counts are generated from the registry, never
+# hand-maintained: the 0.3.x docs carried a single merged figure that matched
+# neither runtime mode and drifted unnoticed. Managed and Connector are counted
+# separately on purpose -- a combined total is forbidden by the 1.0 spec.
+# ---------------------------------------------------------------------------
+
+SUPPORTED_RUNTIME_MODES = ('managed', 'connector')
+_MATURITY_GRADES = ('L1', 'L2', 'L3', 'L4')
+_COUNT_PAGE_LIMIT = 100
+
+
+def _registration_only_bpy():
+    """A stub sufficient to *register* commands for counting.
+
+    A coverage count describes the catalog, not a live Blender. Registration
+    only needs the attributes handlers close over, so no scene is involved and
+    availability probes are never run.
+    """
+    import os
+    import types
+
+    module = types.ModuleType('bpy')
+    module.app = types.SimpleNamespace(
+        version_string='0.0.0', version=(0, 0, 0), version_file=(0, 0, 0), background=True)
+    module.path = types.SimpleNamespace(abspath=lambda value: os.path.abspath(str(value)))
+    module.context = types.SimpleNamespace(scene=None, preferences=None)
+    module.data = types.SimpleNamespace(objects=[], materials=[], scenes=[])
+    module.ops = types.SimpleNamespace()
+    return module
+
+
+def generate_coverage_summary(runtime_mode):
+    """Count the registered capability surface for one runtime mode.
+
+    Returns a dict with the command total and per-maturity counts, the domain
+    names, the Skill counts (on disk vs referenced by the catalog), and the
+    command ids (so a caller can diff the two modes).
+    """
+    if runtime_mode not in SUPPORTED_RUNTIME_MODES:
+        raise HarnessError(
+            'INVALID_ARGUMENT',
+            'runtime_mode must be one of {0}'.format(', '.join(SUPPORTED_RUNTIME_MODES)),
+        )
+    # Imported lazily: runtime.py imports this module at import time.
+    from .runtime import build_registry
+
+    registry = build_registry(_registration_only_bpy(), runtime_mode=runtime_mode)
+
+    commands = {grade: 0 for grade in _MATURITY_GRADES}
+    domain_names = set()
+    referenced_skills = set()
+    command_ids = []
+    offset = 0
+    while True:
+        page = registry.list_capabilities({'offset': offset, 'limit': _COUNT_PAGE_LIMIT})
+        batch = page.get('items', [])
+        if not batch:
+            break
+        for item in batch:
+            command_ids.append(item['id'])
+            grade = item.get('maturity', 'L1')
+            commands[grade] = commands.get(grade, 0) + 1
+            if item.get('domain'):
+                domain_names.add(item['domain'])
+            for skill in item.get('skills') or ():
+                referenced_skills.add(skill)
+        offset = page.get('nextOffset')
+        if offset is None:
+            break
+
+    skills_dir = Path(__file__).resolve().parents[2] / 'skills'
+    on_disk = sorted(entry.name for entry in skills_dir.iterdir() if entry.is_dir()) \
+        if skills_dir.is_dir() else []
+
+    return {
+        'runtimeMode': runtime_mode,
+        'commands': dict(
+            {'total': len(command_ids)},
+            **{grade: commands.get(grade, 0) for grade in _MATURITY_GRADES}
+        ),
+        'domains': {'total': len(domain_names), 'names': sorted(domain_names)},
+        'skills': {
+            'onDisk': len(on_disk),
+            'referenced': len(referenced_skills),
+            'referencedNames': sorted(referenced_skills),
+        },
+        'commandIds': sorted(command_ids),
+    }
+
+
+def generate_coverage_summaries():
+    """Both runtime modes plus their difference.
+
+    The difference is reported explicitly because the Connector adds the
+    optional official uploader surface; folding it into a single number would
+    hide exactly the distinction the 1.0 spec requires.
+    """
+    managed = generate_coverage_summary('managed')
+    connector = generate_coverage_summary('connector')
+    managed_ids = set(managed['commandIds'])
+    connector_ids = set(connector['commandIds'])
+    return {
+        'generatedFrom': 'scripts/harness/runtime_catalog.py',
+        'managed': managed,
+        'connector': connector,
+        'modeDifference': {
+            'onlyManaged': sorted(managed_ids - connector_ids),
+            'onlyConnector': sorted(connector_ids - managed_ids),
+        },
+    }
+
+
+def write_coverage_counts(target: Path | str) -> None:
+    """Write capability-counts.json with a trailing newline."""
+    import json
+    target = Path(target)
+    target.write_text(json.dumps(generate_coverage_summaries(), indent=2) + '\n',
+                      encoding='utf-8')

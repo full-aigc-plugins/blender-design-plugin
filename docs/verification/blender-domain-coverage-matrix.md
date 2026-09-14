@@ -1,5 +1,7 @@
 # Blender 全领域覆盖矩阵
 
+> 本矩阵的域/命令数量以 [`capability-counts.json`](capability-counts.json)（由注册表生成）为准，不在此手工维护计数。
+
 代码事实源：运行时命令注册表与 `capability.list/describe`。本表是 P0 审计快照；注册命令、Skill 和真实验收分别计算。
 
 | 领域 | 工具覆盖 | Skill 覆盖 | 真实验证 | 当前成熟度/缺口 |

@@ -30,8 +30,15 @@ for command, args in [
     assert set(bpy.data.objects.keys()) == before
     assert set(bpy.data.materials.keys()) == before_materials
 catalog = registry.dispatch('capability.list', {'limit': 100})['result']
-assert catalog['domains']['sculpt']['maturity'] == 'L0'
-assert catalog['domains']['rig']['maturity'] == 'L0'
+# Domain maturity is 'partial' as soon as any command is registered, and is
+# never a claim that the whole domain is mature (see registry.list_capabilities).
+# 'L0' therefore means "registered domain with no commands", not "immature".
+assert catalog['domains']['sculpt']['maturity'] == 'partial'
+assert catalog['domains']['rig']['maturity'] == 'partial'
+assert catalog['domains']['sculpt']['registeredCommands'] > 0
+assert catalog['domains']['rig']['registeredCommands'] > 0
+assert all(entry['maturity'] in {'L0', 'partial'} for entry in catalog['domains'].values()), \
+    'a domain must never claim whole-domain maturity'
 assert registry.describe_capability({'id': 'view.set'})['availability']['status'] == 'unavailable'
 assert registry.describe_capability({'id': 'preview.capture'})['availability']['status'] == 'unavailable'
 assert registry.describe_capability({'id': 'object.transform'})['input']['properties']['location']['type'] == 'array'

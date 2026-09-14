@@ -120,7 +120,12 @@ The hybrid baseline keeps Blender visible and interactive for design work while 
 - Persistent PNG or multilayer EXR sequences with per-frame hashes, explicit missing-frame resume, and separate FFmpeg composition
 - Snapshot-isolated background jobs with status, cancellation, non-restarting recovery, and explicitly requested frame resume
 
-Running-session truth comes from `capability.list` and `capability.describe`. The current catalog records 163 tools: 136 at L3, 3 Windows-verified recovery/Rigify tools at L4, and 24 at L1, routed through 22 Skills. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
+Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode** and generated from the registry, never hand-maintained — the numbers below are reproduced by `docs/verification/capability-counts.json`.
+
+- **Managed** records 164 commands: 154 at L3, 3 Windows-verified recovery/Rigify commands at L4, 7 at L1, across 35 domains, routed through 23 Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 169 commands, 154 at L3, 3 at L4, 12 at L1, across 36 domains, routed through 24 Skills.
+
+The two modes are never merged into a single count. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
 
 ## Guardrails are part of the product
 

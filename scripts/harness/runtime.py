@@ -32,6 +32,7 @@ from .extended_export import ExtendedExporter
 from .commands.grease_pencil import GreasePencilCommands
 from .commands.sequence import SequenceCommands
 from .commands.tracking import TrackingCommands
+from .commands.retopo import RetopoCommands
 from .commands.validation import closed_arguments
 from pathlib import Path
 import re
@@ -40,6 +41,9 @@ from .advanced_python import AdvancedPythonExecutor
 from .exporter import Exporter
 from .preview import PreviewEngine
 from .path_policy import PathPolicy
+from .errors import HarnessError
+from .production_profile import ProductionProfile, RuntimeIdentity
+from .compat.selector import select_adapter
 from .registry import CommandRegistry
 from .runtime_catalog import RuntimeCommandRegistry
 from .session import HarnessSession
@@ -57,6 +61,23 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     view = ViewCommands(bpy_module)
     if runtime_mode not in {"managed", "connector"}:
         raise ValueError("runtime_mode must be managed or connector")
+    # Select version adapter once; pass to commands that need it.
+    # Only HarnessError is caught (out-of-range version); unexpected errors
+    # propagate so they are not silently swallowed.
+    _version_adapter = None
+    try:
+        _bv = getattr(getattr(bpy_module, 'app', None), 'version', None)
+        if _bv is not None:
+            import platform as _platform
+            _identity = RuntimeIdentity(
+                blender_version=tuple(_bv)[:3] if isinstance(_bv, tuple) else (0, 0, 0),
+                platform=_platform.system().lower(),
+                architecture=_platform.machine().lower(),
+                runtime_mode=runtime_mode,
+            )
+            _version_adapter = select_adapter(_identity, bpy_module)
+    except HarnessError:
+        _version_adapter = None
     official = OfficialUploaderCommands(bpy_module, approved_output_root=approved_output_root, approved_asset_roots=approved_asset_roots)
     organization = OrganizationCommands(bpy_module)
     meshes = MeshCommands(bpy_module)
@@ -65,13 +86,14 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     asset_policy = PathPolicy(approved_asset_roots) if approved_asset_roots else None
     assets = AssetCommands(bpy_module, asset_policy=asset_policy)
     uvs = UVCommands(bpy_module)
-    rigs = RigCommands(bpy_module)
+    rigs = RigCommands(bpy_module, adapter=_version_adapter)
     constraints = ConstraintCommands(bpy_module)
     advanced_animation = AdvancedAnimationCommands(bpy_module)
     quality = QualityCommands(bpy_module)
     jobs = JobManager(bpy_module, approved_output_root)
-    geometry_nodes = GeometryNodeCommands(bpy_module)
+    geometry_nodes = GeometryNodeCommands(bpy_module, adapter=_version_adapter)
     sculpt = SculptCommands(bpy_module)
+    retopo = RetopoCommands(bpy_module)
     hair = HairCommands(bpy_module)
     simulation = SimulationCommands(bpy_module,approved_output_root)
     rendering = RenderCommands(bpy_module);compositor=CompositorCommands(bpy_module,approved_output_root);extended=ExtendedExporter(bpy_module,approved_output_root)
@@ -83,16 +105,47 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry = RuntimeCommandRegistry(bpy_module, output_root=approved_output_root, asset_roots=approved_asset_roots)
     registry.register('capability.list',
                       lambda args: {'changedObjects': [], 'result': registry.list_capabilities(args)},
-                      validate=closed_arguments(optional=('domain', 'maturity', 'offset', 'limit')), risk='read',
+                      validate=closed_arguments(optional=('domain', 'maturity', 'offset', 'limit',
+                                                         'profile', 'runtime', 'blenderVersion', 'platform', 'runtimeMode')),
+                      risk='read',
                       availability=lambda: {'status': 'available', 'reason': None},
                       metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
-                                'tests': ['tests/test_capability_catalog.py']})
+                                'tests': ['tests/test_capability_catalog.py', 'tests/test_production_profile.py']})
     registry.register('capability.describe',
                       lambda args: {'changedObjects': [], 'result': registry.describe_capability(args)},
-                      validate=closed_arguments(required=('id',)), risk='read',
+                      validate=closed_arguments(required=('id',), optional=('profile', 'runtime', 'blenderVersion', 'platform', 'runtimeMode')),
+                      risk='read',
                       availability=lambda: {'status': 'available', 'reason': None},
                       metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
-                                'tests': ['tests/test_capability_catalog.py']})
+                                'tests': ['tests/test_capability_catalog.py', 'tests/test_production_profile.py']})
+    # Production status command: loads the default profile and computes status.
+    _default_profile_path = Path(__file__).resolve().parents[2] / 'config' / 'production-profile.json'
+    _production_profile = ProductionProfile.load(_default_profile_path) if _default_profile_path.is_file() else None
+
+    def _build_runtime_identity() -> RuntimeIdentity:
+        bv = getattr(getattr(bpy_module, 'app', None), 'version', (0, 0, 0))
+        import platform as _platform
+        return RuntimeIdentity(
+            blender_version=tuple(bv)[:3] if isinstance(bv, tuple) else (0, 0, 0),
+            platform=_platform.system().lower(),
+            architecture=_platform.machine().lower(),
+            runtime_mode=runtime_mode,
+        )
+
+    def _production_status(_args):
+        if _production_profile is None:
+            return {'changedObjects': [], 'result': {
+                'status': 'unavailable', 'reason': 'No production profile found'}}
+        identity = _build_runtime_identity()
+        result = _production_profile.status(identity, registry)
+        return {'changedObjects': [], 'result': result}
+
+    registry.register('production.status',
+                      _production_status,
+                      validate=closed_arguments(), risk='read',
+                      availability=lambda: {'status': 'available', 'reason': None},
+                      metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
+                                'tests': ['tests/test_production_profile.py']})
     registry.register("scene.inspect", scene.inspect, validate=closed_arguments(), risk="read")
     registry.register('scene.set_units', organization.set_units,
                       validate=closed_arguments(required=('system',), optional=('scaleLength',)))
@@ -176,6 +229,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('selection',),optional=('margin',)))
     registry.register('uv.inspect',uvs.inspect,
                       validate=closed_arguments(optional=('name','objectId')),risk='read')
+    registry.register('uv.detect_overlap',uvs.detect_overlap,
+                      validate=closed_arguments(optional=('name','objectId','uvLayer','tolerance')),risk='read')
+    registry.register('uv.measure_texel_density',uvs.measure_texel_density,
+                      validate=closed_arguments(required=('textureWidth','textureHeight'),optional=('name','objectId','uvLayer','targetDensity')),risk='read')
     registry.register('rig.create_armature',rigs.create_armature,
                       validate=closed_arguments(required=('name','bones')))
     registry.register('rig.create_control',rigs.create_control,
@@ -267,6 +324,15 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('sculpt.multires',sculpt.multires,validate=closed_arguments(optional=('name','objectId','levels','modifierName')))
     registry.register('sculpt.cleanup',sculpt.cleanup,validate=closed_arguments(optional=('name','objectId','ratio','modifierName','target')))
     registry.register('sculpt.brush_stroke',sculpt.brush_stroke,validate=closed_arguments(required=('points',),optional=('name','objectId')))
+    registry.register('retopo.setup_surface',retopo.setup_surface,
+                      validate=closed_arguments(required=('sourceObjectId','targetName'),optional=('symmetry','offset')))
+    registry.register('retopo.project',retopo.project,
+                      validate=closed_arguments(required=('objectId','sourceObjectId'),optional=('method','maxDistance')))
+    registry.register('retopo.transfer_layers',retopo.transfer_layers,
+                      validate=closed_arguments(required=('sourceObjectId','targetObjectId','layers')))
+    registry.register('retopo.validate',retopo.validate,
+                      validate=closed_arguments(required=('objectId','sourceObjectId'),optional=('maxDeviation','maxPoleValence')),
+                      risk='read')
     registry.register('hair.create_curves',hair.create_curves,validate=closed_arguments(required=('surface','name','strands'),optional=('radius',)))
     registry.register('hair.inspect',hair.inspect,validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('simulation.rigid_body',simulation.rigid_body,validate=closed_arguments(required=('bodyType',),optional=('name','objectId','collisionShape','mass')))
@@ -321,7 +387,8 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('rig.rigify_install',rigs.rigify_install,
                       validate=closed_arguments(optional=('allowDownload','savePreferences')),risk='gated')
     registry.register('rig.rigify_generate',rigs.rigify_generate,validate=closed_arguments(optional=('name','objectId')))
-    registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated")
+    registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated",
+                      metadata={'class': 'expert'})
     if runtime_mode == "connector":
         registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
         registry.register("official_uploader.status", official.status, validate=closed_arguments(), risk="read")

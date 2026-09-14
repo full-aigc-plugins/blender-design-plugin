@@ -37,6 +37,36 @@ class CapabilityCatalogTests(unittest.TestCase):
         self.assertEqual(result['verification']['runtime'], [])
         self.assertEqual(result['availability']['status'], 'unknown')
 
+    def test_domain_maturity_is_never_a_whole_domain_claim(self):
+        """A domain is 'partial' once it has commands, never a maturity grade.
+
+        This aggregation previously had no unit coverage, so the runtime smoke
+        kept asserting the retired 'L0' vocabulary and silently rotted.
+        """
+        registry = CommandRegistry()
+        # L3 registration is gated on real evidence, so the fixture must carry it.
+        registry.register('mesh.inspect', lambda _: {}, risk='read', metadata={
+            'domain': 'mesh', 'maturity': 'L3', 'skills': ['codex-blender-inspect'],
+            'verification': {'runtime': ['run-1'], 'visual': ['shot-1'], 'delivery': ['artifact-1']}})
+        registry.register('mesh.rename', lambda _: {}, risk='standard',
+                          metadata={'domain': 'mesh', 'maturity': 'L1'})
+        domains = registry.list_capabilities({})['domains']
+        self.assertEqual(domains['mesh']['maturity'], 'partial')
+        self.assertEqual(domains['mesh']['registeredCommands'], 2)
+        self.assertEqual(domains['mesh']['productionVerifiedCommands'], 1)
+        for entry in domains.values():
+            self.assertIn(entry['maturity'], {'L0', 'partial'})
+
+    def test_domain_without_commands_is_l0(self):
+        registry = CommandRegistry()
+        registry.register('mesh.inspect', lambda _: {}, risk='read', metadata={
+            'domain': 'mesh', 'maturity': 'L3', 'skills': ['codex-blender-inspect'],
+            'verification': {'runtime': ['run-1'], 'visual': ['shot-1'], 'delivery': ['artifact-1']}})
+        domains = registry.list_capabilities({})['domains']
+        self.assertEqual(domains['sculpt']['maturity'], 'L0')
+        self.assertEqual(domains['sculpt']['registeredCommands'], 0)
+        self.assertEqual(domains['sculpt']['productionVerifiedCommands'], 0)
+
     def test_availability_recomputed_and_metadata_defensive_copy(self):
         enabled = []
         metadata = {'domain': 'mesh', 'skills': ['a']}
