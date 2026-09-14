@@ -1,6 +1,4 @@
 """Editable retopology: setup, projection, data transfer and validation."""
-import math
-
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
@@ -28,57 +26,32 @@ class RetopoCommands:
         offset = finite_number(arguments.get('offset', 0.01), 'offset', positive=True)
 
         import bmesh
+        import mathutils
+
+        verts = [v.co.copy() for v in source.data.vertices]
+        if not verts:
+            raise HarnessError('INVALID_ARGUMENT', 'source mesh has no vertices')
+        min_co = mathutils.Vector((min(v.x for v in verts), min(v.y for v in verts), min(v.z for v in verts)))
+        max_co = mathutils.Vector((max(v.x for v in verts), max(v.y for v in verts), max(v.z for v in verts)))
+        center = (min_co + max_co) / 2
+        size = max_co - min_co
+        max_dim = max(size.x, size.y, size.z)
+        if max_dim < 1e-8:
+            max_dim = 1.0
+
+        mesh_data = self.bpy.data.meshes.new(target_name + '_mesh')
+        obj = self.bpy.data.objects.new(target_name, mesh_data)
+        self.bpy.context.scene.collection.objects.link(obj)
+
         bm = bmesh.new()
         try:
-            bm.from_mesh(source.data)
-            if len(bm.verts) == 0:
-                raise HarnessError('INVALID_ARGUMENT', 'source mesh has no vertices')
-
-            # Remove internal faces; keep only the outer shell vertices
-            # and build a new surface by projecting along normals.
-            bmesh.ops.delete(bm, geom=list(bm.faces), context='FACES')
-            # After deleting faces, edges are orphaned too; delete them.
-            bmesh.ops.delete(bm, geom=list(bm.edges), context='EDGES')
-
-            # Create a simple quad-dominant surface from source vertex cloud
-            # by building a convex-hull-like envelope.  For a practical
-            # retopo start we create a subdivided plane sized to the source
-            # bounding box, then project.
-            bm.free()
-
-            # Create target as a real Blender mesh object
-            mesh_data = self.bpy.data.meshes.new(target_name + '_mesh')
-            obj = self.bpy.data.objects.new(target_name, mesh_data)
-            self.bpy.context.scene.collection.objects.link(obj)
-
-            # Build a grid surface sized to source bounding box
-            verts = [v.co.copy() for v in source.data.vertices]
-            if not verts:
-                raise HarnessError('INVALID_ARGUMENT', 'source mesh has no vertex data')
-            import mathutils
-            min_co = mathutils.Vector((min(v.x for v in verts), min(v.y for v in verts), min(v.z for v in verts)))
-            max_co = mathutils.Vector((max(v.x for v in verts), max(v.y for v in verts), max(v.z for v in verts)))
-            center = (min_co + max_co) / 2
-            size = max_co - min_co
-            max_dim = max(size.x, size.y, size.z)
-            if max_dim < 1e-8:
-                max_dim = 1.0
-
-            # Grid resolution: aim for ~8x8 quads on the largest face
-            grid_res = 8
-            bm = bmesh.new()
-            bmesh.ops.create_grid(bm, x_segments=grid_res, y_segments=grid_res,
-                                  size=max_dim / 2)
-            # Orient grid to face the source (XY plane, offset along Z)
+            bmesh.ops.create_grid(bm, x_segments=8, y_segments=8, size=max_dim / 2)
             for v in bm.verts:
                 v.co.x += center.x
                 v.co.y += center.y
                 v.co.z = center.z + max_dim / 2 + offset
-
             bm.to_mesh(mesh_data)
             mesh_data.update()
-        except HarnessError:
-            raise
         except Exception as exc:
             raise HarnessError('OPERATION_FAILED', 'setup_surface failed') from exc
         finally:
@@ -102,8 +75,6 @@ class RetopoCommands:
         try:
             bm.from_mesh(obj.data)
             bm.verts.ensure_lookup_table()
-            # Store original half
-            original = [(v.co.copy(),) for v in bm.verts]
             for v in bm.verts:
                 v.co[axis] = center[axis] - (v.co[axis] - center[axis])
             # Remove doubles at the seam
@@ -119,7 +90,8 @@ class RetopoCommands:
 
         Uses nearest-point projection. Result is real vertex data, no modifiers.
         """
-        target = self.objects.resolve({'objectId': arguments['objectId']} if 'objectId' in arguments else arguments, required_type={'MESH'})
+        oid = arguments.get('objectId')
+        target = self.objects.resolve(oid if isinstance(oid, dict) else {'objectId': oid}, required_type={'MESH'})
         source = self.objects.resolve(arguments.get('sourceObjectId', {}), required_type={'MESH'})
         method = str(arguments.get('method', 'nearest')).lower()
         if method not in ('nearest', 'normal'):
@@ -182,7 +154,8 @@ class RetopoCommands:
         return {'changedObjects': [target.name], 'result': self.objects.receipt(target) | {
             'topologyVersion': int(target.data.get(TOPOLOGY_VERSION_KEY, 0)),
             'projected': projected, 'clamped': clamped, 'method': method,
-            'maxDistance': max_distance}}
+            'maxDistance': max_distance,
+            'limitations': ['Projection result is automatic; manual review and editing required for production retopology.']}}
 
     def transfer_layers(self, arguments):
         """Transfer data layers (vertex groups, color attributes) from source to target.
@@ -248,7 +221,10 @@ class RetopoCommands:
 
         target.data.update()
         return {'changedObjects': [target.name], 'result': self.objects.receipt(target) | {
-            'transferred': transferred}}
+            'transferred': transferred,
+            'transferMethod': 'nearest_vertex',
+            'limitations': ['Nearest-vertex mapping is coarse; no barycentric interpolation. Weights may be discontinuous on sparse target meshes.']}}
+
 
     def validate(self, arguments):
         """Validate retopo topology quality.
@@ -257,7 +233,8 @@ class RetopoCommands:
         maxPoleValence is exceeded the result enters 'handover' state,
         indicating human intervention is needed.
         """
-        obj = self.objects.resolve({'objectId': arguments['objectId']} if 'objectId' in arguments else arguments, required_type={'MESH'})
+        oid = arguments.get('objectId')
+        obj = self.objects.resolve(oid if isinstance(oid, dict) else {'objectId': oid}, required_type={'MESH'})
         source = self.objects.resolve(arguments.get('sourceObjectId', {}), required_type={'MESH'})
         max_deviation = finite_number(arguments.get('maxDeviation', 0.01), 'maxDeviation', positive=True)
         max_pole_valence = arguments.get('maxPoleValence', 5)

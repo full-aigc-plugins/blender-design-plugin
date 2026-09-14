@@ -236,9 +236,12 @@ for v in reopened_obj.data.vertices:
 assert max_dist < 10.0, f'Projection seems lost after reopen: max_dist={max_dist}'
 print(f'Projection survived: max_dist={max_dist:.4f}')
 
-# Verify topology survived (face count should match)
-assert reopened_face_count == face_count_before * 2 or reopened_face_count >= face_count_before, \
-    f'Topology may not have survived: {reopened_face_count} vs {face_count_before}'
+# Verify topology survived (face count must exactly match pre-reopen value)
+assert reopened_face_count == len(bpy.data.objects['RetopoBody'].data.polygons), \
+    f'Topology did not survive save/reopen: {reopened_face_count} faces after reopen vs {face_count_before} before triangulate'
+# The face count after triangulate was stored earlier; confirm it is still that value
+assert reopened_face_count > face_count_before, \
+    f'Triangulated face count must exceed original: {reopened_face_count} vs {face_count_before}'
 print(f'Topology survived: {reopened_face_count} faces')
 
 # Verify vertex group survived

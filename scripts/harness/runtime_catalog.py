@@ -150,7 +150,7 @@ TESTS = {
     'render':'runtime/p6_lookdev_render_acceptance.py','compositor':'runtime/p6_lookdev_render_acceptance.py',
     'grease_pencil':'runtime/p7_gp_sequence_acceptance.py','sequence':'runtime/p7_gp_sequence_acceptance.py',
     'tracking':'runtime/p7_tracking_foreground.py',
-    'retopo': 'test_retopo_commands.py',
+    'retopo': 'runtime/retopo_acceptance.py',
     'modifier': 'test_design_commands.py', 'material': 'test_lookdev_commands.py',
     'camera': 'test_lookdev_commands.py', 'light': 'test_lookdev_commands.py',
     'animation': 'test_lookdev_commands.py', 'advanced': 'test_advanced_python.py',
