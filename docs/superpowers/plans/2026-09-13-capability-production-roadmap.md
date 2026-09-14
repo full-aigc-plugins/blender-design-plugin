@@ -35,7 +35,7 @@ L0=目录；L1=结构化接口；L2=配方与 Skill；L3=真实工程、视觉�
 - [ ] 发布门禁：
   - [x] 版本提升到 0.3.0，并同步 manifest、Connector、producer 与回执契约。
   - [x] 提交全部当前改动、推送 `main` 并核对本地/tracking/远端 SHA。
-  - [ ] 重装当前插件缓存并从新缓存复验；该动作需要单独安装授权。
+  - [x] 从 GitHub Marketplace 重装 0.3.0 缓存，并从缓存运行测试、能力目录、补帧视频和 Rigify 复验。
 
 ## 统一验收
 
@@ -48,4 +48,4 @@ macOS Apple Silicon 本机基线需记录实测版本；Windows x64 仍待发布
 ## 当前证据
 
 P0–P7 的 L3 证据分别记录在 `docs/verification/`；能力目录逐命令区分 L1/L2/L3，Rigify generate 等未验证能力保持不可用或较低成熟度。最终回归数字以完成报告中的新鲜验证为准。
-当前新鲜本地证据为 234 tests、26 个 Skill 结构/路由校验、162 条工具的真实能力目录、P8 三组 Blender 5.2.1 验收、分发校验、compileall、diff check 和 Connector package；总报告见 `docs/verification/full-plan-completion.md`。版本已提升为 0.3.0，远端提交与安装缓存分别核验。
+当前新鲜证据为 macOS/Windows 239-test 基线、26 个 Skill 结构/路由校验、163 条工具的真实能力目录、P8/P9 Blender 5.2.1 验收、分发校验、Connector package、Windows L4 和 GitHub Marketplace 缓存复验；总报告见 `docs/verification/full-plan-completion.md`。

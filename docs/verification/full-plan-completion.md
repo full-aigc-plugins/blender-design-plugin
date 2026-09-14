@@ -41,4 +41,4 @@ P0–P9 的本地实现、macOS Apple Silicon 与 Windows Server 2025 x64 / Blen
 
 ## 发布门禁
 
-0.3.0 已同步 validator、manifest、Connector Add-on、artifact producer、Dreamina handoff producer 和契约断言。公开 Marketplace source 指向 `https://github.com/partme-ai/codex-blender-plugin.git@main`。本次用户已授权提交全部现有改动并推送 GitHub；最终远端 SHA在发布回执中核对。重新安装 Codex 插件缓存不是本次“提交、推送”授权的隐含步骤，未执行前不宣称已安装 0.3.0。
+0.3.0 已同步 validator、manifest、Connector Add-on、artifact producer、Dreamina handoff producer 和契约断言。公开 Marketplace source 指向 `https://github.com/partme-ai/codex-blender-plugin.git@main`。本地 `personal` 安装已移除，改由 GitHub `partme-ai-blender` Marketplace 安装；测试、能力目录、补帧视频和 Rigify 均从新缓存运行。最终缓存/源码/远端 SHA 在发布回执中核对。
