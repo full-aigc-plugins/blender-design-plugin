@@ -3,14 +3,14 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 160,
-      "L1": 3,
+      "total": 164,
+      "L1": 7,
       "L2": 0,
       "L3": 154,
       "L4": 3
     },
     "domains": {
-      "total": 34,
+      "total": 35,
       "names": [
         "advanced",
         "animation",
@@ -36,6 +36,7 @@
         "production",
         "recipe",
         "render",
+        "retopo",
         "rig",
         "scene",
         "sculpt",
@@ -49,8 +50,8 @@
       ]
     },
     "skills": {
-      "onDisk": 26,
-      "referenced": 22,
+      "onDisk": 27,
+      "referenced": 23,
       "referencedNames": [
         "codex-blender-background-jobs",
         "codex-blender-character-animation",
@@ -67,6 +68,7 @@
         "codex-blender-procedural-modeling",
         "codex-blender-quality-validation",
         "codex-blender-render-compositing",
+        "codex-blender-retopology",
         "codex-blender-scene-assembly",
         "codex-blender-sculpt-surface",
         "codex-blender-sequence-editing",
@@ -179,6 +181,10 @@
       "render.configure_passes",
       "render.create_view_layer",
       "render.inspect",
+      "retopo.project",
+      "retopo.setup_surface",
+      "retopo.transfer_layers",
+      "retopo.validate",
       "rig.assign_weights",
       "rig.bind",
       "rig.create_armature",
@@ -242,14 +248,14 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 165,
-      "L1": 8,
+      "total": 169,
+      "L1": 12,
       "L2": 0,
       "L3": 154,
       "L4": 3
     },
     "domains": {
-      "total": 35,
+      "total": 36,
       "names": [
         "advanced",
         "animation",
@@ -276,6 +282,7 @@
         "production",
         "recipe",
         "render",
+        "retopo",
         "rig",
         "scene",
         "sculpt",
@@ -289,8 +296,8 @@
       ]
     },
     "skills": {
-      "onDisk": 26,
-      "referenced": 23,
+      "onDisk": 27,
+      "referenced": 24,
       "referencedNames": [
         "codex-blender-background-jobs",
         "codex-blender-character-animation",
@@ -308,6 +315,7 @@
         "codex-blender-procedural-modeling",
         "codex-blender-quality-validation",
         "codex-blender-render-compositing",
+        "codex-blender-retopology",
         "codex-blender-scene-assembly",
         "codex-blender-sculpt-surface",
         "codex-blender-sequence-editing",
@@ -425,6 +433,10 @@
       "render.configure_passes",
       "render.create_view_layer",
       "render.inspect",
+      "retopo.project",
+      "retopo.setup_surface",
+      "retopo.transfer_layers",
+      "retopo.validate",
       "rig.assign_weights",
       "rig.bind",
       "rig.create_armature",

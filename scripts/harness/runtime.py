@@ -32,6 +32,7 @@ from .extended_export import ExtendedExporter
 from .commands.grease_pencil import GreasePencilCommands
 from .commands.sequence import SequenceCommands
 from .commands.tracking import TrackingCommands
+from .commands.retopo import RetopoCommands
 from .commands.validation import closed_arguments
 from pathlib import Path
 import re
@@ -92,6 +93,7 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     jobs = JobManager(bpy_module, approved_output_root)
     geometry_nodes = GeometryNodeCommands(bpy_module, adapter=_version_adapter)
     sculpt = SculptCommands(bpy_module)
+    retopo = RetopoCommands(bpy_module)
     hair = HairCommands(bpy_module)
     simulation = SimulationCommands(bpy_module,approved_output_root)
     rendering = RenderCommands(bpy_module);compositor=CompositorCommands(bpy_module,approved_output_root);extended=ExtendedExporter(bpy_module,approved_output_root)
@@ -322,6 +324,15 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('sculpt.multires',sculpt.multires,validate=closed_arguments(optional=('name','objectId','levels','modifierName')))
     registry.register('sculpt.cleanup',sculpt.cleanup,validate=closed_arguments(optional=('name','objectId','ratio','modifierName','target')))
     registry.register('sculpt.brush_stroke',sculpt.brush_stroke,validate=closed_arguments(required=('points',),optional=('name','objectId')))
+    registry.register('retopo.setup_surface',retopo.setup_surface,
+                      validate=closed_arguments(required=('sourceObjectId','targetName'),optional=('symmetry','offset')))
+    registry.register('retopo.project',retopo.project,
+                      validate=closed_arguments(required=('objectId','sourceObjectId'),optional=('method','maxDistance')))
+    registry.register('retopo.transfer_layers',retopo.transfer_layers,
+                      validate=closed_arguments(required=('sourceObjectId','targetObjectId','layers')))
+    registry.register('retopo.validate',retopo.validate,
+                      validate=closed_arguments(required=('objectId','sourceObjectId'),optional=('maxDeviation','maxPoleValence')),
+                      risk='read')
     registry.register('hair.create_curves',hair.create_curves,validate=closed_arguments(required=('surface','name','strands'),optional=('radius',)))
     registry.register('hair.inspect',hair.inspect,validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('simulation.rigid_body',simulation.rigid_body,validate=closed_arguments(required=('bodyType',),optional=('name','objectId','collisionShape','mass')))

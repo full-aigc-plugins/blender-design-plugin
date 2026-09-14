@@ -119,6 +119,13 @@ FIELDS = {
     'maskName': {'type':'string'},
     'threshold': {'type':'number','minimum':0}, 'translationStrength': {'type':'number','minimum':0},
     'rotationStrength': {'type':'number','minimum':0}, 'noiseScale': {'type':'number','exclusiveMinimum':0}, 'seed': {'type':'integer'},
+    'sourceObjectId': {'type':'object','description':'Object locator for the source mesh'},
+    'targetObjectId': {'type':'object','description':'Object locator for the target mesh'},
+    'targetName': {'type':'string','minLength':1},
+    'symmetry': {'type':'string','enum':['none','x','y','z']},
+    'maxDistance': {'type':'number','exclusiveMinimum':0},
+    'maxDeviation': {'type':'number','exclusiveMinimum':0},
+    'maxPoleValence': {'type':'integer','minimum':3},
     'dimensions': VECTOR,
     **{key:{'type':'number','exclusiveMinimum':0} for key in ('wallThickness','bevelWidth','length','shaftRadius','headLength','headRadius')},
     'settings': {'type': 'object', 'description': 'Existing modifier RNA properties; not a typed modifier workflow'},
@@ -143,6 +150,7 @@ TESTS = {
     'render':'runtime/p6_lookdev_render_acceptance.py','compositor':'runtime/p6_lookdev_render_acceptance.py',
     'grease_pencil':'runtime/p7_gp_sequence_acceptance.py','sequence':'runtime/p7_gp_sequence_acceptance.py',
     'tracking':'runtime/p7_tracking_foreground.py',
+    'retopo': 'test_retopo_commands.py',
     'modifier': 'test_design_commands.py', 'material': 'test_lookdev_commands.py',
     'camera': 'test_lookdev_commands.py', 'light': 'test_lookdev_commands.py',
     'animation': 'test_lookdev_commands.py', 'advanced': 'test_advanced_python.py',
@@ -250,6 +258,7 @@ DOMAIN_SKILLS = {
     'session': ['codex-blender-use'],
     'view': ['codex-blender-use'],
     'playback': ['codex-blender-use'],
+    'retopo': ['codex-blender-retopology'],
 }
 
 COMMAND_SKILLS = {
@@ -417,7 +426,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                             'Probe does not validate a particular object, path, authorization or artistic outcome.'],
         }
         context_types=[]
-        if domain in {'mesh','uv','sculpt'}:context_types=['MESH']
+        if domain in {'mesh','uv','sculpt','retopo'}:context_types=['MESH']
         elif domain=='rig':context_types=['ARMATURE','MESH','EMPTY']
         elif domain=='constraint':context_types=['ARMATURE','MESH']
         elif domain=='curve':context_types=['CURVE']
