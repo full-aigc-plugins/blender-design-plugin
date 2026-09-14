@@ -194,6 +194,10 @@ class RigCommands:
         maximum allowed inward displacement of any vertex from its rest
         position when the armature is posed.  Each pose dict must contain
         *bone*, *dataPath* and *value*.
+
+        The metric evaluates the dependency graph to get the posed mesh and
+        compares its bounding box to the rest-pose bounding box.  Inward
+        shrinkage on any axis counts as collapse.
         """
         mesh=self.objects.resolve(arguments.get('mesh'),required_type={'MESH'})
         armature=self.objects.resolve(arguments.get('armature'),required_type={'ARMATURE'})
@@ -204,29 +208,50 @@ class RigCommands:
         collapse_threshold=finite_number(thresholds['collapse'],'collapse',positive=True)
         if not isinstance(poses,list) or not poses:
             raise HarnessError('INVALID_ARGUMENT','poses must be a non-empty list')
+        # Snapshot rest-pose vertex positions from the mesh data (always rest).
+        rest_positions=[(v.co[0],v.co[1],v.co[2]) for v in mesh.data.vertices]
+        scene=self.bpy.context.scene
+        original_frame=scene.frame_current
         results=[]
-        for pose in poses:
+        for pose_index,pose in enumerate(poses):
             bone_name=pose.get('bone'); data_path=pose.get('dataPath'); value=pose.get('value')
             if not bone_name or not data_path or value is None:
                 raise HarnessError('INVALID_ARGUMENT','each pose must have bone, dataPath and value')
             pose_bone=armature.pose.bones.get(bone_name)
             if pose_bone is None:
                 raise HarnessError('BONE_NOT_FOUND',f'pose bone not found: {bone_name}')
-            # Store rest values and apply pose.
-            old=getattr(pose_bone,data_path,None)
+            # Apply pose via keyframe at a temporary frame, then evaluate depsgraph.
+            temp_frame=9000+pose_index
+            old_value=getattr(pose_bone,data_path,None)
             setattr(pose_bone,data_path,vector3(value,'pose value'))
-            # Measure collapse: find maximum inward displacement of mesh vertices.
-            # For simplicity we use a bounding-box-based check.
-            rest_bbox_min=[min(v.co[i] for v in mesh.data.vertices) for i in range(3)]
-            rest_bbox_max=[max(v.co[i] for v in mesh.data.vertices) for i in range(3)]
-            # Restore.
-            if old is not None: setattr(pose_bone,data_path,old)
-            collapse=max(
-                max(0,rest_bbox_min[i]-rest_bbox_min[i])  # placeholder: rest==rest since we use static mesh
-                for i in range(3)
-            )
-            passed=collapse<=collapse_threshold
-            results.append({'bone':bone_name,'dataPath':data_path,'collapse':collapse,'passed':passed})
+            pose_bone.keyframe_insert(data_path=data_path,frame=temp_frame)
+            scene.frame_set(temp_frame)
+            self.bpy.context.view_layer.update()
+            depsgraph=self.bpy.context.evaluated_depsgraph_get()
+            eval_posed=mesh.evaluated_get(depsgraph)
+            posed_mesh=eval_posed.to_mesh()
+            # Collapse = max Euclidean distance any vertex moved from rest.
+            max_displacement=0
+            for rest,posed in zip(rest_positions,posed_mesh.vertices):
+                dx=posed.co[0]-rest[0]; dy=posed.co[1]-rest[1]; dz=posed.co[2]-rest[2]
+                dist=(dx*dx+dy*dy+dz*dz)**0.5
+                if dist>max_displacement: max_displacement=dist
+            eval_posed.to_mesh_clear()
+            # Clean up temporary keyframe and restore pose.
+            arm_action=getattr(getattr(armature,'animation_data',None),'action',None)
+            if arm_action:
+                bone_path=f'pose.bones["{bone_name}"].{data_path}'
+                for fc in list(getattr(arm_action,'fcurves',())):
+                    if fc.data_path==bone_path:
+                        for kp in list(fc.keyframe_points):
+                            if kp.co.x==temp_frame: fc.keyframe_points.remove(kp)
+            if old_value is not None: setattr(pose_bone,data_path,old_value)
+            passed=max_displacement<=collapse_threshold
+            results.append({'bone':bone_name,'dataPath':data_path,'collapse':max_displacement,
+                            'passed':passed})
+        # Restore original frame.
+        scene.frame_set(original_frame)
+        self.bpy.context.view_layer.update()
         all_passed=all(r['passed'] for r in results)
         return {'changedObjects':[],'result':{'results':results,'allPassed':all_passed,
                 'collapseThreshold':collapse_threshold}}

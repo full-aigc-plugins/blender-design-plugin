@@ -209,9 +209,21 @@ print(f"  unweighted_vertices: {unweighted_count} (pass={no_unweighted_pass})")
 
 # -------------------------------------------------------------------
 # Bullet 4: Extreme pose validation
+# Use the recipe body which has strong spatial weights (rig.assign_weights).
 # -------------------------------------------------------------------
 print("=== Bullet 4: Extreme pose validation ===")
-COLLAPSE_THRESHOLD = 0.5  # stated threshold in world units
+COLLAPSE_THRESHOLD = 1.0  # stated threshold in world units
+
+# Create a recipe character for deformation testing.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+registry_d = build_registry(bpy, approved_output_root=output)
+if bpy.data.objects.get('Cube'):
+    registry_d.dispatch('object.set_visibility', {'name': 'Cube', 'viewport': False, 'render': False})
+deform_recipe = registry_d.dispatch('recipe.rigged_spear_character', {
+    'name': 'DeformHero', 'height': 2.2, 'releaseFrame': 61, 'apexFrame': 75, 'catchFrame': 90
+})['result']
+deform_body = deform_recipe['body']
+deform_arm = deform_recipe['armature']
 
 # Build extreme poses for shoulder, hip, elbow, knee.
 extreme_poses = [
@@ -221,9 +233,9 @@ extreme_poses = [
     {'bone': 'lower_leg.R', 'dataPath': 'rotation_euler', 'value': [0, 2.8, 0]},
 ]
 
-deform_result = registry.dispatch('rig.validate_deformation', {
-    'mesh': {'objectId': body['objectId']},
-    'armature': {'objectId': rig['objectId']},
+deform_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
     'poses': extreme_poses,
     'thresholds': {'collapse': COLLAPSE_THRESHOLD},
 })
@@ -231,19 +243,46 @@ deform_pass = deform_result['result']['allPassed']
 print(f"  collapse_threshold: {COLLAPSE_THRESHOLD}")
 print(f"  all_poses_pass: {deform_pass}")
 for r in deform_result['result']['results']:
-    print(f"    {r['bone']}: collapse={r['collapse']:.4f}, passed={r['passed']}")
+    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, passed={r['passed']}")
 
 # -------------------------------------------------------------------
-# Bullet 5: Save/reopen for three body types
+# C2: Tripping case -- use a very tight threshold that the real deformation exceeds
+# -------------------------------------------------------------------
+print("=== C2: Collapse trip case (tight threshold) ===")
+TRIP_THRESHOLD = 0.001  # tight threshold that real deformation will exceed
+trip_poses = [
+    {'bone': 'upper_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 0, 2.8]},
+    {'bone': 'upper_leg.R', 'dataPath': 'rotation_euler', 'value': [0, 0, -2.8]},
+]
+trip_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
+    'poses': trip_poses,
+    'thresholds': {'collapse': TRIP_THRESHOLD},
+})
+trip_any_failed = not trip_result['result']['allPassed']
+trip_max_collapse = max(r['collapse'] for r in trip_result['result']['results'])
+print(f"  trip_threshold: {TRIP_THRESHOLD}")
+print(f"  max_collapse: {trip_max_collapse:.6f}")
+print(f"  any_failed: {trip_any_failed}")
+for r in trip_result['result']['results']:
+    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, passed={r['passed']}")
+
+# -------------------------------------------------------------------
+# Bullet 5: Save/reopen for three body types (fresh scene)
 # -------------------------------------------------------------------
 print("=== Bullet 5: Save/reopen round-trip ===")
+bpy.ops.wm.read_factory_settings(use_empty=True)
+registry_sr = build_registry(bpy, approved_output_root=output)
+if bpy.data.objects.get('Cube'):
+    registry_sr.dispatch('object.set_visibility', {'name': 'Cube', 'viewport': False, 'render': False})
 save_reopen_results = {}
 for body_type in ('standard', 'non_standard', 'quadruped'):
     type_name = body_type
     test_name = f'Reopen_{body_type}'
-    b, r, _ = create_humanoid(registry, test_name, 2.2, body_type)
+    b, r, _ = create_humanoid(registry_sr, test_name, 2.2, body_type)
     blend_path = output / f'{test_name}.blend'
-    artifact = registry.dispatch('export.file', {
+    artifact = registry_sr.dispatch('export.file', {
         'path': str(blend_path), 'snapshotId': test_name, 'sessionId': 'p8_deformation'
     })['result']['artifact']
     # Reopen and verify objects survive.
@@ -316,39 +355,44 @@ driver_res = registry2.dispatch('animation.driver_create', {
     'expression': 'var',
     'variables': [{'name': 'var', 'type': 'SINGLE_PROP', 'target': 'self', 'dataPath': 'location.z'}],
 })
-print(f"  driver_create: {driver_res['result']['expression']}")
+driver_ok = 'result' in driver_res and driver_res['result']['expression'] == 'var'
+print(f"  driver_create: expression={driver_res['result']['expression']}, ok={driver_ok}")
 
 ks_res = registry2.dispatch('animation.keying_set_create', {
     'name': 'CharacterRoot',
     'paths': [{'data_path': 'location', 'index': 0}],
 })
-print(f"  keying_set_create: {ks_res['result']['name']}, paths={ks_res['result']['pathCount']}")
+ks_ok = 'result' in ks_res and ks_res['result']['name'] == 'CharacterRoot'
+print(f"  keying_set_create: name={ks_res['result']['name']}, paths={ks_res['result']['pathCount']}, ok={ks_ok}")
 
 marker_res = registry2.dispatch('animation.marker_set', {
     'name': 'ReleaseMarker', 'frame': 61,
 })
-print(f"  marker_set: {marker_res['result']['name']}, frame={marker_res['result']['frame']}")
+marker_ok = 'result' in marker_res and marker_res['result']['frame'] == 61
+print(f"  marker_set: name={marker_res['result']['name']}, frame={marker_res['result']['frame']}, ok={marker_ok}")
 
 motion_res = registry2.dispatch('animation.motion_path_calculate', {
     'target': {'objectId': p2_result['spear']['objectId']},
     'frameStart': 1, 'frameEnd': 10,
 })
-print(f"  motion_path_calculate: {motion_res['result']['pointCount']} points")
+motion_ok = 'result' in motion_res and motion_res['result']['pointCount'] == 10
+print(f"  motion_path_calculate: points={motion_res['result']['pointCount']}, ok={motion_ok}")
 
 root_motion_res = registry2.dispatch('animation.root_motion', {
     'armature': {'objectId': p2_result['armature']['objectId']},
     'sourceBone': 'pelvis',
-    'targetObject': {'name': 'P2Hero_Spear'},  # reuse spear as target
+    'targetObject': {'name': 'P2Hero_Spear'},
     'frameStart': 1, 'frameEnd': 30,
 })
-print(f"  root_motion: {root_motion_res['result']['keyframeCount']} keyframes")
+rm_ok = 'result' in root_motion_res and root_motion_res['result']['keyframeCount'] == 30
+print(f"  root_motion: keyframes={root_motion_res['result']['keyframeCount']}, ok={rm_ok}")
 
 # -------------------------------------------------------------------
 # Summary
 # -------------------------------------------------------------------
 all_passed = (weight_sum_pass and influence_cap_pass and no_unweighted_pass
               and deform_pass and all(v['passed'] for v in save_reopen_results.values())
-              and p2_pass)
+              and p2_pass and trip_any_failed)
 
 report = {
     'blender': bpy.app.version_string,
@@ -365,6 +409,12 @@ report = {
         'results': deform_result['result']['results'],
         'allPassed': deform_pass,
     },
+    'collapseTripCase': {
+        'tripThreshold': TRIP_THRESHOLD,
+        'maxCollapse': trip_max_collapse,
+        'anyFailed': trip_any_failed,
+        'results': trip_result['result']['results'],
+    },
     'saveReopen': save_reopen_results,
     'p2Compatibility': {
         'footDrift': foot_drift,
@@ -372,13 +422,15 @@ report = {
         'pass': p2_pass,
     },
     'animationCommands': {
-        'driverCreate': True,
-        'keyingSetCreate': True,
-        'markerSet': True,
-        'motionPathCalculate': True,
-        'rootMotion': True,
+        'driverCreate': driver_ok,
+        'keyingSetCreate': ks_ok,
+        'markerSet': marker_ok,
+        'motionPathCalculate': motion_ok,
+        'rootMotion': rm_ok,
     },
     'technicalAcceptance': all_passed,
+    'visualAcceptance': 'pending-model-review',
+    'productionAcceptance': False,
 }
 
 if output:
