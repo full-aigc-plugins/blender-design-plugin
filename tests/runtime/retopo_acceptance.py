@@ -201,12 +201,10 @@ print('LAYER TRANSFER CONFIRMED')
 print('--- Symmetry verification ---')
 
 # Create a source with asymmetric vertex positions by extruding one face
-# of a cube outward in +X.  This makes the bounding box center.x != 0
-# and the grid built from it will be visibly one-sided before mirroring.
+# of a cube outward in +X.  This makes the bounding box center.x != 0.
 asym_source = registry.dispatch('object.create_mesh', {
     'name': 'AsymSource', 'primitive': 'cube', 'location': [0, 0, 0]
 })['result']
-# Select a face on the +X side and extrude it outward
 face_sel = registry.dispatch('mesh.select', {
     'objectId': asym_source['objectId'], 'method': 'normal',
     'direction': [1, 0, 0], 'angleDegrees': 10
@@ -214,26 +212,37 @@ face_sel = registry.dispatch('mesh.select', {
 registry.dispatch('mesh.edit', {
     'operation': 'extrude', 'selection': face_sel, 'offset': [2, 0, 0]
 })
-# Now the mesh has vertices ranging from -1 to 3 in X; center.x = 1.0
 asym_obj = bpy.data.objects['AsymSource']
 src_xs = [v.co.x for v in asym_obj.data.vertices]
 center_x = (min(src_xs) + max(src_xs)) / 2
 assert center_x != 0, f'Source must be asymmetric, got center.x={center_x}'
 
+# Discriminating check: the grid is symmetric about center, so the SET of
+# vertex positions is the same whether or not _apply_mirror runs.  However,
+# individual vertex indices are permuted — vertex 0 (the grid corner at
+# center.x - max_dim/2) moves to center.x + max_dim/2 after a real mirror.
+# A no-op mirror leaves vertex 0 at its original position.
+no_sym = registry.dispatch('retopo.setup_surface', {
+    'sourceObjectId': {'objectId': asym_source['objectId']},
+    'targetName': 'SymNone', 'symmetry': 'none', 'offset': 0.05
+})['result']
 sym_setup = registry.dispatch('retopo.setup_surface', {
     'sourceObjectId': {'objectId': asym_source['objectId']},
     'targetName': 'SymRetopo', 'symmetry': 'x', 'offset': 0.05
 })['result']
-assert sym_setup['symmetry'] == 'x', f'Expected symmetry x, got {sym_setup["symmetry"]}'
+assert sym_setup['symmetry'] == 'x'
 
-sym_obj = bpy.data.objects['SymRetopo']
-xs = [v.co.x for v in sym_obj.data.vertices]
-# After mirroring about center.x the vertex X offsets must be symmetric.
-offsets = sorted(round(x - center_x, 4) for x in xs)
-negated = sorted(round(-(x - center_x), 4) for x in xs)
-assert offsets == negated, \
-    f'Symmetry failed: vertex X offsets from {center_x} are not symmetric'
-print(f'SYMMETRY CONFIRMED: {len(xs)} verts symmetric about x={center_x:.3f}')
+none_v0_x = bpy.data.objects['SymNone'].data.vertices[0].co.x
+sym_v0_x = bpy.data.objects['SymRetopo'].data.vertices[0].co.x
+assert round(none_v0_x, 4) != round(sym_v0_x, 4), \
+    f'Mirror must move vertex 0: none={none_v0_x:.4f}, x={sym_v0_x:.4f}'
+# Vertex 0 was at center_x - max_dim/2; after mirror it should be at
+# center_x + max_dim/2, so (none_v0_x + sym_v0_x) / 2 == center_x.
+avg = (none_v0_x + sym_v0_x) / 2
+assert abs(avg - center_x) < 0.01, \
+    f'Midpoint of mirrored pair should be center_x={center_x:.4f}, got {avg:.4f}'
+print(f'SYMMETRY CONFIRMED: vertex 0 moved from x={none_v0_x:.4f} to x={sym_v0_x:.4f} '
+      f'(mirror about x={center_x:.4f})')
 
 # =====================================================================
 # BULLET 4: Save/reopen preservation

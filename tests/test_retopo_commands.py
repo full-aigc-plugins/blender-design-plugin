@@ -562,37 +562,46 @@ class SetupSurfaceProductionTests(unittest.TestCase):
         self.assertTrue(any('starting point' in l.lower() for l in result['result']['limitations']))
 
     def test_symmetry_x_mirrors_vertices(self):
-        """symmetry='x' must actually mirror vertices, not just echo the parameter.
+        """symmetry='x' must actually mirror vertices, not just set a field.
 
-        If _apply_mirror were a no-op the vertex set would remain one-sided
-        and the min/max X distances from center.x would differ — this test
-        would fail.
+        Discriminating check: the grid is symmetric about center, so the SET
+        of vertex positions is identical before and after mirroring.  However,
+        individual vertex indices are permuted — vertex 0 (the grid corner at
+        center.x - max_dim/2) moves to center.x + max_dim/2.  A no-op mirror
+        leaves vertex 0 at its original position.  This test asserts the
+        two positions differ, which only a real mirror can produce.
         """
         bpy = RetopoFakeBpy()
-        # Asymmetric source: center.x = (-2 + 1) / 2 = -0.5
+        # Asymmetric source: center.x = (-2 + 1) / 2 = -0.5, max_dim = 3.0
         source = RetopoObject('Source', vertices=[(-2, 0, 0), (1, 0, 0)])
         bpy.data.objects['Source'] = source
 
         from scripts.harness.commands.retopo import RetopoCommands
         cmds = RetopoCommands(bpy)
-        fake_bmesh, created_verts = _inject_fake_bmesh()
+        fake_bmesh, _ = _inject_fake_bmesh()
         with patch.dict(sys.modules, {'bmesh': fake_bmesh, 'mathutils': SimpleNamespace(
                 Vector=lambda args: FakeCo(*args))}):
-            result = cmds.setup_surface({
+            cmds.setup_surface({
                 'sourceObjectId': {'name': 'Source'},
-                'targetName': 'MirrorGrid', 'symmetry': 'x', 'offset': 0.1
+                'targetName': 'NoMirror', 'symmetry': 'none', 'offset': 0.1
             })
-        self.assertEqual(result['result']['symmetry'], 'x')
+            cmds.setup_surface({
+                'sourceObjectId': {'name': 'Source'},
+                'targetName': 'WithMirror', 'symmetry': 'x', 'offset': 0.1
+            })
 
-        obj = bpy.data.objects['MirrorGrid']
-        xs = [v.co.x for v in obj.data.vertices]
-        center_x = -0.5  # (-2 + 1) / 2
-        # After mirroring about center_x the vertex set must be symmetric:
-        # for every x there must be a corresponding 2*center_x - x.
-        rounded = sorted(round(x - center_x, 4) for x in xs)
-        negated = sorted(round(-(x - center_x), 4) for x in xs)
-        self.assertEqual(rounded, negated,
-                        'vertex X offsets from center must be symmetric after mirror')
+        # Vertex 0 is the grid corner at (center.x - max_dim/2, ...).
+        # After mirroring about center.x it should be at (center.x + max_dim/2, ...).
+        center_x = -0.5
+        max_dim = 3.0
+        no_v0_x = bpy.data.objects['NoMirror'].data.vertices[0].co.x
+        mir_v0_x = bpy.data.objects['WithMirror'].data.vertices[0].co.x
+        self.assertAlmostEqual(no_v0_x, center_x - max_dim / 2, places=4,
+                               msg='unmirrored vertex 0 must be at left edge')
+        self.assertAlmostEqual(mir_v0_x, center_x + max_dim / 2, places=4,
+                               msg='mirrored vertex 0 must be at right edge')
+        self.assertNotEqual(round(no_v0_x, 4), round(mir_v0_x, 4),
+                            'mirror must move vertex 0 to the opposite X edge')
 
 
 class ProjectProductionTests(unittest.TestCase):
