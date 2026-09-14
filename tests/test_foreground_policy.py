@@ -60,14 +60,14 @@ class PolicyDispatchTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(),b'new scene')
 
     def test_automatic_does_not_authorize_delete_or_external_uploader(self):
-        session=HarnessSession('s',dispatch=lambda *_:{},execution_policy=ExecutionPolicy.auto_with_budget('/tmp/out',False,None))
+        session=HarnessSession('s',dispatch=lambda *_:{},execution_policy=ExecutionPolicy.auto_with_budget(str(Path.cwd()/'.test-out'),False,None))
         for command in ['object.delete','advanced.execute_python','official_uploader.open_link']:
             response=call(session,command)
             self.assertEqual(response['error']['code'],'AUTHORIZATION_REQUIRED')
 
     def test_unknown_mode_and_non_boolean_proxy_rule_rejected(self):
         with self.assertRaises(ValueError): ExecutionPolicy('anything')
-        with self.assertRaises(ValueError): ExecutionPolicy.auto_with_budget('/tmp/out','false',None)
+        with self.assertRaises(ValueError): ExecutionPolicy.auto_with_budget(str(Path.cwd()/'.test-out'),'false',None)
 
     def test_automatic_format_scope_cannot_be_used_to_export_other_formats(self):
         with tempfile.TemporaryDirectory() as tmp:

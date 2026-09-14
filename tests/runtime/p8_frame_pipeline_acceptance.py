@@ -23,7 +23,9 @@ bpy.ops.mesh.primitive_cube_add(location=(0,0,0));cube=bpy.context.object;cube.n
 bpy.ops.object.camera_add(location=(4,-5,3));camera=bpy.context.object;bpy.context.scene.camera=camera
 direction=(cube.location-camera.location).to_track_quat('-Z','Y');camera.rotation_euler=direction.to_euler()
 bpy.ops.object.light_add(type='AREA',location=(2,-2,4));bpy.context.object.data.energy=800
-bpy.context.scene.render.engine='BLENDER_EEVEE'
+if sys.platform.startswith('win'):
+    bpy.context.scene.render.engine='CYCLES';bpy.context.scene.cycles.device='CPU';bpy.context.scene.cycles.samples=1
+else:bpy.context.scene.render.engine='BLENDER_EEVEE'
 bpy.context.scene.render.fps=24
 
 def wait(job_id,timeout=120):

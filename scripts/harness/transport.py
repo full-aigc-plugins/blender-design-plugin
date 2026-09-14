@@ -31,8 +31,11 @@ class _ThreadingTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     daemon_threads = True
 
 
-class _ThreadingUnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
-    daemon_threads = True
+if hasattr(socketserver, "UnixStreamServer"):
+    class _ThreadingUnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+        daemon_threads = True
+else:
+    _ThreadingUnixServer = None
 
 
 class JsonLineServer:
@@ -77,6 +80,8 @@ class JsonLineServer:
             host, port = self._server.server_address
             self.endpoint = Endpoint("tcp", (host, port))
         elif self.endpoint.kind == "unix":
+            if _ThreadingUnixServer is None:
+                raise RuntimeError("Unix domain sockets are unavailable on this platform")
             path = Path(str(self.endpoint.address))
             path.parent.mkdir(parents=True, exist_ok=True)
             if path.exists():

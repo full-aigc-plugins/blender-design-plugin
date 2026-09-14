@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -43,23 +44,24 @@ class TestManagedMode(unittest.TestCase):
         )
         self.assertNotIn("--background", argv)
         self.assertIn("--disable-autoexec", argv)
-        self.assertIn("/tmp/project.blend", argv)
-        self.assertLess(argv.index("--disable-autoexec"), argv.index("/tmp/project.blend"))
-        self.assertEqual(argv[-4:], ["--session-id", "s1", "--runtime-dir", "/tmp/runtime"])
+        project=str(Path("/tmp/project.blend"));runtime=str(Path("/tmp/runtime"))
+        self.assertIn(project, argv)
+        self.assertLess(argv.index("--disable-autoexec"), argv.index(project))
+        self.assertEqual(argv[-4:], ["--session-id", "s1", "--runtime-dir", runtime])
 
     def test_output_root_is_forwarded_to_bootstrap(self):
         argv = build_managed_argv(
             blender=Path("/app/blender"), project=None, session_id="s1",
             runtime_dir=Path("/tmp/runtime"), output_root=Path("/tmp/exports"),
         )
-        self.assertEqual(argv[-2:], ["--output-root", "/tmp/exports"])
+        self.assertEqual(argv[-2:], ["--output-root", str(Path("/tmp/exports"))])
 
     def test_asset_roots_are_forwarded_to_bootstrap(self):
         argv = build_managed_argv(
             blender=Path("/app/blender"), project=None, session_id="s1",
             runtime_dir=Path("/tmp/runtime"), asset_roots=[Path("/tmp/assets-a"), Path("/tmp/assets-b")],
         )
-        self.assertEqual(argv[-4:], ["--asset-root", "/tmp/assets-a", "--asset-root", "/tmp/assets-b"])
+        self.assertEqual(argv[-4:], ["--asset-root", str(Path("/tmp/assets-a")), "--asset-root", str(Path("/tmp/assets-b"))])
 
     def test_project_is_optional_for_new_design(self):
         argv = build_managed_argv(
@@ -88,6 +90,7 @@ class TestManagedMode(unittest.TestCase):
         self.assertEqual(kwargs["stdout"], subprocess.DEVNULL)
         self.assertEqual(kwargs["stderr"], subprocess.DEVNULL)
 
+    @unittest.skipIf(os.name == 'nt','POSIX mode bits do not represent Windows ACLs')
     def test_load_descriptor_rejects_world_readable_secret(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "s1.json"

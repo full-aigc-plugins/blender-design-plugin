@@ -34,12 +34,17 @@ jobs:
       - name: Run Windows Python and distribution tests
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           python -m unittest discover -s tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/validate_distribution.py .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/package_connector.py dist/codex-blender-connector-0.3.0-windows-l4.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run real Blender recovery and Rigify acceptance
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           & $env:BLENDER_BIN --version
           New-Item -ItemType Directory -Path artifacts/frame-pipeline | Out-Null
           New-Item -ItemType Directory -Path artifacts/rigify | Out-Null

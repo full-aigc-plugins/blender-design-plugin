@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from scripts.harness.execution_policy import ExecutionMode, ExecutionPolicy, ExecutionPolicyError
 
@@ -6,7 +7,7 @@ from scripts.harness.execution_policy import ExecutionMode, ExecutionPolicy, Exe
 class TestExecutionPolicy(unittest.TestCase):
     def test_auto_policy_suppresses_milestone_review_but_not_irreversible_actions(self):
         policy = ExecutionPolicy.auto_with_budget(
-            approved_output_root="/tmp/codex-out",
+            approved_output_root=str(Path.cwd()/'.test-codex-out'),
             allow_designed_proxies=True,
             downstream_budget_limit="3.20",
         )
@@ -21,11 +22,10 @@ class TestExecutionPolicy(unittest.TestCase):
         with self.assertRaises(ExecutionPolicyError):
             ExecutionPolicy.auto_with_budget(None, False, None)
         with self.assertRaises(ExecutionPolicyError):
-            ExecutionPolicy.auto_with_budget("/tmp/out", False, "-0.01")
+            ExecutionPolicy.auto_with_budget(str(Path.cwd()/'.test-out'), False, "-0.01")
 
     def test_review_only_never_permits_mutation_or_export(self):
         policy = ExecutionPolicy.review_only()
         self.assertTrue(policy.requires_user_review("mutation"))
         self.assertTrue(policy.requires_user_review("export"))
         self.assertTrue(policy.requires_user_review("milestone_complete"))
-

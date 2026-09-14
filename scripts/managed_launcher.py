@@ -38,7 +38,7 @@ def build_managed_argv(*, blender: Path, project: Path | None, session_id: str, 
 
 def load_descriptor(path: Path) -> dict:
     path = Path(path)
-    if path.stat().st_mode & 0o077:
+    if os.name != "nt" and path.stat().st_mode & 0o077:
         raise PermissionError(f"session descriptor permissions are not private: {path}")
     return json.loads(path.read_text())
 

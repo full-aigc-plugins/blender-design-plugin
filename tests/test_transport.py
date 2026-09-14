@@ -1,7 +1,9 @@
 import json
 import socket
+import sys
 import threading
 import unittest
+import uuid
 
 from scripts.harness.transport import Endpoint, JsonLineServer, choose_endpoint, send_request
 
@@ -42,6 +44,16 @@ class TestJsonLineServer(unittest.TestCase):
     def test_oversized_request_is_rejected(self):
         response = send_request(self.server.endpoint, "secret", {"value": "x" * 300})
         self.assertEqual(response["error"]["code"], "REQUEST_TOO_LARGE")
+
+
+@unittest.skipUnless(sys.platform == 'win32','requires Windows named pipes')
+class TestWindowsNamedPipe(unittest.TestCase):
+    def test_authenticated_named_pipe_round_trip(self):
+        endpoint=Endpoint('pipe',rf'\\.\pipe\codex-blender-test-{uuid.uuid4().hex}')
+        server=JsonLineServer(endpoint,token='secret',handle=lambda payload:{'echo':payload['value']})
+        server.start()
+        try:self.assertEqual(send_request(endpoint,'secret',{'value':42}),{'echo':42})
+        finally:server.close()
 
 
 if __name__ == "__main__":

@@ -8,11 +8,11 @@ from scripts.harness.reimport_validator import build_validation_argv, parse_vali
 class TestReimportValidator(unittest.TestCase):
     def test_builds_isolated_blender_argv(self):
         argv = build_validation_argv(Path("/app/blender"), Path("/tmp/model.glb"))
-        self.assertEqual(argv[0], "/app/blender")
+        self.assertEqual(argv[0], str(Path("/app/blender")))
         self.assertIn("--background", argv)
         self.assertIn("--factory-startup", argv)
         self.assertIn("--disable-autoexec", argv)
-        self.assertEqual(argv[-2:], ["--", "/tmp/model.glb"])
+        self.assertEqual(argv[-2:], ["--", str(Path("/tmp/model.glb"))])
 
     def test_parses_marked_summary(self):
         output = 'noise\nCODEX_REIMPORT={"objects":2,"meshes":1}\n'
