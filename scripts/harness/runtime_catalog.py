@@ -426,6 +426,11 @@ class RuntimeCommandRegistry(CommandRegistry):
             }}}
         defaults.update(metadata or {})
         if name in LIFECYCLE_VERIFIED:
+            # Evidence gathered on Blender 5.2.1 / darwin / arm64 / managed.
+            # The production-profile validator does NOT check RuntimeIdentity;
+            # the acceptance script records the identity in its output artifact
+            # (lifecycle_acceptance.json) so a reader can see the scope.
+            # Task 4's coverage matrix is the mechanism for other versions/platforms.
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),

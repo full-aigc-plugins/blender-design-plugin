@@ -128,8 +128,12 @@ class ProductionProfile:
                 else:
                     # A declared evidence path that does not exist on disk
                     # makes the validator fail (no dangling evidence).
+                    # Paths may include a '#heading' anchor suffix (e.g.
+                    # 'docs/verification/matrix.md#scene'); only the file
+                    # portion is validated on disk; the anchor is not verified.
                     for ep in evidence_paths:
-                        if not (project_root / ep).is_file():
+                        file_part = ep.split('#', 1)[0]
+                        if not (project_root / file_part).is_file():
                             missing.append(f'{key}:{ep}')
 
         return CapabilityVerdict(

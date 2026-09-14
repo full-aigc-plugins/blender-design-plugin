@@ -85,6 +85,6 @@ domain/maturity 可省略；maturity 使用 L0–L4；offset 为非负整数，l
 
 **专家级排除（1 条）**：`advanced.execute_python` 标记为 `expert` 类，不计入生产覆盖。
 
-**证据范围**：每条命令的运行证据绑定到 `RuntimeIdentity(5.2.1, darwin, arm64, managed)`。不同版本或平台的证据由 Task 4 的覆盖矩阵建立，不从此处继承。
+**证据范围**：本次验收在 Blender 5.2.1 LTS / darwin / arm64 / managed 模式下运行。生产配置文件的验证器**不检查 RuntimeIdentity**——证据适用于所有身份，不存在按身份隔离的机制。验收脚本的输出（`lifecycle_acceptance.json`）记录了实际运行的版本、平台和架构，读者可据此判断覆盖范围。其他版本和平台的证据由 Task 4 的覆盖矩阵建立。
 
-**生产状态**：`production.status` 现在返回 `l1Commands` 字段，列出仍在 L1 的生产范围内命令。当前主机上该字段包含 5 条前台阻塞命令，`status` 为 `blocked`（另有 35 条 P1 命令因证据路径锚点问题处于阻塞状态，为既有问题）。
+**生产状态**：`production.status` 返回 `l1Commands` 字段，列出仍在 L1 的生产范围内命令。修复证据路径锚点验证（C1）后，`blockedCommands` 为空，`status` 为 `ready`。`l1Commands` 包含 5 条前台阻塞命令（stub 模式）或 6 条（含 `export.file`，需 approved output root）。
