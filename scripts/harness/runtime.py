@@ -40,6 +40,7 @@ from .advanced_python import AdvancedPythonExecutor
 from .exporter import Exporter
 from .preview import PreviewEngine
 from .path_policy import PathPolicy
+from .production_profile import ProductionProfile, RuntimeIdentity
 from .registry import CommandRegistry
 from .runtime_catalog import RuntimeCommandRegistry
 from .session import HarnessSession
@@ -83,16 +84,47 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry = RuntimeCommandRegistry(bpy_module, output_root=approved_output_root, asset_roots=approved_asset_roots)
     registry.register('capability.list',
                       lambda args: {'changedObjects': [], 'result': registry.list_capabilities(args)},
-                      validate=closed_arguments(optional=('domain', 'maturity', 'offset', 'limit')), risk='read',
+                      validate=closed_arguments(optional=('domain', 'maturity', 'offset', 'limit',
+                                                         'profile', 'runtime', 'blenderVersion', 'platform', 'runtimeMode')),
+                      risk='read',
                       availability=lambda: {'status': 'available', 'reason': None},
                       metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
-                                'tests': ['tests/test_capability_catalog.py']})
+                                'tests': ['tests/test_capability_catalog.py', 'tests/test_production_profile.py']})
     registry.register('capability.describe',
                       lambda args: {'changedObjects': [], 'result': registry.describe_capability(args)},
-                      validate=closed_arguments(required=('id',)), risk='read',
+                      validate=closed_arguments(required=('id',), optional=('profile', 'runtime', 'blenderVersion', 'platform', 'runtimeMode')),
+                      risk='read',
                       availability=lambda: {'status': 'available', 'reason': None},
                       metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
-                                'tests': ['tests/test_capability_catalog.py']})
+                                'tests': ['tests/test_capability_catalog.py', 'tests/test_production_profile.py']})
+    # Production status command: loads the default profile and computes status.
+    _default_profile_path = Path(__file__).resolve().parents[2] / 'config' / 'production-profile.json'
+    _production_profile = ProductionProfile.load(_default_profile_path) if _default_profile_path.is_file() else None
+
+    def _build_runtime_identity() -> RuntimeIdentity:
+        bv = getattr(getattr(bpy_module, 'app', None), 'version', (0, 0, 0))
+        import platform as _platform
+        return RuntimeIdentity(
+            blender_version=tuple(bv)[:3] if isinstance(bv, tuple) else (0, 0, 0),
+            platform=_platform.system().lower(),
+            architecture=_platform.machine().lower(),
+            runtime_mode=runtime_mode,
+        )
+
+    def _production_status(_args):
+        if _production_profile is None:
+            return {'changedObjects': [], 'result': {
+                'status': 'unavailable', 'reason': 'No production profile found'}}
+        identity = _build_runtime_identity()
+        result = _production_profile.status(identity, registry)
+        return {'changedObjects': [], 'result': result}
+
+    registry.register('production.status',
+                      _production_status,
+                      validate=closed_arguments(), risk='read',
+                      availability=lambda: {'status': 'available', 'reason': None},
+                      metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
+                                'tests': ['tests/test_production_profile.py']})
     registry.register("scene.inspect", scene.inspect, validate=closed_arguments(), risk="read")
     registry.register('scene.set_units', organization.set_units,
                       validate=closed_arguments(required=('system',), optional=('scaleLength',)))
