@@ -21,11 +21,14 @@ jobs:
       - name: Download and verify Blender 5.2.1 x64
         shell: pwsh
         run: |
-          $archive = Join-Path $env:RUNNER_TEMP "blender-5.2.1-windows-x64.zip"
-          Invoke-WebRequest "https://download.blender.org/release/Blender5.2/blender-5.2.1-windows-x64.zip" -OutFile $archive
+          $config = Get-Content "config/blender-release-matrix.json" | ConvertFrom-Json
+          $combo = $config.combinations | Where-Object { $_.version -eq "5.2.1" -and $_.platform -eq "windows-x64" }
+          if (-not $combo) { throw "5.2.1/windows-x64 not found in matrix config" }
+          $archive = Join-Path $env:RUNNER_TEMP $combo.artifact
+          Invoke-WebRequest $combo.url -OutFile $archive
           $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          $expected = "0e631dad7d0cad6d5d18abdd2e2550f6c0213215334eda00ddbd3d22b96ecb2c"
-          if ($actual -ne $expected) { throw "Blender SHA-256 mismatch: $actual" }
+          $expected = $combo.sha256
+          if ($actual -ne $expected) { throw "Blender SHA-256 mismatch: $actual (expected $expected)" }
           $destination = Join-Path $env:RUNNER_TEMP "blender"
           Expand-Archive $archive -DestinationPath $destination
           $binary = Get-ChildItem $destination -Filter blender.exe -Recurse | Select-Object -First 1 -ExpandProperty FullName
