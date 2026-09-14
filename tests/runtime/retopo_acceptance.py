@@ -196,6 +196,46 @@ assert retopo_obj.data.color_attributes.get('RetopoColor') is not None, 'RetopoC
 print('LAYER TRANSFER CONFIRMED')
 
 # =====================================================================
+# Symmetry verification (non-none symmetry end-to-end)
+# =====================================================================
+print('--- Symmetry verification ---')
+
+# Create a source with asymmetric vertex positions by extruding one face
+# of a cube outward in +X.  This makes the bounding box center.x != 0
+# and the grid built from it will be visibly one-sided before mirroring.
+asym_source = registry.dispatch('object.create_mesh', {
+    'name': 'AsymSource', 'primitive': 'cube', 'location': [0, 0, 0]
+})['result']
+# Select a face on the +X side and extrude it outward
+face_sel = registry.dispatch('mesh.select', {
+    'objectId': asym_source['objectId'], 'method': 'normal',
+    'direction': [1, 0, 0], 'angleDegrees': 10
+})['result']
+registry.dispatch('mesh.edit', {
+    'operation': 'extrude', 'selection': face_sel, 'offset': [2, 0, 0]
+})
+# Now the mesh has vertices ranging from -1 to 3 in X; center.x = 1.0
+asym_obj = bpy.data.objects['AsymSource']
+src_xs = [v.co.x for v in asym_obj.data.vertices]
+center_x = (min(src_xs) + max(src_xs)) / 2
+assert center_x != 0, f'Source must be asymmetric, got center.x={center_x}'
+
+sym_setup = registry.dispatch('retopo.setup_surface', {
+    'sourceObjectId': {'objectId': asym_source['objectId']},
+    'targetName': 'SymRetopo', 'symmetry': 'x', 'offset': 0.05
+})['result']
+assert sym_setup['symmetry'] == 'x', f'Expected symmetry x, got {sym_setup["symmetry"]}'
+
+sym_obj = bpy.data.objects['SymRetopo']
+xs = [v.co.x for v in sym_obj.data.vertices]
+# After mirroring about center.x the vertex X offsets must be symmetric.
+offsets = sorted(round(x - center_x, 4) for x in xs)
+negated = sorted(round(-(x - center_x), 4) for x in xs)
+assert offsets == negated, \
+    f'Symmetry failed: vertex X offsets from {center_x} are not symmetric'
+print(f'SYMMETRY CONFIRMED: {len(xs)} verts symmetric about x={center_x:.3f}')
+
+# =====================================================================
 # BULLET 4: Save/reopen preservation
 # =====================================================================
 print('--- BULLET 4: Save/reopen preservation ---')

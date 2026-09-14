@@ -235,6 +235,14 @@ class FakeCo:
         self.x += vec[0]; self.y += vec[1]; self.z += vec[2]
         return self
 
+    def __getitem__(self, index):
+        return (self.x, self.y, self.z)[index]
+
+    def __setitem__(self, index, value):
+        if index == 0: self.x = float(value)
+        elif index == 1: self.y = float(value)
+        elif index == 2: self.z = float(value)
+
     def __iter__(self):
         yield self.x; yield self.y; yield self.z
 
@@ -460,12 +468,14 @@ def _inject_fake_bmesh(grid_verts=None):
             self.faces = _ElementList()
 
         def from_mesh(self, mesh_data):
-            pass
+            self.verts.clear()
+            for i, v in enumerate(getattr(mesh_data, 'vertices', [])):
+                bmv = SimpleNamespace(co=FakeCo(v.co.x, v.co.y, v.co.z), index=i)
+                self.verts.append(bmv)
 
         def to_mesh(self, mesh_data):
-            # Copy created verts into the mesh data
             mesh_data._verts = [FakeMeshVertex(v.co.x, v.co.y, v.co.z, i)
-                                for i, v in enumerate(created_verts)]
+                                for i, v in enumerate(self.verts)]
             mesh_data._polys = []
 
         def normal_update(self):
@@ -552,8 +562,15 @@ class SetupSurfaceProductionTests(unittest.TestCase):
         self.assertTrue(any('starting point' in l.lower() for l in result['result']['limitations']))
 
     def test_symmetry_x_mirrors_vertices(self):
+        """symmetry='x' must actually mirror vertices, not just echo the parameter.
+
+        If _apply_mirror were a no-op the vertex set would remain one-sided
+        and the min/max X distances from center.x would differ — this test
+        would fail.
+        """
         bpy = RetopoFakeBpy()
-        source = RetopoObject('Source', vertices=[(-1, 0, 0), (1, 0, 0)])
+        # Asymmetric source: center.x = (-2 + 1) / 2 = -0.5
+        source = RetopoObject('Source', vertices=[(-2, 0, 0), (1, 0, 0)])
         bpy.data.objects['Source'] = source
 
         from scripts.harness.commands.retopo import RetopoCommands
@@ -566,6 +583,16 @@ class SetupSurfaceProductionTests(unittest.TestCase):
                 'targetName': 'MirrorGrid', 'symmetry': 'x', 'offset': 0.1
             })
         self.assertEqual(result['result']['symmetry'], 'x')
+
+        obj = bpy.data.objects['MirrorGrid']
+        xs = [v.co.x for v in obj.data.vertices]
+        center_x = -0.5  # (-2 + 1) / 2
+        # After mirroring about center_x the vertex set must be symmetric:
+        # for every x there must be a corresponding 2*center_x - x.
+        rounded = sorted(round(x - center_x, 4) for x in xs)
+        negated = sorted(round(-(x - center_x), 4) for x in xs)
+        self.assertEqual(rounded, negated,
+                        'vertex X offsets from center must be symmetric after mirror')
 
 
 class ProjectProductionTests(unittest.TestCase):
