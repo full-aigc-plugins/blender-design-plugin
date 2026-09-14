@@ -30,14 +30,12 @@ _SHADER_NODE_WHITELIST: dict[str, str] = {
 def _resolve_node_type(name: str, bpy_module) -> str:
     """Resolve a plan-level node type name to a Blender bl_idname.
 
-    Accepts either a whitelisted plan name or a verified live bl_idname
-    that exists in bpy.types.  Arbitrary strings are rejected.
+    Only explicit, reviewed names from the whitelist are accepted.
+    Arbitrary bl_idname strings are rejected regardless of whether
+    Blender knows the type.
     """
     if name in _SHADER_NODE_WHITELIST:
         return _SHADER_NODE_WHITELIST[name]
-    # Allow direct bl_idname if it exists in bpy.types
-    if hasattr(bpy_module.types, name):
-        return name
     raise HarnessError('INVALID_ARGUMENT',
                        f'node type is not whitelisted: {name}')
 
@@ -209,7 +207,11 @@ class MaterialCommands:
         # Reject name collision with existing node
         if tree.nodes.get(node_name):
             raise HarnessError('NAME_COLLISION', f'node already exists: {node_name}')
-        node = tree.nodes.new(bl_idname)
+        try:
+            node = tree.nodes.new(bl_idname)
+        except RuntimeError as exc:
+            raise HarnessError('INVALID_ARGUMENT',
+                               f'Blender rejected node type {bl_idname}: {exc}') from exc
         node.name = node_name
         return {'changedObjects': [], 'result': {
             'material': material_name, 'nodeName': node.name,

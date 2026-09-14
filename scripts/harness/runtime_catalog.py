@@ -141,6 +141,11 @@ FIELDS = {
     'lift': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
     'gamma': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
     'gain': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
+    'offset_x': {'type': 'number'}, 'offset_y': {'type': 'number'},
+    'scale_x': {'type': 'number'}, 'scale_y': {'type': 'number'},
+    'rotation': {'type': 'number'},
+    'min_x': {'type': 'integer', 'minimum': 0}, 'max_x': {'type': 'integer', 'minimum': 0},
+    'min_y': {'type': 'integer', 'minimum': 0}, 'max_y': {'type': 'integer', 'minimum': 0},
 }
 
 TESTS = {
@@ -217,6 +222,8 @@ POSTPRODUCTION_VERIFIED = {
     'material.add_node', 'material.connect_nodes',
     'sequence.split', 'sequence.configure_proxy',
     'sequence.add_modifier', 'sequence.color_grade',
+    'sequence.set_transform', 'sequence.set_crop',
+    'compositor.add_node',
 }
 
 # Lifecycle commands graduated to L3 with runtime acceptance evidence.
@@ -439,6 +446,9 @@ class RuntimeCommandRegistry(CommandRegistry):
             if name=='material.add_node':
                 validate.schema['properties']['nodeType']={'type':'string','enum':[
                     'Principled','Image Texture','Normal Map','Mapping','Math','Mix','ColorRamp']}
+            if name=='compositor.add_node':
+                validate.schema['properties']['nodeType']={'type':'string','enum':[
+                    'Render Layers','File Output','Cryptomatte','Keying','Mask']}
         module = getattr(handler, '__module__', '')
         source = module.replace('.', '/') + '.py' if module.startswith('scripts.') else None
         requirements = ['Per-request argument checks and session policy still apply']

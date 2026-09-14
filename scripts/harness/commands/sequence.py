@@ -226,15 +226,6 @@ class SequenceCommands:
         'Curves': 'CURVES',
     }
 
-    # VSE effect strip types (for new_effect): from editor.strips.bl_rna
-    # CROSS, ADD, SUBTRACT, ALPHA_OVER, ALPHA_UNDER, GAMMA_CROSS,
-    # COMPOSITOR, MULTIPLY, WIPE, GLOW, COLOR, SPEED, MULTICAM,
-    # ADJUSTMENT, GAUSSIAN_BLUR, TEXT, COLORMIX
-    _EFFECT_WHITELIST: dict[str, str] = {
-        'Transform': 'ADJUSTMENT',
-        'Crop': 'ADJUSTMENT',
-        'Color Balance': 'COLOR',
-    }
 
     def _resolve_modifier_type(self, name: str) -> str:
         """Resolve a plan-level modifier type name to a Blender enum value."""
@@ -447,4 +438,98 @@ class SequenceCommands:
             'lift': list(mod.color_balance.lift),
             'gamma': list(mod.color_balance.gamma),
             'gain': list(mod.color_balance.gain),
+        }}
+
+    def set_transform(self, args):
+        """Set transform properties on a VSE strip.
+
+        Transform is a strip property (strip.transform.*), not a modifier
+        or effect type.  This is the whitelisted operation for positional,
+        scale and rotation adjustments in the VSE.
+
+        Parameters
+        ----------
+        name : str
+            Strip name.
+        offset_x : float, optional
+            Horizontal offset in pixels (default 0).
+        offset_y : float, optional
+            Vertical offset in pixels (default 0).
+        scale_x : float, optional
+            Horizontal scale factor (default 1.0).
+        scale_y : float, optional
+            Vertical scale factor (default 1.0).
+        rotation : float, optional
+            Rotation in radians (default 0).
+        """
+        name = require_name(args.get('name'))
+        strip = self._strip(name)
+        if not hasattr(strip, 'transform'):
+            raise HarnessError('INVALID_ARGUMENT',
+                               'strip does not support transform properties')
+        xform = strip.transform
+        offset_x = args.get('offset_x', 0.0)
+        offset_y = args.get('offset_y', 0.0)
+        scale_x = args.get('scale_x', 1.0)
+        scale_y = args.get('scale_y', 1.0)
+        rotation = args.get('rotation', 0.0)
+        for label, value in (('offset_x', offset_x), ('offset_y', offset_y),
+                             ('scale_x', scale_x), ('scale_y', scale_y),
+                             ('rotation', rotation)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise HarnessError('INVALID_ARGUMENT', f'{label} must be a number')
+        xform.offset_x = float(offset_x)
+        xform.offset_y = float(offset_y)
+        xform.scale_x = float(scale_x)
+        xform.scale_y = float(scale_y)
+        xform.rotation = float(rotation)
+        return {'changedObjects': [], 'result': {
+            'strip': strip.name,
+            'offset_x': xform.offset_x, 'offset_y': xform.offset_y,
+            'scale_x': xform.scale_x, 'scale_y': xform.scale_y,
+            'rotation': xform.rotation,
+        }}
+
+    def set_crop(self, args):
+        """Set crop properties on a VSE strip.
+
+        Crop is a strip property (strip.crop.*), not a modifier
+        or effect type.  This is the whitelisted operation for
+        adjusting the visible region of a VSE strip.
+
+        Parameters
+        ----------
+        name : str
+            Strip name.
+        min_x : int, optional
+            Pixels to crop from the left (default 0).
+        max_x : int, optional
+            Pixels to crop from the right (default 0).
+        min_y : int, optional
+            Pixels to crop from the bottom (default 0).
+        max_y : int, optional
+            Pixels to crop from the top (default 0).
+        """
+        name = require_name(args.get('name'))
+        strip = self._strip(name)
+        if not hasattr(strip, 'crop'):
+            raise HarnessError('INVALID_ARGUMENT',
+                               'strip does not support crop properties')
+        min_x = args.get('min_x', 0)
+        max_x = args.get('max_x', 0)
+        min_y = args.get('min_y', 0)
+        max_y = args.get('max_y', 0)
+        for label, value in (('min_x', min_x), ('max_x', max_x),
+                             ('min_y', min_y), ('max_y', max_y)):
+            if type(value) is not int or value < 0:
+                raise HarnessError('INVALID_ARGUMENT', f'{label} must be a non-negative integer')
+        crop = strip.crop
+        crop.min_x = min_x
+        crop.max_x = max_x
+        crop.min_y = min_y
+        crop.max_y = max_y
+        return {'changedObjects': [], 'result': {
+            'strip': strip.name,
+            'min_x': crop.min_x, 'max_x': crop.max_x,
+            'min_y': crop.min_y, 'max_y': crop.max_y,
         }}

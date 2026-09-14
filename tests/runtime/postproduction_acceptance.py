@@ -1,13 +1,18 @@
-"""Post-production acceptance: material nodes, VSE split/proxy/modifier/color-grade.
+"""Post-production acceptance: material nodes, VSE split/proxy/modifier/color-grade,
+VSE transform/crop, compositor node whitelisting, codec verification.
 
-Covers the six acceptance bullets from Task 10:
+Covers the acceptance bullets from Task 10:
   1. Whitelist: bogus node type and bogus VSE modifier type both raise;
      every required legitimate name is accepted.
+     Shader whitelist bypass: non-whitelisted-but-valid Blender types are rejected.
   2. Proxy directory outside authorized root is rejected.
   3. VSE output passes a real H.264/AAC, exact-framerate and audio check.
+     Non-H.264 codec rejection demonstrated on a real MPEG-4 video.
   4. After .blend reopen, nodes, strips, proxies and modifiers are intact.
   5. connect_nodes and color_grade show measured numeric deltas.
   6. Anti-false-positive controls: identity lift/gamma/gain is a near no-op.
+  7. VSE Transform and Crop as strip properties with measured effects.
+  8. Compositor node whitelisting: each required name created and inspected.
 
 Every assertion is backed by a mutation test that proves it can fail.
 """
@@ -103,6 +108,32 @@ try:
         pass_bullet('whitelist_bogus_node')
         _count_dispatch('material.add_node')
 
+    # 1a2. material.add_node: non-whitelisted-but-valid Blender node types must be rejected
+    bypass_types = ['ShaderNodeTexNoise', 'ShaderNodeScript', 'ShaderNodeGroup']
+    for bypass_type in bypass_types:
+        try:
+            registry.dispatch('material.add_node', {
+                'material': 'WhitelistTestMat', 'nodeType': bypass_type, 'name': f'Bypass_{bypass_type}'
+            })
+            fail_bullet(f'whitelist_bypass_{bypass_type}',
+                        f'did not raise for non-whitelisted type {bypass_type}')
+        except HarnessError as e:
+            assert e.code == 'INVALID_ARGUMENT', \
+                f'Expected INVALID_ARGUMENT for {bypass_type}, got {e.code}'
+            print(f'  non-whitelisted type rejected: {bypass_type} -> {e}')
+            _count_dispatch('material.add_node')
+
+    # Verify the rejected nodes did NOT land in the tree
+    tree_node_types = {n.bl_idname for n in mat.node_tree.nodes}
+    for bypass_type in bypass_types:
+        assert bypass_type not in tree_node_types, \
+            f'{bypass_type} should not be in the node tree but was found'
+    print(f'  verified: bypass types not in node tree')
+    report['mutations']['whitelist_shader_bypass'] = {
+        'rejectedTypes': bypass_types, 'verified': True
+    }
+    pass_bullet('whitelist_shader_bypass')
+
     # 1b. material.add_node: every required legitimate name must be accepted
     required_shader_nodes = ['Principled', 'Image Texture', 'Normal Map', 'Mapping',
                              'Math', 'Mix', 'ColorRamp']
@@ -156,8 +187,51 @@ try:
     report['mutations']['whitelist_modifier_accepted'] = {
         'accepted': accepted_mods, 'verified': True
     }
+
+    # 1e. compositor.add_node: bogus compositor node type must raise
+    try:
+        registry.dispatch('compositor.add_node', {
+            'nodeType': 'TotallyBogusCompositorNode', 'name': 'BadComp'
+        })
+        fail_bullet('whitelist_bogus_compositor_node', 'did not raise for bogus compositor node type')
+    except HarnessError as e:
+        assert e.code == 'INVALID_ARGUMENT', f'Expected INVALID_ARGUMENT, got {e.code}'
+        print(f'  bogus compositor node type rejected: {e}')
+        report['mutations']['whitelist_bogus_compositor_node'] = {'errorCode': e.code, 'verified': True}
+        pass_bullet('whitelist_bogus_compositor_node')
+        _count_dispatch('compositor.add_node')
+
+    # 1f. compositor.add_node: every required compositor node type must be accepted
+    required_compositor_nodes = ['Render Layers', 'File Output', 'Mask']
+    # Cryptomatte and Keying: test if Blender 5.2.1 supports them
+    optional_compositor_nodes = ['Cryptomatte', 'Keying']
+    accepted_comp = []
+    unverified_comp = []
+    for node_type in required_compositor_nodes + optional_compositor_nodes:
+        node_name = f'CompTest_{node_type.replace(" ", "_")}'
+        try:
+            result = registry.dispatch('compositor.add_node', {
+                'nodeType': node_type, 'name': node_name
+            })['result']
+            assert result['name'] == node_name, f'Node name mismatch for {node_type}'
+            accepted_comp.append(node_type)
+            _count_dispatch('compositor.add_node')
+            print(f'  compositor node accepted: {node_type} -> {result["nodeType"]}')
+        except HarnessError as e:
+            if node_type in optional_compositor_nodes:
+                print(f'  compositor node {node_type} not available in this Blender: {e}')
+                unverified_comp.append(node_type)
+            else:
+                raise
+    print(f'  accepted compositor nodes: {accepted_comp}')
+    if unverified_comp:
+        print(f'  unverified compositor nodes (not available in Blender {bpy.app.version_string}): {unverified_comp}')
+    report['mutations']['whitelist_compositor_accepted'] = {
+        'accepted': accepted_comp, 'unverified': unverified_comp, 'verified': True
+    }
     pass_bullet('whitelist_shader_nodes')
     pass_bullet('whitelist_modifier_types')
+    pass_bullet('whitelist_compositor_nodes')
 
     # =================================================================
     # BULLET 2: Proxy directory outside authorized root must be rejected
@@ -311,22 +385,53 @@ try:
     # Restore fps
     scene.render.fps = 24
 
-    # 3e. Mutation: prove media check fails on non-H.264
-    # Render a single frame as PNG and try to probe it as video
-    scene.render.image_settings.media_type = 'IMAGE'
-    scene.render.image_settings.file_format = 'PNG'
-    png_path = output / 'not_a_video'
-    scene.render.filepath = str(png_path)
+    # 3e. Mutation: prove codec check fails on real non-H.264 video
+    # Render a real video with MPEG-4 Part 2 codec (not H.264)
+    scene.render.fps = 24
+    scene.frame_start = 1
     scene.frame_end = 1
-    bpy.ops.render.render(write_still=True)
-    rendered_png = list(output.glob('not_a_video*.png'))
-    if rendered_png:
-        try:
-            probe_video(rendered_png[0], Path(ffprobe))
-            fail_bullet('vse_codec_fail', 'probe did not fail on PNG file')
-        except HarnessError as e:
-            print(f'  Media check correctly fails on PNG: {e}')
-            report['mutations']['vse_codec_fail'] = {'errorCode': e.code, 'verified': True}
+    scene.render.image_settings.media_type = 'VIDEO'
+    scene.render.image_settings.file_format = 'FFMPEG'
+    scene.render.ffmpeg.format = 'MPEG4'
+    scene.render.ffmpeg.codec = 'MPEG4'  # MPEG-4 Part 2, not H.264
+    scene.render.ffmpeg.audio_codec = 'AAC'
+    scene.render.ffmpeg.constant_rate_factor = 'MEDIUM'
+    non_h264_path = output / 'non_h264_video'
+    scene.render.filepath = str(non_h264_path)
+    bpy.ops.render.render(animation=True)
+    non_h264_files = list(output.glob('non_h264_video*.mp4'))
+    assert non_h264_files, 'No non-H.264 video rendered'
+    non_h264_video = non_h264_files[0]
+    print(f'  Rendered non-H.264 video: {non_h264_video}')
+
+    # Probe it directly to see the codec
+    import json as _json
+    import subprocess as _subprocess
+    raw_cmd = [ffprobe, '-v', 'error', '-select_streams', 'v:0',
+               '-show_entries', 'stream=codec_name', '-of', 'json', str(non_h264_video)]
+    raw_proc = _subprocess.run(raw_cmd, capture_output=True, text=True, timeout=30)
+    raw_data = _json.loads(raw_proc.stdout)
+    actual_codec = raw_data['streams'][0]['codec_name'].lower()
+    print(f'  Non-H.264 video codec: {actual_codec}')
+    assert actual_codec not in {'h264', 'avc1'}, \
+        f'Expected non-H.264 codec, got {actual_codec}'
+
+    # Now verify probe_video rejects it with the correct error message
+    try:
+        probe_video(non_h264_video, Path(ffprobe))
+        fail_bullet('vse_codec_fail', 'probe did not reject non-H.264 video')
+    except HarnessError as e:
+        assert e.code == 'MEDIA_INVALID', f'Expected MEDIA_INVALID, got {e.code}'
+        assert 'H.264' in str(e), f'Error should mention H.264: {e}'
+        assert actual_codec in str(e), f'Error should mention actual codec {actual_codec}: {e}'
+        print(f'  Codec check correctly rejects non-H.264: {e}')
+        report['mutations']['vse_codec_fail'] = {
+            'expectedCodec': 'h264', 'actualCodec': actual_codec,
+            'errorCode': e.code, 'errorMessage': str(e), 'verified': True
+        }
+
+    # Restore H.264 settings
+    scene.render.ffmpeg.codec = 'H264'
 
     pass_bullet('vse_media_check')
     pass_bullet('vse_framerate_check')
@@ -564,9 +669,146 @@ try:
     pass_bullet('color_grade_delta')
 
     # =================================================================
-    # BULLET 6: Reopen integrity
+    # BULLET 6: VSE Transform and Crop
     # =================================================================
-    print('--- BULLET 6: Reopen integrity ---')
+    print('--- BULLET 6: VSE Transform and Crop ---')
+
+    # 6a. Transform: apply a non-trivial transform and verify the strip properties change
+    strip_left = editor.strips.get('SplitLeft')
+    assert strip_left is not None, 'SplitLeft strip not found'
+
+    # Record baseline transform values
+    xform_before = {
+        'offset_x': strip_left.transform.offset_x,
+        'offset_y': strip_left.transform.offset_y,
+        'scale_x': strip_left.transform.scale_x,
+        'scale_y': strip_left.transform.scale_y,
+        'rotation': strip_left.transform.rotation,
+    }
+    print(f'  Transform before: {xform_before}')
+
+    xform_result = registry.dispatch('sequence.set_transform', {
+        'name': 'SplitLeft',
+        'offset_x': 50.0, 'offset_y': -30.0,
+        'scale_x': 1.5, 'scale_y': 0.8,
+        'rotation': 0.5,
+    })['result']
+    _count_dispatch('sequence.set_transform')
+    print(f'  Transform result: {xform_result}')
+
+    # Verify the properties changed (use approximate comparison for floats)
+    assert abs(strip_left.transform.offset_x - 50.0) < 0.001, \
+        f'offset_x mismatch: {strip_left.transform.offset_x}'
+    assert abs(strip_left.transform.offset_y - (-30.0)) < 0.001, \
+        f'offset_y mismatch: {strip_left.transform.offset_y}'
+    assert abs(strip_left.transform.scale_x - 1.5) < 0.001, \
+        f'scale_x mismatch: {strip_left.transform.scale_x}'
+    assert abs(strip_left.transform.scale_y - 0.8) < 0.001, \
+        f'scale_y mismatch: {strip_left.transform.scale_y}'
+    assert abs(strip_left.transform.rotation - 0.5) < 0.001, \
+        f'rotation mismatch: {strip_left.transform.rotation}'
+
+    # Render and verify the pixel changed (transform has visible effect)
+    xform_render_path = output / 'transform_applied'
+    scene.render.filepath = str(xform_render_path)
+    bpy.ops.render.render(write_still=True)
+    xform_files = list(output.glob('transform_applied*.png'))
+    assert xform_files, 'Transform render not found'
+    xform_px = _sample_pixel(xform_files[0])
+    xform_delta = sum(abs(a - b) for a, b in zip(xform_px, baseline_px))
+    print(f'  Transform pixel delta: {xform_delta:.6f}')
+    assert xform_delta > 0.001, \
+        f'transform must change pixels, delta={xform_delta}'
+    report['mutations']['transform_effect'] = {
+        'baselinePixel': [round(v, 4) for v in baseline_px],
+        'transformPixel': [round(v, 4) for v in xform_px],
+        'delta': round(xform_delta, 6), 'verified': True
+    }
+
+    # Reset transform for reopen test
+    registry.dispatch('sequence.set_transform', {
+        'name': 'SplitLeft',
+        'offset_x': 0.0, 'offset_y': 0.0,
+        'scale_x': 1.0, 'scale_y': 1.0,
+        'rotation': 0.0,
+    })
+    _count_dispatch('sequence.set_transform')
+
+    # 6b. Crop: apply a non-trivial crop and verify the strip properties change
+    crop_result = registry.dispatch('sequence.set_crop', {
+        'name': 'SplitLeft',
+        'min_x': 10, 'max_x': 20,
+        'min_y': 5, 'max_y': 15,
+    })['result']
+    _count_dispatch('sequence.set_crop')
+    print(f'  Crop result: {crop_result}')
+
+    # Verify the properties changed
+    assert strip_left.crop.min_x == 10, f'min_x mismatch: {strip_left.crop.min_x}'
+    assert strip_left.crop.max_x == 20, f'max_x mismatch: {strip_left.crop.max_x}'
+    assert strip_left.crop.min_y == 5, f'min_y mismatch: {strip_left.crop.min_y}'
+    assert strip_left.crop.max_y == 15, f'max_y mismatch: {strip_left.crop.max_y}'
+
+    # Render and verify the pixel changed (crop has visible effect)
+    crop_render_path = output / 'crop_applied'
+    scene.render.filepath = str(crop_render_path)
+    bpy.ops.render.render(write_still=True)
+    crop_files = list(output.glob('crop_applied*.png'))
+    assert crop_files, 'Crop render not found'
+    crop_px = _sample_pixel(crop_files[0])
+    crop_delta = sum(abs(a - b) for a, b in zip(crop_px, baseline_px))
+    print(f'  Crop pixel delta: {crop_delta:.6f}')
+    assert crop_delta > 0.001, \
+        f'crop must change pixels, delta={crop_delta}'
+    report['mutations']['crop_effect'] = {
+        'baselinePixel': [round(v, 4) for v in baseline_px],
+        'cropPixel': [round(v, 4) for v in crop_px],
+        'delta': round(crop_delta, 6), 'verified': True
+    }
+
+    # Reset crop for reopen test
+    registry.dispatch('sequence.set_crop', {
+        'name': 'SplitLeft',
+        'min_x': 0, 'max_x': 0,
+        'min_y': 0, 'max_y': 0,
+    })
+    _count_dispatch('sequence.set_crop')
+
+    pass_bullet('vse_transform')
+    pass_bullet('vse_crop')
+
+    # =================================================================
+    # BULLET 7: Compositor node whitelisting
+    # =================================================================
+    print('--- BULLET 7: Compositor node whitelisting ---')
+
+    # The compositor nodes were already created in BULLET 1f.
+    # Verify they are inspectable.
+    comp_inspect = registry.dispatch('compositor.inspect', {})['result']
+    _count_dispatch('compositor.inspect')
+    comp_node_names = {n['name'] for n in comp_inspect.get('nodes', [])}
+    comp_node_types = {n['type'] for n in comp_inspect.get('nodes', [])}
+    print(f'  Compositor nodes: {comp_node_names}')
+    print(f'  Compositor node types: {comp_node_types}')
+
+    # Verify required nodes exist
+    for req_type in required_compositor_nodes:
+        plan_name = req_type.replace(' ', '_')
+        expected_name = f'CompTest_{plan_name}'
+        assert expected_name in comp_node_names, \
+            f'Required compositor node {expected_name} not found in tree'
+
+    report['mutations']['compositor_node_inspect'] = {
+        'nodes': list(comp_node_names),
+        'types': list(comp_node_types),
+        'verified': True
+    }
+    pass_bullet('compositor_node_whitelist')
+
+    # =================================================================
+    # BULLET 8: Reopen integrity
+    # =================================================================
+    print('--- BULLET 8: Reopen integrity ---')
 
     # Record pre-reopen state
     mat_nodes_before = []

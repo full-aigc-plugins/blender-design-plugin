@@ -373,6 +373,8 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('render.create_view_layer',rendering.create_view_layer,validate=closed_arguments(required=('name',)))
     registry.register('render.inspect',rendering.inspect,validate=closed_arguments(),risk='read')
     registry.register('compositor.configure',compositor.configure,validate=closed_arguments(optional=('exposure','glare')))
+    registry.register('compositor.add_node',compositor.add_node,
+                      validate=closed_arguments(required=('nodeType','name')))
     registry.register('compositor.inspect',compositor.inspect,validate=closed_arguments(),risk='read')
     registry.register('compositor.add_tracking_mask',compositor.add_tracking_mask,
                       validate=closed_arguments(required=('clip','maskName','points')))
@@ -414,6 +416,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('name','modifierType'),optional=('settings',)))
     registry.register('sequence.color_grade',sequence.color_grade,
                       validate=closed_arguments(required=('name',),optional=('lift','gamma','gain')))
+    registry.register('sequence.set_transform',sequence.set_transform,
+                      validate=closed_arguments(required=('name',),optional=('offset_x','offset_y','scale_x','scale_y','rotation')))
+    registry.register('sequence.set_crop',sequence.set_crop,
+                      validate=closed_arguments(required=('name',),optional=('min_x','max_x','min_y','max_y')))
     registry.register('tracking.load_clip',tracking.load_clip,validate=closed_arguments(required=('name','path'),optional=('focalLengthPixels',)))
     registry.register('tracking.add_track',tracking.add_track,validate=closed_arguments(required=('clip','name','markers')))
     registry.register('tracking.solve_camera',tracking.solve_camera,validate=closed_arguments(required=('clip','keyframeA','keyframeB')))
