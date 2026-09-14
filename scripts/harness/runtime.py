@@ -257,6 +257,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('material','path','usage')))
     registry.register('material.inspect_nodes',materials.inspect_nodes,
                       validate=closed_arguments(required=('material',)),risk='read')
+    registry.register('material.add_node',materials.add_node,
+                      validate=closed_arguments(required=('material','nodeType','name')))
+    registry.register('material.connect_nodes',materials.connect_nodes,
+                      validate=closed_arguments(required=('material','fromNode','fromSocket','toNode','toSocket')))
     registry.register('material.create_node_group',materials.create_node_group,
                       validate=closed_arguments(required=('material','groupName'),optional=('baseColor','roughness')))
     registry.register('material.bake',materials.bake,
@@ -402,6 +406,14 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('sequence.configure_output',sequence.configure_output,
                       validate=closed_arguments(required=('frameStart','frameEnd'),optional=('width','height','fps')))
     registry.register('sequence.inspect',sequence.inspect,validate=closed_arguments(),risk='read')
+    registry.register('sequence.split',sequence.split,
+                      validate=closed_arguments(required=('name','frame','leftName','rightName')))
+    registry.register('sequence.configure_proxy',sequence.configure_proxy,
+                      validate=closed_arguments(required=('name','sizes','directory')))
+    registry.register('sequence.add_modifier',sequence.add_modifier,
+                      validate=closed_arguments(required=('name','modifierType'),optional=('settings',)))
+    registry.register('sequence.color_grade',sequence.color_grade,
+                      validate=closed_arguments(required=('name',),optional=('lift','gamma','gain')))
     registry.register('tracking.load_clip',tracking.load_clip,validate=closed_arguments(required=('name','path'),optional=('focalLengthPixels',)))
     registry.register('tracking.add_track',tracking.add_track,validate=closed_arguments(required=('clip','name','markers')))
     registry.register('tracking.solve_camera',tracking.solve_camera,validate=closed_arguments(required=('clip','keyframeA','keyframeB')))

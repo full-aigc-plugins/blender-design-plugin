@@ -135,6 +135,12 @@ FIELDS = {
     'progress': {'type': ['number', 'null'], 'minimum': 0, 'maximum': 1},
     'metrics': {'type': 'object', 'description': 'Per-metric toggle dict for simulation.validate'},
     'easing': {'type': 'string', 'enum': ['LINEAR', 'EASE_IN', 'EASE_OUT', 'EASE_IN_OUT', 'BOUNCE', 'ELASTIC']},
+    'sizes': {'type': 'array', 'items': {'type': 'integer', 'enum': [25, 50, 75, 100]}, 'minItems': 1},
+    'directory': {'type': 'string'},
+    'modifierType': {'type': 'string'},
+    'lift': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
+    'gamma': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
+    'gain': {'type': 'array', 'minItems': 3, 'maxItems': 3, 'items': {'type': 'number'}},
 }
 
 TESTS = {
@@ -204,6 +210,13 @@ SURFACE_MOTION_VERIFIED = {
     'hair.groom', 'hair.validate',
     'simulation.bake', 'simulation.validate',
     'grease_pencil.add_modifier', 'grease_pencil.interpolate',
+}
+
+# Task 10: post-production commands verified by postproduction_acceptance.py.
+POSTPRODUCTION_VERIFIED = {
+    'material.add_node', 'material.connect_nodes',
+    'sequence.split', 'sequence.configure_proxy',
+    'sequence.add_modifier', 'sequence.color_grade',
 }
 
 # Lifecycle commands graduated to L3 with runtime acceptance evidence.
@@ -324,6 +337,8 @@ def runtime_evidence(name):
     if name in {'hair.groom','hair.validate','simulation.bake','simulation.validate',
                 'grease_pencil.add_modifier','grease_pencil.interpolate'}:
         return ['tests/runtime/surface_motion_acceptance.py']
+    if name in POSTPRODUCTION_VERIFIED:
+        return ['tests/runtime/postproduction_acceptance.py']
     if name in P7_VERIFIED:
         return ['tests/runtime/p7_gp_sequence_acceptance.py']
     if name in P6_VERIFIED:
@@ -415,6 +430,15 @@ class RuntimeCommandRegistry(CommandRegistry):
                 validate.schema['properties']['operation']={'type':'string','enum':['COMB','CUT','LENGTH','CLUMP','NOISE','SMOOTH']}
             if name=='sequence.add':
                 validate.schema['properties']['type']={'type':'string','enum':['MOVIE','SOUND','IMAGE','IMAGE_SEQUENCE','SCENE','TEXT']}
+            if name=='sequence.add_modifier':
+                validate.schema['properties']['modifierType']={'type':'string','enum':[
+                    'Color Balance','Brightness/Contrast','Hue Correct','Mask',
+                    'White Balance','Tonemap','Curves',
+                    'BRIGHT_CONTRAST','COLOR_BALANCE','COMPOSITOR','CURVES',
+                    'HUE_CORRECT','MASK','TONEMAP','WHITE_BALANCE']}
+            if name=='material.add_node':
+                validate.schema['properties']['nodeType']={'type':'string','enum':[
+                    'Principled','Image Texture','Normal Map','Mapping','Math','Mix','ColorRamp']}
         module = getattr(handler, '__module__', '')
         source = module.replace('.', '/') + '.py' if module.startswith('scripts.') else None
         requirements = ['Per-request argument checks and session policy still apply']
@@ -484,7 +508,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'delivery': ['tests/runtime/foreground_lifecycle_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
-        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED:
+        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED or name in POSTPRODUCTION_VERIFIED:
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),
@@ -497,6 +521,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                            'docs/verification/p2-character-acceptance.md' if name in P2B_VERIFIED else
                            'docs/verification/p2-product-acceptance.md' if name in P2A_VERIFIED else
                            'docs/verification/p5-surface-simulation-acceptance.md' if name in SURFACE_MOTION_VERIFIED else
+                           'docs/verification/postproduction-acceptance.md' if name in POSTPRODUCTION_VERIFIED else
                            'docs/verification/blender-domain-coverage-matrix.md#sceneobjectcollection'],
                 'delivery': [('tests/runtime/p8_frame_pipeline_acceptance.py' if name.startswith('job.') else
                               'tests/runtime/p8_vse_extended_acceptance.py' if name in {'sequence.set_speed','sequence.keyframe_volume'} else
@@ -513,6 +538,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                              'tests/runtime/p2_character_acceptance.py' if name in P2B_VERIFIED else
                              'tests/runtime/p2_product_acceptance.py' if name in P2A_VERIFIED else
                              'tests/runtime/surface_motion_acceptance.py' if name in SURFACE_MOTION_VERIFIED else
+                             'tests/runtime/postproduction_acceptance.py' if name in POSTPRODUCTION_VERIFIED else
                              'tests/runtime/p1_delivery_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
