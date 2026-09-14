@@ -41,6 +41,7 @@ from .exporter import Exporter
 from .preview import PreviewEngine
 from .path_policy import PathPolicy
 from .production_profile import ProductionProfile, RuntimeIdentity
+from .compat.selector import select_adapter
 from .registry import CommandRegistry
 from .runtime_catalog import RuntimeCommandRegistry
 from .session import HarnessSession
@@ -58,6 +59,21 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     view = ViewCommands(bpy_module)
     if runtime_mode not in {"managed", "connector"}:
         raise ValueError("runtime_mode must be managed or connector")
+    # Select version adapter once; pass to commands that need it.
+    _version_adapter = None
+    try:
+        _bv = getattr(getattr(bpy_module, 'app', None), 'version', None)
+        if _bv is not None:
+            import platform as _platform
+            _identity = RuntimeIdentity(
+                blender_version=tuple(_bv)[:3] if isinstance(_bv, tuple) else (0, 0, 0),
+                platform=_platform.system().lower(),
+                architecture=_platform.machine().lower(),
+                runtime_mode=runtime_mode,
+            )
+            _version_adapter = select_adapter(_identity, bpy_module)
+    except Exception:
+        _version_adapter = None
     official = OfficialUploaderCommands(bpy_module, approved_output_root=approved_output_root, approved_asset_roots=approved_asset_roots)
     organization = OrganizationCommands(bpy_module)
     meshes = MeshCommands(bpy_module)
@@ -66,12 +82,12 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     asset_policy = PathPolicy(approved_asset_roots) if approved_asset_roots else None
     assets = AssetCommands(bpy_module, asset_policy=asset_policy)
     uvs = UVCommands(bpy_module)
-    rigs = RigCommands(bpy_module)
+    rigs = RigCommands(bpy_module, adapter=_version_adapter)
     constraints = ConstraintCommands(bpy_module)
     advanced_animation = AdvancedAnimationCommands(bpy_module)
     quality = QualityCommands(bpy_module)
     jobs = JobManager(bpy_module, approved_output_root)
-    geometry_nodes = GeometryNodeCommands(bpy_module)
+    geometry_nodes = GeometryNodeCommands(bpy_module, adapter=_version_adapter)
     sculpt = SculptCommands(bpy_module)
     hair = HairCommands(bpy_module)
     simulation = SimulationCommands(bpy_module,approved_output_root)

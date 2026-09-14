@@ -7,8 +7,8 @@ from .validation import finite_number,require_name,vector3
 
 
 class RigCommands:
-    def __init__(self,bpy_module):
-        self.bpy=bpy_module; self.objects=ObjectResolver(bpy_module); self.context=OperationContext(bpy_module)
+    def __init__(self,bpy_module,adapter=None):
+        self.bpy=bpy_module; self.objects=ObjectResolver(bpy_module); self.context=OperationContext(bpy_module); self.adapter=adapter
 
     def create_armature(self,arguments):
         name=require_name(arguments.get('name')); specs=arguments.get('bones')
@@ -80,6 +80,8 @@ class RigCommands:
         return {'changedObjects':[],'result':self.objects.receipt(arm)|{'bones':bones,'boundMeshes':sorted(bound)}}
 
     def rigify_status(self,_arguments):
+        if self.adapter is not None:
+            return {'changedObjects':[],'result':self.adapter.enable_rigify(self.bpy)}
         try:
             import addon_utils
             bundled=any(module.__name__=='rigify' for module in addon_utils.modules())
