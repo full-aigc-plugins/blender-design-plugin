@@ -411,30 +411,6 @@ class Policy3PriorityTests(unittest.TestCase):
         self.assertEqual(len(launched2), 0,
                          "no new launch: active count still at max=1")
 
-    def test_MUTATION_preemption_would_swap_running_job(self):
-        """If preemption were allowed, a higher-priority job would displace
-        the running one."""
-        scheduler = Scheduler(max_active=1, disk_reserve_fraction=0.0,
-                              disk_reserve_minimum=0)
-        e1 = _QueueEntry(sort_key=(0, 1.0), job_id="job_running", kind="RENDER_STILL",
-                         parameters={}, priority=0, enqueue_time=1.0)
-        scheduler.enqueue(e1)
-        scheduler.try_dispatch(Path(tempfile.gettempdir()),
-                               launch_fn=lambda e: {"jobId": e.job_id})
-        self.assertIn("job_running", scheduler.active_ids)
-        # MUTATION: remove running and start new one (simulating preemption)
-        scheduler.mark_complete("job_running")  # forcibly evict
-        e_new = _QueueEntry(sort_key=(-10, 3.0), job_id="job_preemptor",
-                            kind="RENDER_STILL", parameters={}, priority=10,
-                            enqueue_time=3.0)
-        scheduler.enqueue(e_new)
-        scheduler.try_dispatch(Path(tempfile.gettempdir()),
-                               launch_fn=lambda e: {"jobId": e.job_id})
-        # With preemption mutation, job_preemptor is now active instead
-        self.assertNotIn("job_running", scheduler.active_ids,
-                         "preemption mutation: running job was evicted")
-        self.assertIn("job_preemptor", scheduler.active_ids,
-                      "preemption mutation: higher-priority job took over")
 
 
 # ---------------------------------------------------------------------------
@@ -472,33 +448,6 @@ class Policy4NoPreemptionTests(unittest.TestCase):
             self.assertEqual(factory.call_count, 1,
                              "only one process started")
 
-    def test_MUTATION_preemption_would_kill_first_job(self):
-        """If preemption logic existed, the first job would be terminated."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            factory = _CountingProcessFactory()
-            scheduler = Scheduler(max_active=1, disk_reserve_fraction=0.0,
-                                  disk_reserve_minimum=0, process_factory=factory)
-            manager = JobManager(_FakeBpy(), output_root=Path(tmpdir),
-                                 process_factory=factory, scheduler=scheduler)
-            r1 = manager.submit({
-                "kind": "RENDER_STILL",
-                "jobId": "job_p4m_first",
-                "parameters": {"width": 64, "height": 64},
-            })
-            self.assertEqual(r1["result"]["state"], "running")
-            # MUTATION: forcibly remove the running job and start the new one
-            scheduler.mark_complete("job_p4m_first")
-            r2 = manager.submit({
-                "kind": "RENDER_STILL",
-                "jobId": "job_p4m_second",
-                "parameters": {"width": 64, "height": 64},
-                "priority": 10,
-            })
-            # With the mutation, the second job is now active
-            self.assertIn("job_p4m_second", scheduler.active_ids,
-                          "preemption mutation: second job displaced the first")
-            self.assertNotIn("job_p4m_first", scheduler.active_ids,
-                             "preemption mutation: first job was evicted")
 
 
 # ---------------------------------------------------------------------------
@@ -802,40 +751,55 @@ class DispatchCountTests(unittest.TestCase):
     """All three new commands must be dispatched through the registry."""
 
     def test_all_three_commands_dispatched(self):
-        """Dispatch estimate, list, events through the real registry."""
+        """Dispatch estimate, list, events through the real registry with an output root."""
         from scripts.harness.runtime_catalog import _registration_only_bpy
         from scripts.harness.runtime import build_registry
 
-        registry = build_registry(_registration_only_bpy(), runtime_mode="managed")
-        dispatch_count = 0
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Seed 3 completed jobs on disk so job.list has data to return.
+            _seed_jobs(tmpdir, 3, state="completed")
+            registry = build_registry(
+                _registration_only_bpy(), runtime_mode="managed",
+                approved_output_root=Path(tmpdir),
+            )
+            dispatch_count = 0
 
-        # job.estimate
-        result = registry.dispatch("job.estimate", {
-            "kind": "RENDER_STILL",
-            "parameters": {"width": 256, "height": 256},
-        })
-        dispatch_count += 1
-        self.assertIn("result", result)
-        self.assertEqual(result["result"]["kind"], "RENDER_STILL")
-
-        # job.list -- needs output root, but we can test dispatch resolves
-        try:
-            registry.dispatch("job.list", {"limit": 1})
+            # job.estimate -- pure computation, no output root needed
+            result = registry.dispatch("job.estimate", {
+                "kind": "RENDER_STILL",
+                "parameters": {"width": 256, "height": 256},
+            })
             dispatch_count += 1
-        except HarnessError as e:
-            if e.code == "OUTPUT_NOT_AUTHORIZED":
-                dispatch_count += 1  # dispatch resolved, just no output root
-            else:
-                raise
+            self.assertIn("result", result)
+            self.assertEqual(result["result"]["kind"], "RENDER_STILL")
 
-        # job.events
-        result = registry.dispatch("job.events", {})
-        dispatch_count += 1
-        self.assertIn("result", result)
+            # job.list -- dispatched successfully with output root; assert real fields
+            result = registry.dispatch("job.list", {"limit": 2})
+            dispatch_count += 1
+            list_result = result["result"]
+            self.assertEqual(list_result["total"], 3, "total must reflect all seeded jobs")
+            self.assertEqual(len(list_result["items"]), 2, "limit=2 returns 2 items")
+            self.assertIsNotNone(list_result["nextOffset"], "nextOffset present when more items exist")
+            # Verify real listing fields on returned items
+            for item in list_result["items"]:
+                self.assertIn("jobId", item, "each item must have a jobId")
+                self.assertIn("state", item, "each item must have a state")
+                self.assertEqual(item["state"], "completed")
+            # Page 2: offset=2, should return 1 item, nextOffset=None
+            page2 = registry.dispatch("job.list", {"offset": 2, "limit": 2})
+            self.assertEqual(len(page2["result"]["items"]), 1)
+            self.assertIsNone(page2["result"]["nextOffset"])
 
-        print(f"\n  Dispatch count: {dispatch_count} / 3")
-        self.assertEqual(dispatch_count, 3,
-                         f"all 3 commands must be dispatched; got {dispatch_count}")
+            # job.events -- dispatched; assert real fields
+            result = registry.dispatch("job.events", {})
+            dispatch_count += 1
+            events_result = result["result"]
+            self.assertIn("events", events_result)
+            self.assertIsInstance(events_result["events"], list)
+
+            print(f"\n  Dispatch count: {dispatch_count} / 3")
+            self.assertEqual(dispatch_count, 3,
+                             f"all 3 commands must be dispatched; got {dispatch_count}")
 
 
 # ---------------------------------------------------------------------------
