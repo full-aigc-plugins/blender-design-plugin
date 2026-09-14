@@ -344,12 +344,22 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('objectId','sourceObjectId'),optional=('maxDeviation','maxPoleValence')),
                       risk='read')
     registry.register('hair.create_curves',hair.create_curves,validate=closed_arguments(required=('surface','name','strands'),optional=('radius',)))
+    registry.register('hair.groom',hair.groom,
+                      validate=closed_arguments(required=('objectId','operation','strength'),optional=('selection',)))
+    registry.register('hair.validate',hair.validate,
+                      validate=closed_arguments(required=('objectId','surfaceObjectId'),optional=('limits',)),
+                      risk='read')
     registry.register('hair.inspect',hair.inspect,validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('simulation.rigid_body',simulation.rigid_body,validate=closed_arguments(required=('bodyType',),optional=('name','objectId','collisionShape','mass')))
     registry.register('simulation.collision',simulation.collision,validate=closed_arguments(optional=('name','objectId','thickness')))
     registry.register('simulation.cloth',simulation.cloth,validate=closed_arguments(optional=('name','objectId','modifierName','quality','mass','frameStart','frameEnd')))
     registry.register('simulation.soft_body',simulation.soft_body,validate=closed_arguments(optional=('name','objectId','modifierName','frameStart','frameEnd')))
     registry.register('simulation.quick_smoke',simulation.quick_smoke,validate=closed_arguments(required=('flows',),optional=('resolution','frameStart','frameEnd')))
+    registry.register('simulation.bake',simulation.bake,
+                      validate=closed_arguments(required=('objectId','bakeType','frameStart','frameEnd')))
+    registry.register('simulation.validate',simulation.validate,
+                      validate=closed_arguments(required=('objectId',),optional=('metrics',)),
+                      risk='read')
     registry.register('simulation.cache_status',simulation.cache_status,validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('simulation.free_cache',simulation.free_cache,validate=closed_arguments(optional=('name','objectId')))
     registry.register('render.configure',rendering.configure,
@@ -372,6 +382,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('material','color'),optional=('name','objectId')))
     registry.register('grease_pencil.add_stroke',grease_pencil.add_stroke,
                       validate=closed_arguments(required=('layer','frame','points'),optional=('name','objectId','materialIndex','cyclic')))
+    registry.register('grease_pencil.add_modifier',grease_pencil.add_modifier,
+                      validate=closed_arguments(required=('objectId','type'),optional=('settings',)))
+    registry.register('grease_pencil.interpolate',grease_pencil.interpolate,
+                      validate=closed_arguments(required=('objectId','layer','frameStart','frameEnd','easing')))
     registry.register('grease_pencil.inspect',grease_pencil.inspect,validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('sequence.add',sequence.add,validate=closed_arguments(required=('type','name','channel','frameStart'),
                       optional=('path','paths','scene','text','duration','fontSize')))
