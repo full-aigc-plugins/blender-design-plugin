@@ -2,7 +2,8 @@
 
 Blender 5.0 introduced the Grease Pencil v3 rewrite (GreasePencil
 data-block with layers/drawings replacing GPencil).  The compositor
-still uses scene.node_tree and CompositorNodeComposite in 5.0-5.1.
+is assumed to still use scene.node_tree in 5.0-5.1 (unverified;
+CompositorNodeComposite was removed by 5.2).
 
 Runtime-verified: NO.  Only Blender 5.2.1 is installed.  The adapter
 here is based on changelog analysis, not live testing.

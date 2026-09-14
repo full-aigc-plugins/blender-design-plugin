@@ -42,8 +42,9 @@ class BlenderCompatibilityAdapter:
     def configure_file_output(self, node, directory, base_name):
         """Configure a CompositorNodeOutputFile for the current version.
 
-        Older Blenders use node.directory; newer ones use node.base_path
-        and file_slots.
+        All known versions use node.directory + node.file_name (evidence:
+        5.2.1 snapshot).  The six unverified versions may differ; Task 4's
+        matrix will surface any such difference.
         """
         raise HarnessError(
             'CAPABILITY_UNAVAILABLE',
@@ -110,7 +111,8 @@ class BlenderCompatibilityAdapter:
     def configure_hair_curves(self, hair_object, surface, radius):
         """Configure hair curves data on *hair_object*.
 
-        Older Blenders use different attribute APIs for position/radius.
+        Version differences in the attribute API are unverified; no version
+        module overrides this yet.  Task 4's matrix may surface differences.
         """
         raise HarnessError(
             'CAPABILITY_UNAVAILABLE',
@@ -157,7 +159,8 @@ class BlenderCompatibilityAdapter:
     def configure_render_engine(self, scene, requested_engine, available_engines):
         """Return the correct engine identifier for *requested_engine*.
 
-        Handles the EEVEE → BLENDER_EEVEE_NEXT rename across versions.
+        The 5.2.1 snapshot reports only BLENDER_EEVEE (no BLENDER_EEVEE_NEXT).
+        The six unverified versions may differ; Task 4's matrix will confirm.
         """
         raise HarnessError(
             'CAPABILITY_UNAVAILABLE',
