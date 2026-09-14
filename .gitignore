@@ -9,3 +9,7 @@ dist/
 .env
 .env.*
 .superpowers/
+
+# Runtime acceptance output (regenerable; never commit evidence dumps)
+artifacts/
+tests/runtime/evidence/
