@@ -52,6 +52,26 @@ class SimulationCommands:
         if path:cache.filepath=str(path)
     @staticmethod
     def _cache_receipt(cache):return {'frameStart':cache.frame_start,'frameEnd':cache.frame_end,'filepath':cache.filepath,'isBaked':bool(cache.is_baked)}
+
+    def _store_bake_range(self, obj, mod_name, frame_start, frame_end):
+        """Persist the baked frame range so validate() can detect staleness."""
+        obj[f'_harness_baked_{mod_name}_start'] = int(frame_start)
+        obj[f'_harness_baked_{mod_name}_end'] = int(frame_end)
+
+    def _clear_bake_range(self, obj, mod_name):
+        """Remove stored bake range metadata after freeing a cache."""
+        for suffix in ('start', 'end'):
+            key = f'_harness_baked_{mod_name}_{suffix}'
+            if key in obj:
+                del obj[key]
+
+    def _read_bake_range(self, obj, mod_name, fallback_start, fallback_end):
+        """Read stored bake range; fall back to current cache config if absent."""
+        sk = f'_harness_baked_{mod_name}_start'
+        ek = f'_harness_baked_{mod_name}_end'
+        baked_start = int(obj[sk]) if sk in obj else fallback_start
+        baked_end = int(obj[ek]) if ek in obj else fallback_end
+        return baked_start, baked_end
     def quick_smoke(self,args):
         flows=args.get('flows')
         if not isinstance(flows,list) or not flows:raise HarnessError('INVALID_ARGUMENT','flows must contain object locators')
@@ -95,6 +115,7 @@ class SimulationCommands:
                 try:
                     with self.bpy.context.temp_override(point_cache=cache):self.bpy.ops.ptcache.free_bake()
                     freed.append(name)
+                    self._clear_bake_range(obj, name)
                 except Exception as exc:raise HarnessError('OPERATION_FAILED',f'could not free cache: {name}') from exc
         for modifier in obj.modifiers:
             settings=getattr(modifier,'domain_settings',None)
@@ -178,6 +199,7 @@ class SimulationCommands:
                     with self.bpy.context.temp_override(point_cache=cache):
                         self.bpy.ops.ptcache.bake(bake=True)
                     baked.append(mod_name)
+                    self._store_bake_range(obj, mod_name, frame_start, frame_end)
                 except Exception as exc:
                     cancelled = True
                 finally:
@@ -261,11 +283,14 @@ class SimulationCommands:
             requested_start = cache.frame_start
             requested_end = cache.frame_end
 
+            if is_baked:
+                baked_start, baked_end = self._read_bake_range(
+                    obj, mod_name, requested_start, requested_end)
+            else:
+                baked_start, baked_end = requested_start, requested_end
+
             if check_frames:
                 if is_baked:
-                    # Count baked frames by reading the baked frame range
-                    baked_start = getattr(cache, 'frame_start', requested_start)
-                    baked_end = getattr(cache, 'frame_end', requested_end)
                     entry['framesBaked'] = baked_end - baked_start + 1
                 else:
                     entry['framesBaked'] = 0
@@ -273,8 +298,6 @@ class SimulationCommands:
             if check_coverage:
                 entry['requestedRange'] = {'frameStart': requested_start, 'frameEnd': requested_end}
                 if is_baked:
-                    baked_start = getattr(cache, 'frame_start', requested_start)
-                    baked_end = getattr(cache, 'frame_end', requested_end)
                     entry['bakedRange'] = {'frameStart': baked_start, 'frameEnd': baked_end}
                     requested_count = max(requested_end - requested_start + 1, 1)
                     covered_start = max(baked_start, requested_start)
@@ -288,8 +311,6 @@ class SimulationCommands:
 
             if check_staleness:
                 if is_baked:
-                    baked_start = getattr(cache, 'frame_start', requested_start)
-                    baked_end = getattr(cache, 'frame_end', requested_end)
                     entry['stale'] = (baked_start != requested_start or baked_end != requested_end)
                     if entry['stale']:
                         all_passed = False
