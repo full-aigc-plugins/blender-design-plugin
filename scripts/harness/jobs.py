@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from .errors import HarnessError
 from .frame_pipeline import inspect_frame_sequence, validate_compose_parameters, validate_render_parameters
+from .job_journal import JobEvent, JobJournal, RecoveryPlan
 from .resource_estimator import estimate as _resource_estimate
 from .scheduler import (
     Scheduler,
@@ -25,7 +26,8 @@ class JobManager:
         "RENDER_ANIMATION_FRAMES", "COMPOSE_VIDEO",
     }
 
-    def __init__(self, bpy_module, output_root=None, process_factory=subprocess.Popen, scheduler=None):
+    def __init__(self, bpy_module, output_root=None, process_factory=subprocess.Popen, scheduler=None,
+                 journal=None):
         self.bpy = bpy_module
         self.root = Path(output_root).resolve() / "jobs" if output_root else None
         self.processes = {}
@@ -40,6 +42,8 @@ class JobManager:
         # Event log: list of dicts with sequential revision numbers
         self._events: list[dict] = []
         self._next_revision: int = 1
+        # Durable journal (optional; None = in-memory only, for tests).
+        self._journal: JobJournal | None = journal
         if self.root:
             self.root.mkdir(parents=True, exist_ok=True)
 
@@ -63,6 +67,11 @@ class JobManager:
         }
         self._events.append(event)
         self._next_revision += 1
+        # Also persist to the durable journal if configured.
+        if self._journal is not None:
+            self._journal.append(JobEvent(
+                job_id=job_id, type=event_type, message=message,
+            ))
         return event
 
     # ------------------------------------------------------------------
@@ -147,8 +156,22 @@ class JobManager:
 
     @staticmethod
     def _write(path, payload, exclusive=False):
-        with path.open("x" if exclusive else "w", encoding="utf-8") as stream:
-            json.dump(payload, stream, ensure_ascii=False, indent=2)
+        if exclusive and path.exists():
+            raise FileExistsError(f"file already exists: {path}")
+        directory = path.parent
+        tmp = directory / (path.name + ".tmp")
+        try:
+            with tmp.open("w", encoding="utf-8") as stream:
+                json.dump(payload, stream, ensure_ascii=False, indent=2)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(str(tmp), str(path))
+        except BaseException:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+            raise
 
     def _launch(self, directory, spec, status):
         spec_path = directory / "spec.json"

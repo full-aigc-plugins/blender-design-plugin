@@ -94,7 +94,11 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     _production_scheduler = _Scheduler(
         process_factory=__import__('subprocess').Popen,
     )
-    jobs = JobManager(bpy_module, approved_output_root, scheduler=_production_scheduler)
+    _journal = None
+    if approved_output_root is not None:
+        from .job_journal import JobJournal
+        _journal = JobJournal(Path(approved_output_root).resolve())
+    jobs = JobManager(bpy_module, approved_output_root, scheduler=_production_scheduler, journal=_journal)
     geometry_nodes = GeometryNodeCommands(bpy_module, adapter=_version_adapter)
     sculpt = SculptCommands(bpy_module)
     retopo = RetopoCommands(bpy_module)
