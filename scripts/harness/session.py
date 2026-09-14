@@ -334,6 +334,17 @@ class HarnessSession:
             self._responses.popitem(last=False)
 
     def _record_audit(self, payload: dict, response: dict) -> None:
+        if isinstance(payload, dict) and str(payload.get("command", "")).startswith("official_uploader."):
+            sanitized = {
+                "command": payload.get("command"),
+                "requestId": payload.get("requestId"),
+                "status": response["status"],
+                "sceneRevision": response["sceneRevision"],
+                "executionPolicy": self.execution_policy.to_audit_dict(),
+            }
+            self._audit.append(sanitized)
+            self._notify()
+            return
         sanitized = dict(payload) if isinstance(payload, dict) else {"request": "invalid"}
         if "authorization" in sanitized:
             sanitized["authorization"] = "[REDACTED]"

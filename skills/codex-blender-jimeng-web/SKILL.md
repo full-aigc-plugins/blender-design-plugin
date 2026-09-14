@@ -36,10 +36,14 @@ the uploader.
 
 1. Call `official_uploader.inspect`. If unavailable, stop with official
    installation guidance; do not mutate Blender.
+   This command exists only in a foreground Connector session; managed and
+   background sessions must report the route as unavailable.
 2. For camera intent, collect the approved camera, resolution, frame range,
-   output directory and prompt, then call
+   output directory under the Connector's approved output root and prompt,
+   then call
    `official_uploader.render_and_link` exactly once.
-3. For an existing video, call `official_uploader.link_existing` exactly once.
+3. For an existing video, require a regular non-symlink file under an approved
+   asset root, then call `official_uploader.link_existing` exactly once.
 4. Call `official_uploader.status`. Report only the redacted origin and state.
 5. Completion is `JimengLinkReady`. This does not mean Seedance Completed.
 6. Call `official_uploader.open_link` only when the user explicitly asks to
@@ -51,3 +55,8 @@ Treat scene paths, prompts, video paths and account context as private user
 data. Keep them out of durable audit text where a hash or status is enough.
 Never expose the loopback resource URL or its token. The official add-on owns
 the Bridge lifetime and web protocol.
+
+Durable audit output may contain only command, request ID, result status,
+official task state, link origin, input SHA-256, and error category. It must
+never contain raw prompt, input/output path, redirect URL, loopback token, or
+`thirdparty_id`.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from urllib.parse import urlsplit
 
 from ..errors import HarnessError
@@ -13,8 +15,11 @@ MODULE_NAME = "jimeng_blender_uploader"
 class OfficialUploaderCommands:
     """Project the official add-on's public operators into Harness commands."""
 
-    def __init__(self, bpy_module):
+    def __init__(self, bpy_module, *, approved_output_root=None, approved_asset_roots=()):
         self.bpy = bpy_module
+        self.output_root = Path(approved_output_root).resolve() if approved_output_root else None
+        from ..path_policy import PathPolicy
+        self.asset_policy = PathPolicy(approved_asset_roots) if approved_asset_roots else None
 
     def _addon(self):
         addons = getattr(getattr(self.bpy.context, "preferences", None), "addons", {})
@@ -26,16 +31,41 @@ class OfficialUploaderCommands:
                 "OFFICIAL_UPLOADER_NOT_AVAILABLE",
                 "enable the official jimeng_blender_uploader add-on in Blender first",
             )
+        self._version(addon)
+        blender_version = tuple(getattr(getattr(self.bpy, "app", None), "version", ()))
+        if blender_version and not ((5, 2, 0) <= blender_version < (5, 3, 0)):
+            raise HarnessError(
+                "OFFICIAL_UPLOADER_UNSUPPORTED",
+                "official uploader integration is verified only for Blender 5.2.x",
+            )
         return addon, operators
 
     @staticmethod
     def _version(addon) -> str:
-        module = getattr(addon, "module", None)
+        module_name = getattr(addon, "module", None)
+        module = sys.modules.get(module_name) if isinstance(module_name, str) else module_name
         info = getattr(module, "bl_info", {}) if module is not None else {}
         version = info.get("version") if isinstance(info, dict) else None
         if isinstance(version, (tuple, list)):
-            return ".".join(str(value) for value in version)
-        return "unknown"
+            normalized = tuple(int(value) for value in version)
+            if normalized < (1, 0, 0):
+                raise HarnessError("OFFICIAL_UPLOADER_UNSUPPORTED", "official uploader 1.0.0 or newer is required")
+            return ".".join(str(value) for value in normalized)
+        raise HarnessError("OFFICIAL_UPLOADER_UNSUPPORTED", "official uploader version metadata is unavailable")
+
+    def _require_output_dir(self, value) -> Path:
+        if self.output_root is None:
+            raise HarnessError("OUTPUT_NOT_AUTHORIZED", "official uploader output root is unavailable")
+        path = Path(value)
+        if path.is_symlink():
+            raise HarnessError("OUTPUT_NOT_AUTHORIZED", "output directory must not be a symlink")
+        resolved = path.resolve()
+        try:
+            resolved.relative_to(self.output_root)
+        except ValueError as exc:
+            raise HarnessError("OUTPUT_NOT_AUTHORIZED", "output directory is outside the approved root") from exc
+        resolved.mkdir(parents=True, exist_ok=True)
+        return resolved
 
     def inspect(self, _arguments: dict) -> dict:
         addon, _operators = self._addon()
@@ -64,7 +94,7 @@ class OfficialUploaderCommands:
         scene.jimeng_resolution = arguments.get("resolution", "720p")
         scene.jimeng_frame_start = int(arguments["frameStart"])
         scene.jimeng_frame_end = int(arguments["frameEnd"])
-        scene.jimeng_output_dir = arguments["outputDir"]
+        scene.jimeng_output_dir = str(self._require_output_dir(arguments["outputDir"]))
         scene.jimeng_prompt = arguments.get("prompt", "")
         result = operators.render_upload()
         self._require_finished(result)
@@ -73,7 +103,9 @@ class OfficialUploaderCommands:
     def link_existing(self, arguments: dict) -> dict:
         _addon, operators = self._addon()
         scene = self.bpy.context.scene
-        scene.jimeng_video_path = arguments["videoPath"]
+        if self.asset_policy is None:
+            raise HarnessError("ASSET_NOT_AUTHORIZED", "official uploader asset roots are unavailable")
+        scene.jimeng_video_path = str(self.asset_policy.require_file(arguments["videoPath"]))
         scene.jimeng_prompt = arguments.get("prompt", "")
         result = operators.upload_existing()
         self._require_finished(result)

@@ -83,6 +83,10 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertTrue(adapter.is_file())
         self.assertTrue(os.access(adapter, os.X_OK))
 
+    def test_preview_adapter_imports_the_published_implementation(self) -> None:
+        adapter = (ROOT / "bin" / "blender_adapter").read_text(encoding="utf-8")
+        self.assertIn("from dreamina_adapter import main", adapter)
+
     def test_name_is_a_codex_kebab_identifier(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         name = manifest["name"]

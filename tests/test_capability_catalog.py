@@ -98,7 +98,7 @@ class CapabilityCatalogTests(unittest.TestCase):
     def test_session_progress_description_matches_intercepted_arguments(self):
         from scripts.harness.runtime import build_registry
         from tests.test_design_commands import FakeBpy
-        registry = build_registry(FakeBpy())
+        registry = build_registry(FakeBpy(), runtime_mode="connector")
         result = registry.describe_capability({'id': 'session.set_progress'})
         self.assertEqual(result['input']['required'], ['stage'])
         self.assertIn('progress', result['input']['properties'])

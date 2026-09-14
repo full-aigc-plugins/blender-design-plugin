@@ -65,6 +65,7 @@ def start_harness(
     approved_asset_roots=(),
     execution_policy=None,
     show_frontend: bool = True,
+    runtime_mode: str = "managed",
 ) -> HarnessRuntime:
     runtime_dir = Path(runtime_dir)
     runtime_dir.mkdir(parents=True, exist_ok=True)
@@ -79,6 +80,7 @@ def start_harness(
     session = create_session(
         bpy_module,
         session_id,
+        runtime_mode=runtime_mode,
         approved_output_root=approved_output_root or runtime_dir / "outputs",
         approved_asset_roots=approved_asset_roots,
         transactions=transactions,

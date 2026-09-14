@@ -46,7 +46,7 @@ from .session import HarnessSession
 from .execution_policy import ExecutionMode, ExecutionPolicy
 
 
-def build_registry(bpy_module, *, approved_output_root: Path | None = None, approved_asset_roots=(), revision_provider=lambda: 0) -> CommandRegistry:
+def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output_root: Path | None = None, approved_asset_roots=(), revision_provider=lambda: 0) -> CommandRegistry:
     scene = SceneCommands(bpy_module)
     objects = ObjectCommands(bpy_module)
     materials = MaterialCommands(bpy_module, asset_policy=PathPolicy(approved_asset_roots) if approved_asset_roots else None,
@@ -55,7 +55,9 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
     lights = LightCommands(bpy_module)
     animation = AnimationCommands(bpy_module)
     view = ViewCommands(bpy_module)
-    official = OfficialUploaderCommands(bpy_module)
+    if runtime_mode not in {"managed", "connector"}:
+        raise ValueError("runtime_mode must be managed or connector")
+    official = OfficialUploaderCommands(bpy_module, approved_output_root=approved_output_root, approved_asset_roots=approved_asset_roots)
     organization = OrganizationCommands(bpy_module)
     meshes = MeshCommands(bpy_module)
     modifiers = ModifierCommands(bpy_module)
@@ -320,24 +322,12 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
                       validate=closed_arguments(optional=('allowDownload','savePreferences')),risk='gated')
     registry.register('rig.rigify_generate',rigs.rigify_generate,validate=closed_arguments(optional=('name','objectId')))
     registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated")
-    registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
-    registry.register("official_uploader.status", official.status, validate=closed_arguments(), risk="read")
-    registry.register(
-        "official_uploader.render_and_link",
-        official.render_and_link,
-        validate=closed_arguments(
-            required=("camera", "frameStart", "frameEnd", "outputDir"),
-            optional=("resolution", "prompt"),
-        ),
-        risk="gated",
-    )
-    registry.register(
-        "official_uploader.link_existing",
-        official.link_existing,
-        validate=closed_arguments(required=("videoPath",), optional=("prompt",)),
-        risk="gated",
-    )
-    registry.register("official_uploader.open_link", official.open_link, validate=closed_arguments(), risk="gated")
+    if runtime_mode == "connector":
+        registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
+        registry.register("official_uploader.status", official.status, validate=closed_arguments(), risk="read")
+        registry.register("official_uploader.render_and_link", official.render_and_link, validate=closed_arguments(required=("camera", "frameStart", "frameEnd", "outputDir"), optional=("resolution", "prompt")), risk="gated")
+        registry.register("official_uploader.link_existing", official.link_existing, validate=closed_arguments(required=("videoPath",), optional=("prompt",)), risk="gated")
+        registry.register("official_uploader.open_link", official.open_link, validate=closed_arguments(), risk="gated")
     def capture_preview(arguments):
         from .errors import HarnessError
         if approved_output_root is None:
@@ -427,7 +417,7 @@ def build_registry(bpy_module, *, approved_output_root: Path | None = None, appr
     return registry
 
 
-def create_session(bpy_module, session_id: str, *, approved_output_root: Path | None = None, approved_asset_roots=(), transactions=None, execution_policy: ExecutionPolicy | None = None) -> HarnessSession:
+def create_session(bpy_module, session_id: str, *, runtime_mode: str = "managed", approved_output_root: Path | None = None, approved_asset_roots=(), transactions=None, execution_policy: ExecutionPolicy | None = None) -> HarnessSession:
     policy = execution_policy or ExecutionPolicy.interactive()
     if policy.mode is ExecutionMode.AUTO_WITH_BUDGET and (
         approved_output_root is None or Path(policy.approved_output_root) != Path(approved_output_root).resolve()
@@ -436,6 +426,7 @@ def create_session(bpy_module, session_id: str, *, approved_output_root: Path | 
     holder = {}
     registry = build_registry(
         bpy_module,
+        runtime_mode=runtime_mode,
         approved_output_root=approved_output_root,
         approved_asset_roots=approved_asset_roots,
         revision_provider=lambda: holder["session"].scene_revision,

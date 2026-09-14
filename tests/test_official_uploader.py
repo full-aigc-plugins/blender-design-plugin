@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.harness.errors import HarnessError
@@ -19,7 +22,7 @@ class _Operator:
         return self.result
 
 
-def _bpy(*, installed=True, current_link=True):
+def _bpy(*, installed=True, current_link=True, addon_module="jimeng_blender_uploader"):
     render = _Operator()
     existing = _Operator()
     open_link = _Operator()
@@ -47,10 +50,9 @@ def _bpy(*, installed=True, current_link=True):
     camera = SimpleNamespace(name="Camera", type="CAMERA")
     addons = {}
     if installed:
-        addons["jimeng_blender_uploader"] = SimpleNamespace(
-            module=SimpleNamespace(bl_info={"version": (1, 0, 0)})
-        )
+        addons["jimeng_blender_uploader"] = SimpleNamespace(module=addon_module)
     return SimpleNamespace(
+        app=SimpleNamespace(version=(5, 2, 1)),
         context=SimpleNamespace(scene=scene, preferences=SimpleNamespace(addons=addons)),
         data=SimpleNamespace(objects=[camera], materials=[], collections=[], images=[]),
         ops=SimpleNamespace(jimeng=jimeng),
@@ -61,7 +63,9 @@ def _bpy(*, installed=True, current_link=True):
 
 class OfficialUploaderCommandTests(unittest.TestCase):
     def _registry(self, bpy, command):
-        registry = build_registry(bpy)
+        sys.modules["jimeng_blender_uploader"] = SimpleNamespace(bl_info={"version": (1, 0, 0), "blender": (5, 2, 0)})
+        self.addCleanup(sys.modules.pop, "jimeng_blender_uploader", None)
+        registry = build_registry(bpy, runtime_mode="connector", approved_output_root=Path("/tmp"), approved_asset_roots=(Path("/tmp"),))
         names = {entry["command"] for entry in registry.capabilities()}
         self.assertIn(command, names, f"missing production command {command}")
         return registry
@@ -95,7 +99,8 @@ class OfficialUploaderCommandTests(unittest.TestCase):
     def test_link_existing_invokes_official_operator_once(self):
         bpy = _bpy(current_link=False)
         registry = self._registry(bpy, "official_uploader.link_existing")
-        registry.dispatch("official_uploader.link_existing", {"videoPath": "/tmp/input.mp4"})
+        with tempfile.NamedTemporaryFile(suffix=".mp4", dir="/tmp") as video:
+            registry.dispatch("official_uploader.link_existing", {"videoPath": video.name})
         self.assertEqual(bpy._operators[0].calls, 0)
         self.assertEqual(bpy._operators[1].calls, 1)
 
@@ -112,6 +117,51 @@ class OfficialUploaderCommandTests(unittest.TestCase):
         with self.assertRaises(HarnessError) as raised:
             registry.dispatch("official_uploader.open_link", {})
         self.assertEqual(raised.exception.code, "OFFICIAL_LINK_NOT_READY")
+
+    def test_managed_mode_exposes_no_official_uploader_commands(self):
+        registry = build_registry(_bpy(), runtime_mode="managed", approved_output_root=Path("/tmp"))
+        names = {entry["command"] for entry in registry.capabilities()}
+        self.assertFalse(any(name.startswith("official_uploader.") for name in names))
+
+    def test_real_addon_module_string_resolves_version(self):
+        registry = self._registry(_bpy(addon_module="jimeng_blender_uploader"), "official_uploader.inspect")
+        self.assertEqual(registry.dispatch("official_uploader.inspect", {})["result"]["version"], "1.0.0")
+
+    def test_unsupported_addon_version_is_rejected(self):
+        sys.modules["jimeng_blender_uploader"] = SimpleNamespace(bl_info={"version": (0, 9, 0), "blender": (5, 2, 0)})
+        self.addCleanup(sys.modules.pop, "jimeng_blender_uploader", None)
+        registry = build_registry(_bpy(), runtime_mode="connector", approved_output_root=Path("/tmp"), approved_asset_roots=(Path("/tmp"),))
+        with self.assertRaises(HarnessError) as raised:
+            registry.dispatch("official_uploader.inspect", {})
+        self.assertEqual(raised.exception.code, "OFFICIAL_UPLOADER_UNSUPPORTED")
+
+    def test_unsupported_blender_version_is_rejected(self):
+        bpy = _bpy()
+        bpy.app.version = (4, 1, 0)
+        sys.modules["jimeng_blender_uploader"] = SimpleNamespace(bl_info={"version": (1, 0, 0), "blender": (5, 2, 0)})
+        self.addCleanup(sys.modules.pop, "jimeng_blender_uploader", None)
+        registry = build_registry(bpy, runtime_mode="connector", approved_output_root=Path("/tmp"), approved_asset_roots=(Path("/tmp"),))
+        with self.assertRaises(HarnessError) as raised:
+            registry.dispatch("official_uploader.inspect", {})
+        self.assertEqual(raised.exception.code, "OFFICIAL_UPLOADER_UNSUPPORTED")
+
+    def test_output_and_video_paths_must_be_inside_approved_roots(self):
+        bpy = _bpy(current_link=False)
+        sys.modules["jimeng_blender_uploader"] = SimpleNamespace(bl_info={"version": (1, 0, 0), "blender": (5, 2, 0)})
+        self.addCleanup(sys.modules.pop, "jimeng_blender_uploader", None)
+        with tempfile.TemporaryDirectory() as approved, tempfile.TemporaryDirectory() as outside_dir:
+            registry = build_registry(bpy, runtime_mode="connector", approved_output_root=Path(approved), approved_asset_roots=(Path(approved),))
+            with self.assertRaises(HarnessError):
+                registry.dispatch("official_uploader.render_and_link", {
+                    "camera": "Camera", "frameStart": 1, "frameEnd": 48,
+                    "outputDir": str(Path(outside_dir) / "output"), "prompt": "secret prompt",
+                })
+            outside = Path(outside_dir) / "input.mp4"
+            outside.write_bytes(b"video")
+            with self.assertRaises(HarnessError):
+                registry.dispatch("official_uploader.link_existing", {"videoPath": str(outside)})
+        self.assertEqual(bpy._operators[0].calls, 0)
+        self.assertEqual(bpy._operators[1].calls, 0)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from blender_adapter import main
+from dreamina_adapter import main
 
 
 if __name__ == "__main__":

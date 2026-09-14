@@ -33,6 +33,7 @@ def start(bpy_module, *, session_id: str | None = None, runtime_dir: Path | None
         approved_output_root=approved_output_root,
         approved_asset_roots=approved_asset_roots,
         execution_policy=execution_policy,
+        runtime_mode="connector",
     )
     return _CURRENT
 
