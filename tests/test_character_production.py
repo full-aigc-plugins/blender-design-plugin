@@ -121,10 +121,21 @@ class FakeMeshData:
         return default
 
 
+class FakeEdge:
+    """Minimal edge with .vertices tuple."""
+    def __init__(self, i, j):
+        self.vertices = (i, j)
+
+
 class FakeEvaluatedMesh:
     """Mesh returned by evaluated_get().to_mesh() -- shares vertex data."""
-    def __init__(self, vertices):
+    def __init__(self, vertices, edges=None):
         self.vertices = vertices
+        # Build edges from sequential vertex pairs if not supplied.
+        if edges is None:
+            self.edges = [FakeEdge(i, i + 1) for i in range(max(0, len(vertices) - 1))]
+        else:
+            self.edges = edges
 
 
 class FakeDepsgraph:
@@ -133,25 +144,75 @@ class FakeDepsgraph:
         pass
 
 
+class FakeEvaluatedMeshProxy:
+    """Proxy returned by evaluated_get() that applies pose-bone transforms.
+
+    When to_mesh() is called, scale and location from pose bones are applied
+    per-vertex using vertex-group weights.  This is a simplified model that
+    is sufficient for testing the edge-shrinkage collapse metric:
+    - scale < 1 on weighted vertices -> edge shrinkage -> collapse > 0
+    - location change with uniform weights -> rigid shift -> collapse == 0
+    - no transform -> identity -> collapse == 0
+    """
+    def __init__(self, mesh_obj):
+        self._mesh_obj = mesh_obj
+
+    def to_mesh(self):
+        vertices = [FakeVertex(v.index, list(v.co)) for v in self._mesh_obj.data.vertices]
+        armature = self._mesh_obj._armature
+        if armature is not None:
+            for bone_name, pose_bone in armature.pose.bones.items():
+                group = self._mesh_obj.vertex_groups.get(bone_name)
+                if group is None:
+                    continue
+                sx, sy, sz = pose_bone.scale
+                lx, ly, lz = pose_bone.location
+                has_scale = abs(sx - 1.0) > 1e-6 or abs(sy - 1.0) > 1e-6 or abs(sz - 1.0) > 1e-6
+                has_loc = abs(lx) > 1e-6 or abs(ly) > 1e-6 or abs(lz) > 1e-6
+                if not has_scale and not has_loc:
+                    continue
+                for v in vertices:
+                    w = group._weights.get(v.index, 0)
+                    if w <= 0:
+                        continue
+                    if has_scale:
+                        v.co[0] *= 1.0 + (sx - 1.0) * w
+                        v.co[1] *= 1.0 + (sy - 1.0) * w
+                        v.co[2] *= 1.0 + (sz - 1.0) * w
+                    if has_loc:
+                        v.co[0] += lx * w
+                        v.co[1] += ly * w
+                        v.co[2] += lz * w
+        # Build edges: chain vertices sequentially (same topology as the base mesh).
+        edges = [FakeEdge(i, i + 1) for i in range(max(0, len(vertices) - 1))]
+        return FakeEvaluatedMesh(vertices, edges)
+
+    def to_mesh_clear(self):
+        pass
+
+
 class FakeBone:
-    def __init__(self, name, head, tail, parent=None, deform=True):
+    def __init__(self, name, head, tail, parent=None, deform=True, rotation_mode='XYZ'):
         self.name = name
         self.head_local = list(head)
         self.tail_local = list(tail)
         self.parent = parent
         self.use_deform = deform
+        self.rotation_mode = rotation_mode
         self.length = math.sqrt(sum((a - b) ** 2 for a, b in zip(head, tail)))
 
 
 class FakePoseBone:
-    def __init__(self, name):
+    def __init__(self, name, rotation_mode='XYZ'):
         self.name = name
         self.matrix = FakeMatrix()
         self.constraints = []
         self.location = [0, 0, 0]
         self.rotation_euler = [0, 0, 0]
+        self.rotation_quaternion = [1, 0, 0, 0]
+        self.rotation_axis_angle = [0, 0, 0, 1]
         self.scale = [1, 1, 1]
-        self.rotation_mode = 'XYZ'
+        self.rotation_mode = rotation_mode
         self.animation_data = None
 
     def keyframe_insert(self, data_path='', frame=0):
@@ -199,7 +260,8 @@ class FakeArmatureObject:
         self.type = 'ARMATURE'
         self.data = FakeArmatureData(bones)
         self.pose = SimpleNamespace(bones={
-            b.name: FakePoseBone(b.name) for b in bones if b.use_deform
+            b.name: FakePoseBone(b.name, rotation_mode=getattr(b, 'rotation_mode', 'XYZ'))
+            for b in bones if b.use_deform
         })
         self.matrix_world = FakeMatrix()
         self.animation_data = None
@@ -213,7 +275,7 @@ class FakeArmatureObject:
 
 
 class FakeMeshObject:
-    def __init__(self, name, vertex_count=8):
+    def __init__(self, name, vertex_count=8, armature=None):
         self.name = name
         self.type = 'MESH'
         vertices = []
@@ -229,6 +291,7 @@ class FakeMeshObject:
         self.animation_data = None
         self._codex_id = 'obj_test_mesh'
         self._keyframe_calls = []
+        self._armature = armature
 
     def get(self, key, default=None):
         if key == 'codex_blender_object_id':
@@ -242,8 +305,8 @@ class FakeMeshObject:
             self._codex_id = value
 
     def evaluated_get(self, depsgraph):
-        """Return self (mock: no real depsgraph evaluation)."""
-        return self
+        """Return a proxy that applies pose-bone transforms on to_mesh()."""
+        return FakeEvaluatedMeshProxy(self)
 
     def to_mesh(self):
         """Return a mesh sharing our vertex data."""
@@ -836,69 +899,130 @@ class TestWeightNormalizationMutation(unittest.TestCase):
 
 
 class TestCollapseTripCase(unittest.TestCase):
-    """Test that validate_deformation can actually detect a collapsing pose."""
+    """Falsifiable tests for validate_deformation collapse metric.
 
-    def test_collapse_detected_when_threshold_exceeded(self):
-        """A pose that produces displacement beyond the threshold must fail."""
+    The mock now applies pose-bone scale to weighted vertices via
+    FakeEvaluatedMeshProxy, so these tests genuinely exercise the
+    edge-shrinkage metric.  A broken metric (constant, displacement-
+    based, or rigid-motion-unaware) will fail at least one of these.
+    """
+
+    def _make_weighted_scene(self, rotation_mode='XYZ'):
+        """Create a scene where all vertices are fully weighted to one bone."""
         bpy = FakeBpy()
-        mesh_obj = FakeMeshObject('Body', 8)
-        bones = [
-            FakeBone('shoulder.L', [0.2, 0, 1.5], [0.5, 0, 1.5]),
-        ]
+        bones = [FakeBone('bone_main', [0, 0, 0], [0, 0, 1],
+                          rotation_mode=rotation_mode)]
         arm_obj = FakeArmatureObject('Rig', bones)
+        mesh_obj = FakeMeshObject('Body', 8, armature=arm_obj)
+        # Assign all vertices to the bone with full weight.
+        group = mesh_obj.vertex_groups.new('bone_main')
+        for v in mesh_obj.data.vertices:
+            group.add([v.index], 1.0, 'REPLACE')
         bpy.data.objects[mesh_obj.name] = mesh_obj
         bpy.data.objects[arm_obj.name] = arm_obj
+        return bpy, mesh_obj, arm_obj
 
+    def test_no_op_pose_collapse_is_zero(self):
+        """Identity pose (no deformation) must report collapse == 0."""
+        bpy, _, _ = self._make_weighted_scene()
         cmds = RigCommands(bpy)
-        # Use a very tight threshold that the mock depsgraph's static
-        # bbox cannot satisfy when displacement > 0 is simulated.
-        # Since the mock returns the same vertices, we set threshold to 0
-        # so any nonzero displacement would trip it. With the mock,
-        # displacement is always 0, so we test with threshold=0 and a
-        # trivially small positive threshold to verify the comparison logic.
         result = cmds.validate_deformation({
             'mesh': {'name': 'Body'},
             'armature': {'name': 'Rig'},
-            'poses': [{'bone': 'shoulder.L', 'dataPath': 'rotation_euler', 'value': [1.5, 0, 0]}],
-            'thresholds': {'collapse': 0.001},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [1, 1, 1]}],
+            'thresholds': {'collapse': 0.5},
         })
-        # With the mock, collapse=0, so this passes. The real Blender
-        # runtime acceptance demonstrates actual nonzero collapse.
         self.assertTrue(result['result']['allPassed'])
-        self.assertAlmostEqual(result['result']['results'][0]['collapse'], 0.0, places=6)
+        self.assertAlmostEqual(result['result']['results'][0]['collapse'], 0.0, places=10,
+                               msg='Identity pose must give collapse == 0')
 
-    def test_tight_threshold_trips_on_real_displacement(self):
-        """A very tight threshold must trip when collapse exceeds it.
-
-        This test verifies the comparison logic: collapse > threshold => passed=False.
-        We simulate a nonzero collapse by directly manipulating the result
-        to prove the comparison works, since the mock depsgraph cannot produce
-        real deformation.
-        """
-        bpy = FakeBpy()
-        mesh_obj = FakeMeshObject('Body', 8)
-        bones = [FakeBone('bone', [0, 0, -1], [0, 0, 1])]
-        arm_obj = FakeArmatureObject('Rig', bones)
-        bpy.data.objects[mesh_obj.name] = mesh_obj
-        bpy.data.objects[arm_obj.name] = arm_obj
-
+    def test_collapsing_pose_detected(self):
+        """Scaling a bone to 10% must produce collapse ~0.9 and fail a tight threshold."""
+        bpy, _, _ = self._make_weighted_scene()
         cmds = RigCommands(bpy)
-        # With mock depsgraph, collapse is always 0.
-        # A threshold of 0.001 passes because 0 <= 0.001.
         result = cmds.validate_deformation({
             'mesh': {'name': 'Body'},
             'armature': {'name': 'Rig'},
-            'poses': [{'bone': 'bone', 'dataPath': 'rotation_euler', 'value': [3.14, 0, 0]}],
-            'thresholds': {'collapse': 0.001},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [0.1, 0.1, 0.1]}],
+            'thresholds': {'collapse': 0.01},
         })
-        self.assertTrue(result['result']['allPassed'])
-        # Now verify the comparison logic: if collapse were > threshold, passed would be False.
-        # We verify this by testing the logic directly.
-        collapse_value = result['result']['results'][0]['collapse']
-        threshold = result['result']['collapseThreshold']
-        self.assertLessEqual(collapse_value, threshold)
-        # The actual trip case is demonstrated in the runtime acceptance
-        # where real depsgraph evaluation produces nonzero displacement.
+        collapse = result['result']['results'][0]['collapse']
+        self.assertGreater(collapse, 0.8,
+                           msg=f'Scale 0.1 should give collapse ~0.9, got {collapse}')
+        self.assertFalse(result['result']['allPassed'],
+                         msg='Collapsing pose must fail with tight threshold')
+
+    def test_rigid_translation_preserves_edges(self):
+        """Translating a bone (all vertices shift equally) must give collapse == 0."""
+        bpy, _, _ = self._make_weighted_scene()
+        cmds = RigCommands(bpy)
+        result = cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'location', 'value': [5, 0, 0]}],
+            'thresholds': {'collapse': 0.5},
+        })
+        collapse = result['result']['results'][0]['collapse']
+        self.assertAlmostEqual(collapse, 0.0, places=10,
+                               msg='Rigid translation must not register as collapse')
+
+    def test_partial_scale_collapse_proportional(self):
+        """Scaling to 50% should give collapse ~0.5, not 0 and not the full displacement."""
+        bpy, _, _ = self._make_weighted_scene()
+        cmds = RigCommands(bpy)
+        result = cmds.validate_deformation({
+            'mesh': {'name': 'Body'},
+            'armature': {'name': 'Rig'},
+            'poses': [{'bone': 'bone_main', 'dataPath': 'scale', 'value': [0.5, 0.5, 0.5]}],
+            'thresholds': {'collapse': 1.0},
+        })
+        collapse = result['result']['results'][0]['collapse']
+        self.assertGreater(collapse, 0.3,
+                           msg=f'Scale 0.5 should give collapse ~0.5, got {collapse}')
+        self.assertLess(collapse, 0.7,
+                        msg=f'Scale 0.5 should give collapse ~0.5, got {collapse}')
+
+    def test_rotation_mode_mismatch_euler_on_quaternion(self):
+        """rotation_euler on a QUATERNION-mode bone must raise ROTATION_MODE_MISMATCH."""
+        bpy = FakeBpy()
+        bones = [FakeBone('bone', [0, 0, 0], [0, 0, 1], rotation_mode='QUATERNION')]
+        arm_obj = FakeArmatureObject('Rig', bones)
+        mesh_obj = FakeMeshObject('Body', 4, armature=arm_obj)
+        group = mesh_obj.vertex_groups.new('bone')
+        for v in mesh_obj.data.vertices:
+            group.add([v.index], 1.0, 'REPLACE')
+        bpy.data.objects[mesh_obj.name] = mesh_obj
+        bpy.data.objects[arm_obj.name] = arm_obj
+        cmds = RigCommands(bpy)
+        with self.assertRaises(HarnessError) as ctx:
+            cmds.validate_deformation({
+                'mesh': {'name': 'Body'},
+                'armature': {'name': 'Rig'},
+                'poses': [{'bone': 'bone', 'dataPath': 'rotation_euler', 'value': [1.5, 0, 0]}],
+                'thresholds': {'collapse': 0.5},
+            })
+        self.assertEqual(ctx.exception.code, 'ROTATION_MODE_MISMATCH')
+
+    def test_rotation_mode_mismatch_quaternion_on_euler(self):
+        """rotation_quaternion on an Euler-mode bone must raise ROTATION_MODE_MISMATCH."""
+        bpy = FakeBpy()
+        bones = [FakeBone('bone', [0, 0, 0], [0, 0, 1], rotation_mode='XYZ')]
+        arm_obj = FakeArmatureObject('Rig', bones)
+        mesh_obj = FakeMeshObject('Body', 4, armature=arm_obj)
+        group = mesh_obj.vertex_groups.new('bone')
+        for v in mesh_obj.data.vertices:
+            group.add([v.index], 1.0, 'REPLACE')
+        bpy.data.objects[mesh_obj.name] = mesh_obj
+        bpy.data.objects[arm_obj.name] = arm_obj
+        cmds = RigCommands(bpy)
+        with self.assertRaises(HarnessError) as ctx:
+            cmds.validate_deformation({
+                'mesh': {'name': 'Body'},
+                'armature': {'name': 'Rig'},
+                'poses': [{'bone': 'bone', 'dataPath': 'rotation_quaternion', 'value': [1, 0, 0, 0]}],
+                'thresholds': {'collapse': 0.5},
+            })
+        self.assertEqual(ctx.exception.code, 'ROTATION_MODE_MISMATCH')
 
 
 if __name__ == '__main__':

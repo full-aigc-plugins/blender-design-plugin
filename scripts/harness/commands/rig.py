@@ -7,6 +7,99 @@ from .mesh import TOPOLOGY_VERSION_KEY
 from .validation import finite_number,require_name,vector3
 
 
+# ---------------------------------------------------------------------------
+# Rotation-mode validation helpers
+# ---------------------------------------------------------------------------
+
+_EULER_MODES = frozenset({'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'})
+
+
+def _validate_pose_channel(data_path, rotation_mode):
+    """Raise HarnessError if the rotation channel is incompatible with the bone's mode.
+
+    A silently inert pose is the exact failure mode that produced the original
+    collapse-metric bug; this guard makes it impossible to pass a measurement
+    that the bone will ignore.
+    """
+    if data_path == 'rotation_euler' and rotation_mode not in _EULER_MODES:
+        raise HarnessError('ROTATION_MODE_MISMATCH',
+            f'rotation_euler requires an Euler rotation mode but bone has '
+            f'rotation_mode={rotation_mode}.  Use rotation_quaternion or '
+            f'set rotation_mode to an Euler mode (e.g. XYZ) first.')
+    if data_path == 'rotation_quaternion' and rotation_mode != 'QUATERNION':
+        raise HarnessError('ROTATION_MODE_MISMATCH',
+            f'rotation_quaternion requires QUATERNION rotation mode but bone has '
+            f'rotation_mode={rotation_mode}.  Use rotation_euler or '
+            f'set rotation_mode to QUATERNION first.')
+    if data_path == 'rotation_axis_angle' and rotation_mode != 'AXIS_ANGLE':
+        raise HarnessError('ROTATION_MODE_MISMATCH',
+            f'rotation_axis_angle requires AXIS_ANGLE rotation mode but bone has '
+            f'rotation_mode={rotation_mode}.  Use rotation_euler or '
+            f'set rotation_mode to AXIS_ANGLE first.')
+
+
+def _pose_value(value, data_path):
+    """Validate and convert a pose value -- 3 or 4 components depending on channel."""
+    if data_path in ('rotation_quaternion', 'rotation_axis_angle'):
+        if not isinstance(value, (list, tuple)) or len(value) != 4:
+            raise HarnessError('INVALID_ARGUMENT',
+                               f'{data_path} value must contain exactly four numbers')
+        if any(isinstance(item, bool) or not isinstance(item, (int, float))
+               or not math.isfinite(item) for item in value):
+            raise HarnessError('INVALID_ARGUMENT',
+                               f'{data_path} value must contain finite numbers')
+        return [float(item) for item in value]
+    return vector3(value, 'pose value')
+
+
+# ---------------------------------------------------------------------------
+# Slotted-action fcurve helpers (Blender 5.2+)
+# ---------------------------------------------------------------------------
+
+def _get_action_fcurves(action):
+    """Yield fcurves from *action*, supporting both old and slotted (5.2+) formats.
+
+    Blender 5.2 slotted actions store fcurves at
+    ``action.layers[].strips[].channelbags[].fcurves``.  Older versions
+    store them directly at ``action.fcurves``.  This helper tries the
+    slotted path first and falls back to the legacy path.
+    """
+    # Slotted format (Blender 5.2+)
+    try:
+        fcurves = []
+        for layer in getattr(action, 'layers', ()):
+            for strip in getattr(layer, 'strips', ()):
+                for channelbag in getattr(strip, 'channelbags', ()):
+                    fcurves.extend(getattr(channelbag, 'fcurves', ()))
+        if fcurves:
+            return fcurves
+    except (AttributeError, TypeError):
+        pass
+    # Legacy format
+    return list(getattr(action, 'fcurves', ()))
+
+
+def _cleanup_temp_keyframes(action, bone_path, temp_frame):
+    """Remove keyframes at *temp_frame* on *bone_path*, handling slotted actions."""
+    if action is None:
+        return
+    seen_ptrs = set()
+    for fc in _get_action_fcurves(action):
+        ptr = fc.as_pointer()
+        if ptr in seen_ptrs:
+            continue
+        seen_ptrs.add(ptr)
+        if fc.data_path == bone_path:
+            for kp in list(fc.keyframe_points):
+                if kp.co.x == temp_frame:
+                    try:
+                        fc.keyframe_points.remove(kp)
+                    except RuntimeError:
+                        # Blender raises "Keyframe not in F-Curve" when a stale
+                        # reference is iterated after prior removal.
+                        pass
+
+
 class RigCommands:
     def __init__(self,bpy_module,adapter=None):
         self.bpy=bpy_module; self.objects=ObjectResolver(bpy_module); self.context=OperationContext(bpy_module); self.adapter=adapter
@@ -190,14 +283,17 @@ class RigCommands:
     def validate_deformation(self,arguments):
         """Check that extreme poses do not collapse mesh geometry beyond threshold.
 
-        The *collapse* threshold (in world units) is required and defines the
-        maximum allowed inward displacement of any vertex from its rest
-        position when the armature is posed.  Each pose dict must contain
-        *bone*, *dataPath* and *value*.
+        The *collapse* metric measures **loss of local scale**, not displacement.
+        It compares edge lengths in the posed mesh (evaluated via depsgraph)
+        to edge lengths in the neutral (unposed) evaluated mesh.  Rigid
+        translation or rotation preserves edge lengths, so only genuine
+        deformation such as shrinkage or stretching registers.
 
-        The metric evaluates the dependency graph to get the posed mesh and
-        compares its bounding box to the rest-pose bounding box.  Inward
-        shrinkage on any axis counts as collapse.
+        collapse = max over edges of max(0, 1 - posedLen / restLen)
+
+        Each pose dict must contain *bone*, *dataPath* and *value*.  If
+        *dataPath* is a rotation channel incompatible with the bone's
+        *rotation_mode*, a ``ROTATION_MODE_MISMATCH`` error is raised.
         """
         mesh=self.objects.resolve(arguments.get('mesh'),required_type={'MESH'})
         armature=self.objects.resolve(arguments.get('armature'),required_type={'ARMATURE'})
@@ -208,10 +304,18 @@ class RigCommands:
         collapse_threshold=finite_number(thresholds['collapse'],'collapse',positive=True)
         if not isinstance(poses,list) or not poses:
             raise HarnessError('INVALID_ARGUMENT','poses must be a non-empty list')
-        # Snapshot rest-pose vertex positions from the mesh data (always rest).
-        rest_positions=[(v.co[0],v.co[1],v.co[2]) for v in mesh.data.vertices]
+
         scene=self.bpy.context.scene
         original_frame=scene.frame_current
+
+        # ---- neutral (unposed) evaluated mesh ----
+        depsgraph=self.bpy.context.evaluated_depsgraph_get()
+        eval_neutral=mesh.evaluated_get(depsgraph)
+        neutral_mesh=eval_neutral.to_mesh()
+        neutral_verts=[(v.co[0],v.co[1],v.co[2]) for v in neutral_mesh.vertices]
+        neutral_edges=[(e.vertices[0],e.vertices[1]) for e in neutral_mesh.edges]
+        eval_neutral.to_mesh_clear()
+
         results=[]
         for pose_index,pose in enumerate(poses):
             bone_name=pose.get('bone'); data_path=pose.get('dataPath'); value=pose.get('value')
@@ -220,35 +324,62 @@ class RigCommands:
             pose_bone=armature.pose.bones.get(bone_name)
             if pose_bone is None:
                 raise HarnessError('BONE_NOT_FOUND',f'pose bone not found: {bone_name}')
-            # Apply pose via keyframe at a temporary frame, then evaluate depsgraph.
+
+            # Guard: rotation channel must match the bone's rotation_mode.
+            _validate_pose_channel(data_path,pose_bone.rotation_mode)
+
+            parsed_value=_pose_value(value,data_path)
             temp_frame=9000+pose_index
             old_value=getattr(pose_bone,data_path,None)
-            setattr(pose_bone,data_path,vector3(value,'pose value'))
+            setattr(pose_bone,data_path,parsed_value)
             pose_bone.keyframe_insert(data_path=data_path,frame=temp_frame)
             scene.frame_set(temp_frame)
             self.bpy.context.view_layer.update()
+
+            # ---- posed evaluated mesh ----
             depsgraph=self.bpy.context.evaluated_depsgraph_get()
             eval_posed=mesh.evaluated_get(depsgraph)
             posed_mesh=eval_posed.to_mesh()
-            # Collapse = max Euclidean distance any vertex moved from rest.
-            max_displacement=0
-            for rest,posed in zip(rest_positions,posed_mesh.vertices):
-                dx=posed.co[0]-rest[0]; dy=posed.co[1]-rest[1]; dz=posed.co[2]-rest[2]
-                dist=(dx*dx+dy*dy+dz*dz)**0.5
-                if dist>max_displacement: max_displacement=dist
+
+            # Topology must not change under armature deformation.
+            if len(neutral_verts)!=len(posed_mesh.vertices):
+                raise HarnessError('TOPOLOGY_MISMATCH',
+                    f'neutral has {len(neutral_verts)} vertices but posed has '
+                    f'{len(posed_mesh.vertices)} -- armature changed topology')
+
+            # ---- edge-shrinkage metric ----
+            max_collapse=0.0
+            max_stretch=0.0
+            edges_compared=0
+            for i,j in neutral_edges:
+                ni=neutral_verts[i]; nj=neutral_verts[j]
+                pi=posed_mesh.vertices[i].co; pj=posed_mesh.vertices[j].co
+                rest_len=math.sqrt(sum((a-b)**2 for a,b in zip(ni,nj)))
+                posed_len=math.sqrt(sum((a-b)**2 for a,b in zip(pi,pj)))
+                if rest_len>1e-12:
+                    edges_compared+=1
+                    ratio=posed_len/rest_len
+                    shrinkage=max(0.0,1.0-ratio)
+                    stretch=max(0.0,ratio-1.0)
+                    if shrinkage>max_collapse: max_collapse=shrinkage
+                    if stretch>max_stretch: max_stretch=stretch
+
             eval_posed.to_mesh_clear()
-            # Clean up temporary keyframe and restore pose.
+
+            # ---- clean up temporary keyframe (slotted-action safe) ----
             arm_action=getattr(getattr(armature,'animation_data',None),'action',None)
-            if arm_action:
-                bone_path=f'pose.bones["{bone_name}"].{data_path}'
-                for fc in list(getattr(arm_action,'fcurves',())):
-                    if fc.data_path==bone_path:
-                        for kp in list(fc.keyframe_points):
-                            if kp.co.x==temp_frame: fc.keyframe_points.remove(kp)
-            if old_value is not None: setattr(pose_bone,data_path,old_value)
-            passed=max_displacement<=collapse_threshold
-            results.append({'bone':bone_name,'dataPath':data_path,'collapse':max_displacement,
+            bone_path=f'pose.bones["{bone_name}"].{data_path}'
+            _cleanup_temp_keyframes(arm_action,bone_path,temp_frame)
+            if old_value is not None:
+                setattr(pose_bone,data_path,old_value)
+
+            passed=max_collapse<=collapse_threshold
+            results.append({'bone':bone_name,'dataPath':data_path,
+                            'collapse':max_collapse,'maxStretch':max_stretch,
+                            'edgesCompared':edges_compared,
+                            'verticesCompared':len(neutral_verts),
                             'passed':passed})
+
         # Restore original frame.
         scene.frame_set(original_frame)
         self.bpy.context.view_layer.update()

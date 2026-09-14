@@ -4,13 +4,17 @@ Verifies:
   1. auto_weights: weight sum = 1 +/- 0.001 per vertex
   2. auto_weights: max influences per vertex = 4 (default)
   3. auto_weights: no unweighted vertices
-  4. validate_deformation: extreme pose collapse within stated threshold (0.5)
+  4. validate_deformation: edge-shrinkage collapse metric
+     - no-op control (identity pose) gives collapse == 0
+     - extreme rotation poses stay within threshold (1.0)
+     - tripping case: bone scaled to 0.1 triggers collapse with tight threshold
+     - no temp keyframes (frame >= 9000) remain after validation
   5. Standard humanoid, non-standard proportions humanoid, quadruped
      all pass save/reopen round-trip
   6. Existing p2_character_acceptance thresholds still pass (foot_drift <= 0.01,
      minimum_z >= -0.002)
 """
-import json, math, sys
+import json, math, os, sys
 from pathlib import Path
 
 import bpy
@@ -208,11 +212,10 @@ print(f"  max_influences: {max_influence_count} (pass={influence_cap_pass})")
 print(f"  unweighted_vertices: {unweighted_count} (pass={no_unweighted_pass})")
 
 # -------------------------------------------------------------------
-# Bullet 4: Extreme pose validation
-# Use the recipe body which has strong spatial weights (rig.assign_weights).
+# Bullet 4: Extreme pose validation (edge-shrinkage collapse metric)
 # -------------------------------------------------------------------
 print("=== Bullet 4: Extreme pose validation ===")
-COLLAPSE_THRESHOLD = 1.0  # stated threshold in world units
+COLLAPSE_THRESHOLD = 1.0
 
 # Create a recipe character for deformation testing.
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -224,15 +227,33 @@ deform_recipe = registry_d.dispatch('recipe.rigged_spear_character', {
 })['result']
 deform_body = deform_recipe['body']
 deform_arm = deform_recipe['armature']
+deform_arm_obj = bpy.data.objects[deform_arm['name']]
 
-# Build extreme poses for shoulder, hip, elbow, knee.
+# Bones in this rig default to QUATERNION rotation_mode.
+# Set to Euler so rotation_euler poses actually deform.
+for pb in deform_arm_obj.pose.bones:
+    pb.rotation_mode = 'XYZ'
+
+# --- No-op control: identity pose must give collapse == 0 ---
+print("  --- No-op control (identity pose) ---")
+noop_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
+    'poses': [{'bone': 'upper_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 0, 0]}],
+    'thresholds': {'collapse': COLLAPSE_THRESHOLD},
+})
+noop_collapse = noop_result['result']['results'][0]['collapse']
+noop_pass = abs(noop_collapse) < 1e-6
+print(f"    collapse={noop_collapse:.10f}, pass={noop_pass}")
+
+# --- Extreme poses: real deformation, must stay within threshold ---
+print("  --- Extreme rotation poses ---")
 extreme_poses = [
     {'bone': 'upper_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 0, 2.8]},
     {'bone': 'upper_leg.R', 'dataPath': 'rotation_euler', 'value': [0, 0, -2.8]},
     {'bone': 'lower_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 2.8, 0]},
     {'bone': 'lower_leg.R', 'dataPath': 'rotation_euler', 'value': [0, 2.8, 0]},
 ]
-
 deform_result = registry_d.dispatch('rig.validate_deformation', {
     'mesh': {'objectId': deform_body['objectId']},
     'armature': {'objectId': deform_arm['objectId']},
@@ -243,16 +264,48 @@ deform_pass = deform_result['result']['allPassed']
 print(f"  collapse_threshold: {COLLAPSE_THRESHOLD}")
 print(f"  all_poses_pass: {deform_pass}")
 for r in deform_result['result']['results']:
-    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, passed={r['passed']}")
+    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, edgesCompared={r['edgesCompared']}")
+
+# --- Verify no temp keyframes (frame >= 9000) remain ---
+arm_action = getattr(getattr(deform_arm_obj, 'animation_data', None), 'action', None)
+stale_keyframes = 0
+if arm_action:
+    for layer in getattr(arm_action, 'layers', ()):
+        for strip in getattr(layer, 'strips', ()):
+            for channelbag in getattr(strip, 'channelbags', ()):
+                for fc in getattr(channelbag, 'fcurves', ()):
+                    for kp in fc.keyframe_points:
+                        if kp.co.x >= 9000:
+                            stale_keyframes += 1
+    # Fallback: legacy fcurves
+    if not stale_keyframes:
+        for fc in getattr(arm_action, 'fcurves', ()):
+            for kp in fc.keyframe_points:
+                if kp.co.x >= 9000:
+                    stale_keyframes += 1
+keyframe_cleanup_pass = stale_keyframes == 0
+print(f"  temp_keyframes_remaining: {stale_keyframes} (pass={keyframe_cleanup_pass})")
 
 # -------------------------------------------------------------------
-# C2: Tripping case -- use a very tight threshold that the real deformation exceeds
+# C2: Tripping case -- genuine collapse via bone scale
 # -------------------------------------------------------------------
-print("=== C2: Collapse trip case (tight threshold) ===")
-TRIP_THRESHOLD = 0.001  # tight threshold that real deformation will exceed
+print("=== C2: Collapse trip case (bone scaled to 0.1) ===")
+TRIP_THRESHOLD = 0.01  # tight threshold; scale-to-0.1 gives collapse ~0.9
+
+# Neutral control first: identity scale must give collapse == 0
+noop_trip_result = registry_d.dispatch('rig.validate_deformation', {
+    'mesh': {'objectId': deform_body['objectId']},
+    'armature': {'objectId': deform_arm['objectId']},
+    'poses': [{'bone': 'upper_arm.R', 'dataPath': 'scale', 'value': [1, 1, 1]}],
+    'thresholds': {'collapse': TRIP_THRESHOLD},
+})
+noop_trip_collapse = noop_trip_result['result']['results'][0]['collapse']
+noop_trip_pass = abs(noop_trip_collapse) < 1e-6
+print(f"  neutral control: collapse={noop_trip_collapse:.10f}, pass={noop_trip_pass}")
+
+# Now scale the bone to 0.1 -> genuine edge shrinkage
 trip_poses = [
-    {'bone': 'upper_arm.R', 'dataPath': 'rotation_euler', 'value': [0, 0, 2.8]},
-    {'bone': 'upper_leg.R', 'dataPath': 'rotation_euler', 'value': [0, 0, -2.8]},
+    {'bone': 'upper_arm.R', 'dataPath': 'scale', 'value': [0.1, 0.1, 0.1]},
 ]
 trip_result = registry_d.dispatch('rig.validate_deformation', {
     'mesh': {'objectId': deform_body['objectId']},
@@ -266,7 +319,7 @@ print(f"  trip_threshold: {TRIP_THRESHOLD}")
 print(f"  max_collapse: {trip_max_collapse:.6f}")
 print(f"  any_failed: {trip_any_failed}")
 for r in trip_result['result']['results']:
-    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, passed={r['passed']}")
+    print(f"    {r['bone']}: collapse={r['collapse']:.6f}, edgesCompared={r['edgesCompared']}")
 
 # -------------------------------------------------------------------
 # Bullet 5: Save/reopen for three body types (fresh scene)
@@ -391,8 +444,10 @@ print(f"  root_motion: keyframes={root_motion_res['result']['keyframeCount']}, o
 # Summary
 # -------------------------------------------------------------------
 all_passed = (weight_sum_pass and influence_cap_pass and no_unweighted_pass
-              and deform_pass and all(v['passed'] for v in save_reopen_results.values())
-              and p2_pass and trip_any_failed)
+              and noop_pass and deform_pass and keyframe_cleanup_pass
+              and noop_trip_pass and trip_any_failed
+              and all(v['passed'] for v in save_reopen_results.values())
+              and p2_pass)
 
 report = {
     'blender': bpy.app.version_string,
@@ -406,11 +461,14 @@ report = {
     },
     'deformationValidation': {
         'collapseThreshold': COLLAPSE_THRESHOLD,
+        'noopControl': {'collapse': noop_collapse, 'pass': noop_pass},
         'results': deform_result['result']['results'],
         'allPassed': deform_pass,
+        'keyframeCleanupPass': keyframe_cleanup_pass,
     },
     'collapseTripCase': {
         'tripThreshold': TRIP_THRESHOLD,
+        'neutralControl': {'collapse': noop_trip_collapse, 'pass': noop_trip_pass},
         'maxCollapse': trip_max_collapse,
         'anyFailed': trip_any_failed,
         'results': trip_result['result']['results'],
@@ -438,3 +496,7 @@ if output:
         json.dump(report, stream, ensure_ascii=False, indent=2)
 
 print('CHARACTER_DEFORMATION=' + json.dumps(report, ensure_ascii=False))
+
+if not all_passed:
+    print("ACCEPTANCE FAILED: one or more pass criteria not met", file=sys.stderr)
+    os._exit(1)
