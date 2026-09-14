@@ -122,8 +122,8 @@ The hybrid baseline keeps Blender visible and interactive for design work while 
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode** and generated from the registry, never hand-maintained — the numbers below are reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** records 158 commands: 149 at L3, 3 Windows-verified recovery/Rigify commands at L4, 6 at L1, across 34 domains, routed through 22 Skills.
-- **Connector** adds the 5 optional `official_uploader.*` commands: 163 commands, 149 at L3, 3 at L4, 11 at L1, across 35 domains, routed through 23 Skills.
+- **Managed** records 160 commands: 154 at L3, 3 Windows-verified recovery/Rigify commands at L4, 3 at L1, across 34 domains, routed through 22 Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 165 commands, 154 at L3, 3 at L4, 8 at L1, across 35 domains, routed through 23 Skills.
 
 The two modes are never merged into a single count. Tool, Skill, and platform coverage are measured separately; no combined “100%” is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime verification](docs/verification/harness-runtime.md).
 

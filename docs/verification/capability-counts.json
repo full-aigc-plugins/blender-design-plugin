@@ -3,8 +3,8 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 158,
-      "L1": 1,
+      "total": 160,
+      "L1": 3,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -222,8 +222,10 @@
       "tracking.load_clip",
       "tracking.setup_scene",
       "tracking.solve_camera",
+      "uv.detect_overlap",
       "uv.inspect",
       "uv.mark_seams",
+      "uv.measure_texel_density",
       "uv.pack",
       "uv.unwrap",
       "validation.camera_visibility",
@@ -240,8 +242,8 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 163,
-      "L1": 6,
+      "total": 165,
+      "L1": 8,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -466,8 +468,10 @@
       "tracking.load_clip",
       "tracking.setup_scene",
       "tracking.solve_camera",
+      "uv.detect_overlap",
       "uv.inspect",
       "uv.mark_seams",
+      "uv.measure_texel_density",
       "uv.pack",
       "uv.unwrap",
       "validation.camera_visibility",
