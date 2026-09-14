@@ -16,7 +16,31 @@
   <a href="docs/verification/harness-runtime.md">运行证据</a>
 </p>
 
-## 从一句提示词到可编辑的 Blender 交付物
+## 状态与版本
+
+发布的插件提供 23 个 Skill 的 Managed Harness，以及可选的 24 个 Skill 的 Connector Add-on。macOS 运行验证覆盖 154 条 L3 命令、3 条 Windows 验证的 L4 恢复命令、7 条 L1 命令（Managed 模式）；Connector 额外加入 5 条 `official_uploader.*` 命令。Windows 前台 UI 接管仍未达到 L4 验证。云端登录、报价、提交、轮询和付费操作均不属于本插件。当前证据详见[运行验证记录](docs/verification/harness-runtime.md)。
+
+## 快速开始
+
+1. 从 [Blender 官网](https://www.blender.org/download/) 下载并安装 Blender，手工启动一次，确认能看到默认立方体。
+2. 从 GitHub Marketplace 安装插件：
+
+```bash
+codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
+codex plugin add codex-blender@partme-ai-blender
+```
+
+新建一个 Codex 任务，然后试试：
+
+```text
+使用非侵入模式启动 Blender。设计一个橙色磨砂金属桌面音箱：圆角机身、黑色前网罩、
+一个控制旋钮。先给我 Camera、Front、Side、Top 四视图；验证通过后，在指定输出目录
+新建并导出 .blend、.glb 和 .png。
+```
+
+截图版安装、Connector、素材缺失策略、自动执行和交付回执说明见[安装与使用指南](docs/getting-started.zh-CN.md)。
+
+## 可以做什么
 
 给 Codex 一个想法、一组参考素材或一条动作时间线。插件把它转换成真正的 Blender 工作，而不是一次性图片：场景对象、材质、灯光、相机、动画、检查点、预览和导出回执都会保留下来。
 
@@ -34,7 +58,24 @@ flowchart LR
 
 提示词缺少引用素材时，默认要求补充。只有你明确允许原创设计代理，Codex 才会在 Blender 中替代设计缺失的角色、道具、场景或动作参考，并在交付清单中逐项标注假设。
 
-## 案例：8 秒长矛动作白模
+### 能力范围
+
+- 场景装配、集合、稳定对象 ID、局部/世界变换、BMesh、曲线、Modifier 和授权资产导入
+- 硬表面与程序化配方、UV、PBR 材质、Geometry Nodes、雕刻、Hair Curves 和贴图烘焙
+- Armature、权重、IK/FK、约束、Action、F-Curve、NLA、Shape Key、重定向和单一道具交接
+- 相机路径、手持响应、灯光、Eevee/Cycles、合成节点、passes 与 EXR 交付
+- 刚体、布料、软体、Smoke、隔离缓存烘焙、Grease Pencil、跟踪，以及可编辑的 VSE Scene/图片序列/文本/声音时间线
+- 持久 PNG 或多层 EXR 序列、逐帧哈希、显式缺帧补渲，以及独立 FFmpeg 合成
+- 快照隔离后台任务、状态查询、取消、不自动重跑的恢复，以及明确调用后的逐帧恢复
+
+运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，且由注册表生成、不手工维护——下方数字可由 `docs/verification/capability-counts.json` 复现。
+
+- **Managed** 共注册 164 条命令：154 条 L3、3 条恢复/Rigify 工具通过 Windows 达到 L4、7 条 L1，横跨 35 个域，路由到 23 个 Skill。
+- **Connector** 在此之上增加 5 条可选 `official_uploader.*` 命令：169 条命令、154 条 L3、3 条 L4、12 条 L1，横跨 36 个域，路由到 24 个 Skill。
+
+两种模式**不合并为单一总数**。工具、Skill 与平台覆盖分别统计，不宣称综合"100%"；Windows 前台 UI 接管仍未达到 L4。
+
+### 案例：8 秒长矛动作白模
 
 仓库的端到端验证不是只跑命令，而是实际完成了一次从设计到出片的闭环：
 
@@ -60,29 +101,20 @@ flowchart LR
   <a href="assets/showcase/spear-fight-final-preview.mp4"><strong>▶ 播放 8 秒下游成片</strong></a>
 </p>
 
-仓库内放置的是轻量 640×360 宣传预览，避免 README 加载过慢。`codex-blender` 负责左侧交付：可编辑的 Blender 场景与验证后的本地文件。右侧视频只是在明确选择 `codex-dreamina-3d` 后得到的独立下游示例；云端登录、报价、提交、轮询和付费操作不属于本插件。
+仓库内放置的是轻量 640×360 宣传预览，避免 README 加载过慢。`codex-blender` 负责左侧交付：可编辑的 Blender 场景与验证后的本地文件。右侧视频只是在明确选择 `codex-dreamina-3d` 后得到的独立下游示例。
 
-## 两条命令完成安装
+## 边界与契约
 
-1. 从 [Blender 官网](https://www.blender.org/download/) 下载并安装 Blender，手工启动一次，确认能看到默认立方体。
-2. 从 GitHub Marketplace 安装插件：
+Harness 的边界是为了让错误配置无法危及宿主机或用户的本地工程。
 
-```bash
-codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
-codex plugin add codex-blender@partme-ai-blender
-```
+- 默认只允许封闭结构化命令，不直接运行任意 Python
+- Blender 数据修改只在主线程执行
+- revision 防止旧状态写入，requestId 防止重复执行
+- 删除、覆盖、专家 Python、扩展格式和外部动作使用动作绑定授权
+- macOS 使用私有 UDS，Windows 使用 Named Pipe，loopback TCP 仅作带 token 降级
+- 每个里程碑建立快照，并提供回滚证据、媒体探测、哈希及必要的重导入验证
 
-新建一个 Codex 任务，然后试试：
-
-```text
-使用非侵入模式启动 Blender。设计一个橙色磨砂金属桌面音箱：圆角机身、黑色前网罩、
-一个控制旋钮。先给我 Camera、Front、Side、Top 四视图；验证通过后，在指定输出目录
-新建并导出 .blend、.glb 和 .png。
-```
-
-截图版安装、Connector、素材缺失策略、自动执行和交付回执说明见[安装与使用指南](docs/getting-started.zh-CN.md)。
-
-## 两种连接方式
+### 两种连接方式
 
 | 模式 | 是否安装 Blender Add-on | 适用场景 |
 |---|---:|---|
@@ -110,39 +142,22 @@ flowchart TB
 
 新的混合架构让 Blender 保持前台可见、可交互；耗时导出基于已提交快照安全地放到后台。你可以暂停并接管场景，恢复时 Codex 会重新检查现场，不会拿旧状态覆盖人工修改。
 
-## 可以做什么
-
-- 场景装配、集合、稳定对象 ID、局部/世界变换、BMesh、曲线、Modifier 和授权资产导入
-- 硬表面与程序化配方、UV、PBR 材质、Geometry Nodes、雕刻、Hair Curves 和贴图烘焙
-- Armature、权重、IK/FK、约束、Action、F-Curve、NLA、Shape Key、重定向和单一道具交接
-- 相机路径、手持响应、灯光、Eevee/Cycles、合成节点、passes 与 EXR 交付
-- 刚体、布料、软体、Smoke、隔离缓存烘焙、Grease Pencil、跟踪，以及可编辑的 VSE Scene/图片序列/文本/声音时间线
-- 持久 PNG 或多层 EXR 序列、逐帧哈希、显式缺帧补渲，以及独立 FFmpeg 合成
-- 快照隔离后台任务、状态查询、取消、不自动重跑的恢复，以及明确调用后的逐帧恢复
-
-运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，且由注册表生成、不手工维护——下方数字可由 `docs/verification/capability-counts.json` 复现。
-
-- **Managed** 共注册 164 条命令：154 条 L3、3 条恢复/Rigify 工具通过 Windows 达到 L4、7 条 L1，横跨 35 个域，路由到 23 个 Skill。
-- **Connector** 在此之上增加 5 条可选 `official_uploader.*` 命令：169 条命令、154 条 L3、3 条 L4、12 条 L1，横跨 36 个域，路由到 24 个 Skill。
-
-两种模式**不合并为单一总数**。工具、Skill 与平台覆盖分别统计，不宣称综合“100%”；Windows 前台 UI 接管仍未达到 L4。详见[运行验证记录](docs/verification/harness-runtime.md)。
-
-## 安全不是附加项
-
-- 默认只允许封闭结构化命令，不直接运行任意 Python
-- Blender 数据修改只在主线程执行
-- revision 防止旧状态写入，requestId 防止重复执行
-- 删除、覆盖、专家 Python、扩展格式和外部动作使用动作绑定授权
-- macOS 使用私有 UDS，Windows 使用 Named Pipe，loopback TCP 仅作带 token 降级
-- 每个里程碑建立快照，并提供回滚证据、媒体探测、哈希及必要的重导入验证
-
-## 三个交付入口
+### 三个交付入口
 
 - `preview_only`：创建并验证本地 Blender 预览。
 - `jimeng_web`：在前台 Connector 中单次调用用户已启用的官方上传器，止于 `JimengLinkReady`。
 - `downstream_seedance`：将验证后的回执交给 `codex-dreamina-3d`，进入另行授权的生成流程。
 
 本仓库不捆绑或安装官方上传器。当前 macOS 验证环境未启用该插件，所以即梦网页运行门禁明确记录为阻塞；命令与 Skill 契约已通过离线验证。
+
+## 文档导航
+
+- [Architecture](docs/Codex-Blender-Plugin-Architecture.md) · [架构文档](docs/Codex-Blender-Plugin-Architecture.zh_CN.md)
+- [Technical solution](docs/Codex-Blender-Plugin-Technical-Solution.md) · [技术方案](docs/Codex-Blender-Plugin-Technical-Solution.zh_CN.md)
+- [Harness 设计规格](docs/superpowers/specs/2026-09-12-codex-blender-harness-design.md)
+- [实施计划](docs/superpowers/plans/2026-09-12-codex-blender-harness-implementation.md)
+- [运行验证记录](docs/verification/harness-runtime.md)
+- [安装与使用（中文）](docs/getting-started.zh-CN.md)
 
 ## 开发与验证
 
@@ -151,10 +166,6 @@ python3 -m unittest discover -s tests -v
 python3 scripts/validate_distribution.py
 python3 scripts/package_connector.py dist/codex-blender-connector.zip
 ```
-
-- [Harness 设计规格](docs/superpowers/specs/2026-09-12-codex-blender-harness-design.md)
-- [实施计划](docs/superpowers/plans/2026-09-12-codex-blender-harness-implementation.md)
-- [运行验证记录](docs/verification/harness-runtime.md)
 
 ## 许可证
 
