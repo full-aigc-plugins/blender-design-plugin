@@ -34,8 +34,9 @@ checksums (verified on disk):
 | top.png | `06f53a53698630500ca990991448882898263e77370c3716bedc38c244a490bb` |
 
 The PNGs are not committed to the repository (too large); the checksums above
-are the verifiable link.  A reader can re-run the acceptance script to
-regenerate them and confirm the hashes match.
+seal this specific run.  Blender rendering is not guaranteed deterministic
+(frame counters, GPU state, sampling), so a re-run is expected to produce
+equivalent artifacts for the same scene but not necessarily identical bytes.
 
 ## Acceptance script
 

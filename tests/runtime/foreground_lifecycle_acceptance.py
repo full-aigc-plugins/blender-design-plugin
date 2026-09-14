@@ -45,7 +45,11 @@ GRADUATED = [
 
 def run_acceptance(descriptor_path: Path, report_path: Path,
                    output_root: Path | None = None) -> dict:
-    """Exercise each foreground command and write a machine-readable report."""
+    """Exercise each foreground command and write a machine-readable report.
+
+    The report is *always* written -- including on failure -- so a reader can
+    distinguish ``"the run failed"`` from ``"the run never happened"``.
+    """
     descriptor = load_descriptor(descriptor_path)
     endpoint = Endpoint(descriptor['transport'], descriptor['address'])
     token = descriptor['token']
@@ -56,43 +60,51 @@ def run_acceptance(descriptor_path: Path, report_path: Path,
     tx = 'fg-accept-' + uuid.uuid4().hex[:8]
 
     def call(command, arguments=None, expect=None):
-        """Send one command; return the result dict.
+        """Send one command; return the result dict or ``None`` on error.
 
         Each ``transaction.begin`` starts a fresh transaction, so ``tx`` is
         rotated before begin/commit sequences (same pattern as
-        foreground_smoke.py).
+        foreground_smoke.py).  Exceptions are captured into *errors* and
+        return ``None`` so the report is always written.
         """
         nonlocal revision, tx
-        # Each transaction.begin must carry a fresh id.
-        if command == 'transaction.begin':
-            tx = 'fg-accept-' + uuid.uuid4().hex[:8]
-        payload = {
-            'protocolVersion': 'codex-blender/v1',
-            'sessionId': descriptor['sessionId'],
-            'requestId': str(uuid.uuid4()),
-            'transactionId': tx,
-            'command': command,
-            'arguments': arguments or {},
-            'expectedSceneRevision': revision,
-        }
-        result = send_request(endpoint, token, payload, timeout=30)
-        status = result.get('status')
-        error = result.get('error')
-        new_rev = result.get('sceneRevision', revision)
-        records.append({
-            'command': command,
-            'status': status,
-            'error': error,
-            'sceneRevision': new_rev,
-        })
-        if expect:
-            assert (error or {}).get('code') == expect, \
-                f'{command}: expected {expect}, got {result}'
-        else:
-            assert status == 'succeeded', \
-                f'{command}: expected succeeded, got {result}'
-        revision = new_rev
-        return result
+        try:
+            if command == 'transaction.begin':
+                tx = 'fg-accept-' + uuid.uuid4().hex[:8]
+            payload = {
+                'protocolVersion': 'codex-blender/v1',
+                'sessionId': descriptor['sessionId'],
+                'requestId': str(uuid.uuid4()),
+                'transactionId': tx,
+                'command': command,
+                'arguments': arguments or {},
+                'expectedSceneRevision': revision,
+            }
+            result = send_request(endpoint, token, payload, timeout=30)
+            status = result.get('status')
+            error = result.get('error')
+            new_rev = result.get('sceneRevision', revision)
+            records.append({
+                'command': command,
+                'status': status,
+                'error': error,
+                'sceneRevision': new_rev,
+            })
+            if expect:
+                if (error or {}).get('code') != expect:
+                    errors.append({'command': command,
+                                   'error': f'expected {expect}, got {result}'})
+                    return None
+            else:
+                if status != 'succeeded':
+                    errors.append({'command': command,
+                                   'error': f'expected succeeded, got {result}'})
+                    return None
+            revision = new_rev
+            return result
+        except Exception as exc:
+            errors.append({'command': command, 'error': str(exc)})
+            return None
 
     # Determine output root for preview.capture.
     if output_root is None:
@@ -111,21 +123,25 @@ def run_acceptance(descriptor_path: Path, report_path: Path,
     call('transaction.begin')
     call('object.create_mesh', {'primitive': 'cube', 'name': 'FgAcceptFocusTarget'})
     call('transaction.commit')
-    call('view.focus', {'object': 'FgAcceptFocusTarget'})
-    results['view.focus'] = {'target': 'FgAcceptFocusTarget'}
+    r = call('view.focus', {'object': 'FgAcceptFocusTarget'})
+    if r is not None:
+        results['view.focus'] = {'target': 'FgAcceptFocusTarget'}
 
     # ---- view.present ----
     r = call('view.present')
-    window_count = r.get('result', {}).get('windowCount', 0)
-    results['view.present'] = {'windowCount': window_count}
+    if r is not None:
+        results['view.present'] = {
+            'windowCount': r.get('result', {}).get('windowCount', 0),
+        }
 
     # ---- playback.set ----
     r_on = call('playback.set', {'playing': True})
     r_off = call('playback.set', {'playing': False})
-    results['playback.set'] = {
-        'start_playing': r_on.get('result', {}).get('playing'),
-        'stop_playing': r_off.get('result', {}).get('playing'),
-    }
+    if r_on is not None and r_off is not None:
+        results['playback.set'] = {
+            'start_playing': r_on.get('result', {}).get('playing'),
+            'stop_playing': r_off.get('result', {}).get('playing'),
+        }
 
     # ---- preview.capture ----
     # Needs a committed snapshot: transaction.begin -> object.create ->
@@ -133,25 +149,30 @@ def run_acceptance(descriptor_path: Path, report_path: Path,
     call('transaction.begin')
     call('object.create_mesh', {'primitive': 'cube', 'name': 'FgAcceptPreview'})
     tx_result = call('transaction.commit')
-    snapshot_id = tx_result.get('snapshotId', '')
-    assert snapshot_id, 'transaction.commit did not return a snapshotId'
+    if tx_result is not None:
+        snapshot_id = tx_result.get('snapshotId', '')
+        if not snapshot_id:
+            errors.append({'command': 'preview.capture',
+                           'error': 'transaction.commit did not return a snapshotId'})
+        else:
+            r = call('preview.capture', {
+                'snapshotId': snapshot_id,
+                'milestone': 'foreground-certification',
+                'width': 256,
+                'height': 256,
+            })
+            if r is not None:
+                milestone = (r.get('result') or {}).get('milestone', {})
+                views = milestone.get('views', [])
+                view_info = [{'name': v['name'], 'sha256': v['sha256']}
+                             for v in views]
+                results['preview.capture'] = {
+                    'status': r.get('status'),
+                    'snapshotId': snapshot_id,
+                    'views': view_info,
+                }
 
-    r = call('preview.capture', {
-        'snapshotId': snapshot_id,
-        'milestone': 'foreground-certification',
-        'width': 256,
-        'height': 256,
-    })
-    milestone = (r.get('result') or {}).get('milestone', {})
-    views = milestone.get('views', [])
-    view_info = [{'name': v['name'], 'sha256': v['sha256']} for v in views]
-    results['preview.capture'] = {
-        'status': r.get('status'),
-        'snapshotId': snapshot_id,
-        'views': view_info,
-    }
-
-    # ---- Build report ----
+    # ---- Build report (always written, even on failure) ----
     report = {
         'blender': descriptor.get('blender', None),
         'platform': sys.platform,
@@ -161,6 +182,7 @@ def run_acceptance(descriptor_path: Path, report_path: Path,
         'graduatedCommands': len(GRADUATED),
         'executedCommands': len(results),
         'skippedCommands': 0,
+        'passed': len(errors) == 0,
         'results': results,
         'commands': records,
         'errors': errors,
