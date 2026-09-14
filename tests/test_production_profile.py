@@ -320,6 +320,52 @@ class ProductionProfileEvidencePathTests(_TmpdirMixin, unittest.TestCase):
         self.assertEqual(verdict.status, 'blocked')
 
 
+class ProductionProfileL1CommandsTests(_TmpdirMixin, unittest.TestCase):
+    """Tests for l1Commands in production status output."""
+
+    def test_l1_commands_tracked_in_status(self):
+        """L1 commands that are not excluded or optional appear in l1Commands."""
+        reg = CommandRegistry()
+        reg.register('playback.set', lambda _: {}, risk='read',
+                     metadata={'domain': 'playback', 'maturity': 'L1',
+                               'skills': ['codex-blender-use']})
+        reg.register('mesh.inspect', lambda _: {}, risk='read',
+                     metadata={'domain': 'mesh', 'maturity': 'L3',
+                               'skills': ['codex-blender-inspect'],
+                               'verification': {
+                                   'runtime': ['tests/runtime/p1_foundation_smoke.py'],
+                                   'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
+                                   'delivery': ['tests/runtime/p1_delivery_acceptance.py'],
+                               }})
+        profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
+        status = profile.status(_identity(), reg)
+        self.assertIn('playback.set', status['l1Commands'])
+        self.assertNotIn('mesh.inspect', status['l1Commands'])
+        self.assertIn('mesh.inspect', status['productionCommands'])
+
+    def test_expert_excluded_from_l1_commands(self):
+        """expert-class L1 commands do not appear in l1Commands."""
+        reg = CommandRegistry()
+        reg.register('advanced.execute_python', lambda _: {}, risk='gated',
+                     metadata={'domain': 'advanced', 'maturity': 'L1',
+                               'skills': ['codex-blender-use'],
+                               'class': 'expert'})
+        profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
+        status = profile.status(_identity(), reg)
+        self.assertNotIn('advanced.execute_python', status['l1Commands'])
+
+    def test_optional_excluded_from_l1_commands(self):
+        """Optional domain L1 commands do not appear in l1Commands."""
+        reg = CommandRegistry()
+        reg.register('official_uploader.status', lambda _: {}, risk='read',
+                     metadata={'domain': 'official_uploader', 'maturity': 'L1',
+                               'skills': ['codex-blender-jimeng-web']})
+        profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
+        status = profile.status(_identity(), reg)
+        self.assertNotIn('official_uploader.status', status['l1Commands'])
+        self.assertIn('official_uploader.status', status['optionalCommands'])
+
+
 class ProductionProfileStatusTests(_TmpdirMixin, unittest.TestCase):
     """Tests for production.status and catalogHash."""
 
@@ -360,6 +406,7 @@ class ProductionProfileStatusTests(_TmpdirMixin, unittest.TestCase):
         self.assertIn('productionCommands', status)
         self.assertIn('optionalCommands', status)
         self.assertIn('blockedCommands', status)
+        self.assertIn('l1Commands', status)
         self.assertIn('catalogHash', status)
 
     def test_status_blocked_when_evidence_missing(self):

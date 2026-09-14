@@ -4,9 +4,9 @@
     "runtimeMode": "managed",
     "commands": {
       "total": 158,
-      "L1": 19,
+      "L1": 6,
       "L2": 0,
-      "L3": 136,
+      "L3": 149,
       "L4": 3
     },
     "domains": {
@@ -241,9 +241,9 @@
     "runtimeMode": "connector",
     "commands": {
       "total": 163,
-      "L1": 24,
+      "L1": 11,
       "L2": 0,
-      "L3": 136,
+      "L3": 149,
       "L4": 3
     },
     "domains": {

@@ -148,6 +148,7 @@ class ProductionProfile:
         production_commands: list[str] = []
         optional_commands: list[str] = []
         blocked_commands: list[str] = []
+        l1_commands: list[str] = []
 
         for name in sorted(registry._commands):
             definition = registry._commands[name]
@@ -163,7 +164,9 @@ class ProductionProfile:
                 production_commands.append(name)
             elif v.status == 'blocked':
                 blocked_commands.append(name)
-            # excluded and not_production are silently omitted.
+            elif v.status == 'not_production' and v.maturity == 'L1':
+                l1_commands.append(name)
+            # excluded commands are silently omitted.
 
         # Compute catalog hash: canonical JSON of the profile + production set.
         hash_input = json.dumps({
@@ -180,5 +183,6 @@ class ProductionProfile:
             'productionCommands': production_commands,
             'optionalCommands': optional_commands,
             'blockedCommands': blocked_commands,
+            'l1Commands': l1_commands,
             'catalogHash': catalog_hash,
         }

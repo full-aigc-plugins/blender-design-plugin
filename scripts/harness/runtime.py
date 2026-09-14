@@ -372,7 +372,8 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('rig.rigify_install',rigs.rigify_install,
                       validate=closed_arguments(optional=('allowDownload','savePreferences')),risk='gated')
     registry.register('rig.rigify_generate',rigs.rigify_generate,validate=closed_arguments(optional=('name','objectId')))
-    registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated")
+    registry.register("advanced.execute_python", advanced.execute, validate=closed_arguments(required=("script",)), risk="gated",
+                      metadata={'class': 'expert'})
     if runtime_mode == "connector":
         registry.register("official_uploader.inspect", official.inspect, validate=closed_arguments(), risk="read")
         registry.register("official_uploader.status", official.status, validate=closed_arguments(), risk="read")

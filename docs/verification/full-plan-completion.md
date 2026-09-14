@@ -26,7 +26,7 @@ P0–P9 的本地实现、macOS Apple Silicon 与 Windows Server 2025 x64 / Blen
 
 > **计数口径（2026-09-14 修正）**：命令与 Skill 数量**由注册表生成**，唯一权威是 [`capability-counts.json`](capability-counts.json)；本节其余数字（尺寸误差、重投影误差、帧数等）来自各自的验收 run，**未**由本仓库的自动门禁重新计算——引用时请回到对应 `deliverables/` 证据。
 
-- 工具：**按运行模式分别统计**（见 `capability-counts.json`）。Managed 158 条：136 L3、3 L4、19 L1，34 个域；Connector 在 Managed 之上增加 5 条可选 `official_uploader.*`：163 条、136 L3、3 L4、24 L1，35 个域。两种模式不合并为单一总数。
+- 工具：**按运行模式分别统计**（见 `capability-counts.json`）。Managed 158 条：149 L3、3 L4、6 L1，34 个域；Connector 在 Managed 之上增加 5 条可选 `official_uploader.*`：163 条、149 L3、3 L4、11 L1，35 个域。两种模式不合并为单一总数。
 - Skill：26 个分发 Skill；被命令目录精确引用者 Managed 22 个、Connector 23 个，其余为 managed/connector/recover 等会话生命周期入口。真实固定任务行为见 `skill-behavior-evaluation.md`。
 - 角色：肢长误差 0；释放距离≥5cm 连续 30 帧；接回位置跳变约 1.19e-7m、旋转 0°；骨盆移动时脚漂移 7.67mm；最低点高于地面。
 - 产品：目标尺寸误差≤0.5%；壁厚参数、Boolean→Bevel→Subdivision、UV、packed texture 与 GLB reimport 通过。

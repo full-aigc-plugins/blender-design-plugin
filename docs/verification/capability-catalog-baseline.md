@@ -66,3 +66,25 @@ domain/maturity 可省略；maturity 使用 L0–L4；offset 为非负整数，l
 - 真实 Blender 检查覆盖创建无残留、变换无部分修改、修改器配置失败无残留。父子循环另有单元回归，尚不代替完整骨架制作测试。
 
 仍未宣布 P0 或全计划完成；正式领域工具、配方与作品验收按实施账本继续。
+
+## 生命周期命令毕业至 L3
+
+13 条核心生命周期/内省命令通过真实 Blender 5.2.1 LTS 后台运行证据从 L1 提升至 L3：
+
+- `capability.list`, `capability.describe`
+- `session.status`, `session.capabilities`, `session.pause`, `session.resume`, `session.set_progress`
+- `scene.inspect`
+- `object.create_curve`, `object.create_text`
+- `material.attach_image_texture`
+- `playback.set_frame`
+- `production.status`
+
+验收脚本 `tests/runtime/lifecycle_commands_acceptance.py` 在真实 Blender 后台运行，逐条命令执行并保存证据到 `lifecycle_acceptance.json`。
+
+**前台阻塞（5 条）**：`view.set`, `view.focus`, `view.present`, `playback.set`, `preview.capture` 需要前台 VIEW_3D 区域，在后台模式下不可用，保持 L1。其毕业依赖 Task 17（macOS/Windows 前台认证）。
+
+**专家级排除（1 条）**：`advanced.execute_python` 标记为 `expert` 类，不计入生产覆盖。
+
+**证据范围**：每条命令的运行证据绑定到 `RuntimeIdentity(5.2.1, darwin, arm64, managed)`。不同版本或平台的证据由 Task 4 的覆盖矩阵建立，不从此处继承。
+
+**生产状态**：`production.status` 现在返回 `l1Commands` 字段，列出仍在 L1 的生产范围内命令。当前主机上该字段包含 5 条前台阻塞命令，`status` 为 `blocked`（另有 35 条 P1 命令因证据路径锚点问题处于阻塞状态，为既有问题）。

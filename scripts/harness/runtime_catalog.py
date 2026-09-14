@@ -147,6 +147,7 @@ TESTS = {
     'export': 'test_exporter.py', 'view': 'test_foreground_controls.py',
     'playback': 'test_foreground_controls.py', 'session': 'test_harness_session.py',
     'capability': 'test_capability_catalog.py',
+    'production': 'test_production_profile.py',
 }
 P1_VERIFIED = {
     'scene.set_units', 'collection.create', 'collection.move_object', 'collection.set_visibility',
@@ -183,6 +184,25 @@ P7_VERIFIED = {'grease_pencil.create','grease_pencil.add_material','grease_penci
 P8_VERIFIED = {'job.submit','job.resume','sequence.set_speed','sequence.keyframe_volume',
  'sequence.add_compositor_modifier','compositor.add_file_output','compositor.create_strip_group'}
 P9_L4_VERIFIED = {'job.resume','rig.rigify_install','rig.rigify_generate'}
+
+# Lifecycle commands graduated to L3 with runtime acceptance evidence.
+LIFECYCLE_VERIFIED = {
+    'capability.list', 'capability.describe',
+    'session.status', 'session.capabilities', 'session.pause', 'session.resume', 'session.set_progress',
+    'scene.inspect',
+    'object.create_curve', 'object.create_text',
+    'material.attach_image_texture',
+    'playback.set_frame',
+    'production.status',
+}
+
+# Lifecycle commands that require a foreground VIEW_3D window; blocked in
+# background mode and cannot produce runtime evidence on this host.
+LIFECYCLE_FOREGROUND_ONLY = frozenset({
+    'view.set', 'view.focus', 'view.present',
+    'playback.set',
+    'preview.capture',
+})
 
 UI_COMMANDS = {'view.set', 'view.focus', 'view.present', 'playback.set', 'sculpt.brush_stroke'}
 LONG_COMMANDS = {'preview.capture', 'export.file', 'official_uploader.render_and_link'}
@@ -254,6 +274,8 @@ def command_skills(name, domain, metadata):
 
 
 def runtime_evidence(name):
+    if name in LIFECYCLE_VERIFIED:
+        return ['tests/runtime/lifecycle_commands_acceptance.py']
     if name in {'rig.rigify_install','rig.rigify_generate'}:
         return ['tests/runtime/p9_rigify_install_acceptance.py']
     if name == 'job.submit':
@@ -403,7 +425,15 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'COMPOSE_VIDEO': ['codex-blender-sequence-editing','codex-blender-background-jobs'],
             }}}
         defaults.update(metadata or {})
-        if name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED:
+        if name in LIFECYCLE_VERIFIED:
+            defaults['maturity'] = 'L3'
+            defaults['verification'] = {
+                'runtime': runtime_evidence(name),
+                'visual': ['docs/verification/capability-catalog-baseline.md'],
+                'delivery': ['tests/runtime/lifecycle_commands_acceptance.py'],
+                'recoveryAndCompatibility': [],
+            }
+        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED:
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),
