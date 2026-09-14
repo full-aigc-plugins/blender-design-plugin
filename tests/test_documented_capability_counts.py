@@ -11,6 +11,7 @@ the numbers quoted in the docs are the generated ones.
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -25,6 +26,7 @@ README = ROOT / "README.md"
 README_ZH = ROOT / "README.zh-CN.md"
 COMPLETION_DOC = ROOT / "docs/verification/full-plan-completion.md"
 MATRIX_DOC = ROOT / "docs/verification/blender-domain-coverage-matrix.md"
+PROVENANCE_PATH = ROOT / "docs/verification/1.0-baseline-provenance.json"
 
 MATURITIES = ("L1", "L2", "L3", "L4")
 
@@ -108,13 +110,14 @@ class DocumentedCountsTests(unittest.TestCase):
             "README's tool count must equal the generated managed total",
         )
 
-    def test_readme_does_not_claim_a_single_merged_l1(self):
+    def test_readme_states_each_mode_l1_count_in_context(self):
+        """A bare substring match would be satisfied by an unrelated number such as '18mm'."""
         text = README.read_text(encoding="utf-8")
         for mode in ("managed", "connector"):
-            generated = generate_coverage_summary(mode)
-            self.assertIn(
-                str(generated["commands"]["L1"]), text,
-                f"README must report the {mode} L1 count ({generated['commands']['L1']})",
+            l1 = generate_coverage_summary(mode)["commands"]["L1"]
+            self.assertRegex(
+                text, rf"{l1}\s+at\s+L1",
+                f"README must state the {mode} L1 count as '{l1} at L1'",
             )
 
     def test_docs_reference_the_generated_artifact(self):
@@ -124,6 +127,71 @@ class DocumentedCountsTests(unittest.TestCase):
                 "capability-counts.json", path.read_text(encoding="utf-8"),
                 f"{path.relative_to(ROOT)} must reference the generated counts artifact",
             )
+
+
+class BaselineProvenanceTests(unittest.TestCase):
+    """The brief requires source / cache / remote SHA plus the CI commit.
+
+    Undetermined values must be recorded as undetermined (with a reason), never
+    omitted and never invented; a recorded SHA must resolve in this repository.
+    """
+
+    REQUIRED = (
+        ("source", "sha"),
+        ("remote", "sha"),
+        ("installedCache", "sha"),
+        ("ci", "windowsL4", "headSha"),
+    )
+
+    def setUp(self):
+        self.assertTrue(
+            PROVENANCE_PATH.is_file(),
+            f"{PROVENANCE_PATH.relative_to(ROOT)} must record the baseline provenance",
+        )
+        self.data = json.loads(PROVENANCE_PATH.read_text(encoding="utf-8"))
+
+    def _get(self, path):
+        node = self.data
+        for key in path:
+            if not isinstance(node, dict) or key not in node:
+                return None
+            node = node[key]
+        return node
+
+    def test_nothing_required_is_silently_omitted(self):
+        unresolved = self.data.get("unresolved") or {}
+        for path in self.REQUIRED:
+            value = self._get(path)
+            if not value:
+                self.assertIn(
+                    ".".join(path), unresolved,
+                    f"{'.'.join(path)} is unset, so it must be listed in `unresolved` with a reason",
+                )
+
+    def test_recorded_shas_are_real_commits(self):
+        """Catches an invented or stale SHA, which a value-only check would miss."""
+        for path in (("source", "sha"), ("remote", "sha"), ("ci", "windowsL4", "headSha")):
+            sha = self._get(path)
+            if not sha:
+                continue
+            result = subprocess.run(
+                ["git", "-C", str(ROOT), "cat-file", "-e", f"{sha}^{{commit}}"],
+                capture_output=True,
+            )
+            self.assertEqual(
+                result.returncode, 0,
+                f"{'.'.join(path)} {sha} does not resolve to a commit in this repository",
+            )
+
+    def test_counts_artifact_is_named(self):
+        self.assertIn("capability-counts.json", self.data.get("countsArtifact", ""))
+
+    def test_completion_doc_cites_the_recorded_ci_run(self):
+        run_id = str(self._get(("ci", "windowsL4", "runId")))
+        self.assertIn(
+            run_id, COMPLETION_DOC.read_text(encoding="utf-8"),
+            "the completion doc must cite the CI run recorded in the provenance",
+        )
 
 
 if __name__ == "__main__":

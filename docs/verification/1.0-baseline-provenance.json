@@ -1,0 +1,28 @@
+{
+  "asOf": "2026-09-14",
+  "ci": {
+    "windowsL4": {
+      "conclusion": "success",
+      "headSha": "959184528457bb00241b16b82cff42fda740fd19",
+      "runId": 34798159616,
+      "verifiedVia": "gh api repos/partme-ai/codex-blender-plugin/actions/runs/34798159616",
+      "workflow": "Windows L4"
+    }
+  },
+  "countsArtifact": "docs/verification/capability-counts.json",
+  "generatedFrom": "scripts/harness/runtime_catalog.py",
+  "installedCache": {
+    "note": "Git clone behind the partme-ai-blender marketplace; the earlier personal-namespace install was removed by design.",
+    "path": "~/.codex/.tmp/marketplaces/partme-ai-blender",
+    "sha": "e2f6f0252f55dd99c384dd1710ebbede1c1bcd7e"
+  },
+  "remote": {
+    "ref": "origin/main",
+    "sha": "e2f6f0252f55dd99c384dd1710ebbede1c1bcd7e"
+  },
+  "source": {
+    "branch": "feat/blender-1.0-production",
+    "sha": "67eb265c48627e5b4ec84b654c6e6bd104ad3d62"
+  },
+  "unresolved": {}
+}
