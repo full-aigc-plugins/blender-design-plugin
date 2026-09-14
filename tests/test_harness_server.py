@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -55,7 +56,8 @@ class TestHarnessServer(unittest.TestCase):
             try:
                 descriptor = Path(directory) / "session-1.json"
                 payload = json.loads(descriptor.read_text())
-                self.assertEqual(descriptor.stat().st_mode & 0o777, 0o600)
+                if os.name != 'nt':
+                    self.assertEqual(descriptor.stat().st_mode & 0o777, 0o600)
                 request = {
                     "protocolVersion": "codex-blender/v1",
                     "sessionId": "session-1",
