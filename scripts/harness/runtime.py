@@ -283,6 +283,16 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('keyName','frame','value'),optional=('name','objectId')))
     registry.register('animation.retarget',advanced_animation.retarget,
                       validate=closed_arguments(required=('source','target','boneMap','frameStart','frameEnd'),optional=('step',)))
+    registry.register('animation.driver_create',advanced_animation.driver_create,
+                      validate=closed_arguments(required=('owner','dataPath','expression'),optional=('variables',)))
+    registry.register('animation.keying_set_create',advanced_animation.keying_set_create,
+                      validate=closed_arguments(required=('name','paths')))
+    registry.register('animation.marker_set',advanced_animation.marker_set,
+                      validate=closed_arguments(required=('name','frame'),optional=('camera',)))
+    registry.register('animation.motion_path_calculate',advanced_animation.motion_path_calculate,
+                      validate=closed_arguments(required=('target','frameStart','frameEnd')))
+    registry.register('animation.root_motion',advanced_animation.root_motion,
+                      validate=closed_arguments(required=('armature','sourceBone','targetObject','frameStart','frameEnd')))
     registry.register('camera.follow_path',advanced_animation.camera_follow_path,
                       validate=closed_arguments(required=('camera','path','name','frameStart','frameEnd'),optional=('targetObjectId',)))
     registry.register('camera.add_handheld',advanced_animation.camera_handheld,
@@ -383,6 +393,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('tracking.solve_camera',tracking.solve_camera,validate=closed_arguments(required=('clip','keyframeA','keyframeB')))
     registry.register('tracking.setup_scene',tracking.setup_scene,validate=closed_arguments(required=('clip',)))
     registry.register('tracking.inspect',tracking.inspect,validate=closed_arguments(required=('clip',)),risk='read')
+    registry.register('rig.auto_weights',rigs.auto_weights,
+                      validate=closed_arguments(required=('mesh','armature'),optional=('maxInfluences',)))
+    registry.register('rig.validate_deformation',rigs.validate_deformation,
+                      validate=closed_arguments(required=('mesh','armature','poses','thresholds')))
     registry.register('rig.rigify_status',rigs.rigify_status,validate=closed_arguments(),risk='read')
     registry.register('rig.rigify_install',rigs.rigify_install,
                       validate=closed_arguments(optional=('allowDownload','savePreferences')),risk='gated')
