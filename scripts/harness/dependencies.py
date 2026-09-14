@@ -5,7 +5,14 @@ computes SHA-256 checksums, discovers license provenance, and supports packaging
 a project into a self-contained directory.
 
 Dependency kinds: IMAGE, UDIM, FONT, AUDIO, VIDEO, IMAGE_SEQUENCE,
-BLEND_LIBRARY, NODE_GROUP, SIMULATION_CACHE, EXTENSION.
+BLEND_LIBRARY, SIMULATION_CACHE, EXTENSION.
+
+NOTE: NODE_GROUP is intentionally absent.  A Blender node-group library is a
+.blend file referenced as a library for a node group -- the file extension
+alone cannot distinguish it from BLEND_LIBRARY, and classification would
+require usage context (the owning library or referencing datablock) that the
+file-level scanner does not inspect.  A schema enum entry the scanner can never
+emit would be a false contract for downstream consumers.
 """
 
 from __future__ import annotations
@@ -80,10 +87,7 @@ def classify_dependency(path: Path) -> str:
         if part.lower() in _CACHE_DIR_NAMES:
             return 'SIMULATION_CACHE'
 
-    # Extension packages
-    if suffix in {'.zip', '.py'} and 'extensions' in str(path).lower():
-        return 'EXTENSION'
-
+    # Catch-all: anything not matched above
     return 'EXTENSION'
 
 

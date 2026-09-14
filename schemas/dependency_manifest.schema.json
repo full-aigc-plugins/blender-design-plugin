@@ -48,7 +48,6 @@
               "VIDEO",
               "IMAGE_SEQUENCE",
               "BLEND_LIBRARY",
-              "NODE_GROUP",
               "SIMULATION_CACHE",
               "EXTENSION"
             ]
