@@ -77,6 +77,20 @@ class UVCommands:
 
     # -- helpers for detect_overlap / measure_texel_density ------------------
 
+    def _resolve_uv_layer(self, obj, arguments):
+        """Return the UV layer to use: active when uvLayer is absent, named
+        layer when present, or raise UV_LAYER_NOT_FOUND if the name is given
+        but does not exist on the mesh."""
+        layer_name = arguments.get('uvLayer')
+        if layer_name is None:
+            layer = obj.data.uv_layers.active
+        else:
+            layer = obj.data.uv_layers.get(layer_name)
+            if layer is None:
+                raise HarnessError('UV_LAYER_NOT_FOUND',
+                                   f'UV layer {layer_name!r} not found on mesh')
+        return layer
+
     @staticmethod
     def _uv_polygon_area(points):
         """Shoelace formula; returns absolute area."""
@@ -152,7 +166,7 @@ class UVCommands:
         reported; it guards against float-noise phantom overlaps.
         """
         obj = self.objects.resolve(arguments, required_type={'MESH'})
-        layer = obj.data.uv_layers.active
+        layer = self._resolve_uv_layer(obj, arguments)
         if layer is None:
             return {'changedObjects':[], 'result':self.objects.receipt(obj)|{
                 'hasUV':False, 'issues':[{'code':'UV_MISSING'}]}}
@@ -199,11 +213,14 @@ class UVCommands:
                         })
 
         overlaps.sort(key=lambda o: o['area'], reverse=True)
+        limitations = ['Intersection area assumes convex UV polygons; '
+                       'concave n-gons may produce incorrect results']
         return {'changedObjects':[], 'result':self.objects.receipt(obj)|{
             'hasUV':True, 'layer':layer.name,
             'hasOverlaps':len(overlaps)>0, 'overlaps':overlaps,
             'degenerateFaces':degenerate,
-            'issues':([{'code':'UV_DEGENERATE','faces':degenerate}] if degenerate else [])}}
+            'issues':([{'code':'UV_DEGENERATE','faces':degenerate}] if degenerate else []),
+            'limitations':limitations}}
 
     # -- measure_texel_density ------------------------------------------------
 
@@ -216,7 +233,7 @@ class UVCommands:
         metric used in game production.
         """
         obj = self.objects.resolve(arguments, required_type={'MESH'})
-        layer = obj.data.uv_layers.active
+        layer = self._resolve_uv_layer(obj, arguments)
         if layer is None:
             return {'changedObjects':[], 'result':self.objects.receipt(obj)|{
                 'hasUV':False, 'issues':[{'code':'UV_MISSING'}]}}

@@ -23,9 +23,28 @@ registry = build_registry(bpy)
 
 
 def _snapshot_scene():
-    """Return a lightweight fingerprint of the scene for read-only verification."""
-    objs = [(o.name, o.type, len(o.data.polygons) if o.type == 'MESH' else 0)
-            for o in bpy.data.objects]
+    """Deep fingerprint: object identity, polygon count, UV coordinates,
+    and vertex positions.  Any mutation to mesh data or UVs will be caught."""
+    import hashlib
+    objs = []
+    for o in bpy.data.objects:
+        if o.type == 'MESH':
+            m = o.data
+            uv_layer = m.uv_layers.active
+            uv_vals = []
+            vert_vals = []
+            if uv_layer:
+                for poly in m.polygons:
+                    for li in poly.loop_indices:
+                        uv = uv_layer.data[li].uv
+                        uv_vals.append((round(uv.x, 10), round(uv.y, 10)))
+            for v in m.vertices:
+                vert_vals.append(tuple(round(c, 10) for c in v.co))
+            uv_hash = hashlib.sha256(str(uv_vals).encode()).hexdigest()[:16]
+            vert_hash = hashlib.sha256(str(vert_vals).encode()).hexdigest()[:16]
+            objs.append((o.name, o.type, len(m.polygons), uv_hash, vert_hash))
+        else:
+            objs.append((o.name, o.type, 0, '', ''))
     return sorted(objs)
 
 

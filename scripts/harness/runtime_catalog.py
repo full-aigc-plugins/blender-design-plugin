@@ -18,7 +18,7 @@ FIELDS = {
         'name', 'newName', 'object', 'child', 'parent', 'material', 'primitive',
         'modifier', 'type', 'path', 'videoPath', 'outputDir', 'snapshotId', 'sessionId',
         'camera', 'dataPath', 'text', 'script', 'milestone', 'prompt', 'id', 'domain', 'maturity', 'view',
-        'baseName', 'groupName', 'strip', 'colorDepth')},
+        'baseName', 'groupName', 'strip', 'colorDepth', 'uvLayer')},
     **{key: VECTOR for key in ('location', 'rotation', 'scale', 'color')},
     'baseColor': {'type': 'array', 'minItems': 4, 'maxItems': 4,
                   'items': {'type': 'number', 'minimum': 0, 'maximum': 1}},
@@ -640,3 +640,11 @@ def generate_coverage_summaries():
             'onlyConnector': sorted(connector_ids - managed_ids),
         },
     }
+
+
+def write_coverage_counts(target: Path | str) -> None:
+    """Write capability-counts.json with a trailing newline."""
+    import json
+    target = Path(target)
+    target.write_text(json.dumps(generate_coverage_summaries(), indent=2) + '\n',
+                      encoding='utf-8')

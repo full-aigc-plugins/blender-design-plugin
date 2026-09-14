@@ -228,9 +228,9 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('uv.inspect',uvs.inspect,
                       validate=closed_arguments(optional=('name','objectId')),risk='read')
     registry.register('uv.detect_overlap',uvs.detect_overlap,
-                      validate=closed_arguments(optional=('name','objectId','tolerance')),risk='read')
+                      validate=closed_arguments(optional=('name','objectId','uvLayer','tolerance')),risk='read')
     registry.register('uv.measure_texel_density',uvs.measure_texel_density,
-                      validate=closed_arguments(required=('textureWidth','textureHeight'),optional=('name','objectId','targetDensity')),risk='read')
+                      validate=closed_arguments(required=('textureWidth','textureHeight'),optional=('name','objectId','uvLayer','targetDensity')),risk='read')
     registry.register('rig.create_armature',rigs.create_armature,
                       validate=closed_arguments(required=('name','bones')))
     registry.register('rig.create_control',rigs.create_control,

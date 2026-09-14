@@ -83,6 +83,7 @@ class FakeMeshWithUV:
 class FakeUVLayers:
     def __init__(self):
         self._active = None
+        self._layers = {}
 
     @property
     def active(self):
@@ -91,7 +92,11 @@ class FakeUVLayers:
     def new(self, name='UVMap'):
         layer = FakeUVLayer(name)
         self._active = layer
+        self._layers[name] = layer
         return layer
+
+    def get(self, name):
+        return self._layers.get(name)
 
 
 class FakeObjectWithUV:
@@ -456,6 +461,129 @@ class TestDetectOverlapMissingUV(unittest.TestCase):
         res = result['result']
         self.assertFalse(res['hasUV'])
         self.assertIn({'code': 'UV_MISSING'}, res['issues'])
+
+
+class TestUVLayerParameter(unittest.TestCase):
+    """F1: uvLayer parameter must be accepted and resolved correctly."""
+
+    def test_absent_uv_layer_uses_active(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = _make_overlapping_mesh()
+        obj = _register_object(bpy, FakeObjectWithUV('ActiveLayerObj', mesh))
+        result = uvs.detect_overlap({'objectId': obj.get('codex_blender_object_id')})
+        self.assertTrue(result['result']['hasUV'])
+        self.assertEqual(result['result']['layer'], 'UVMap')
+
+    def test_named_uv_layer_resolves(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = FakeMeshWithUV()
+        mesh.uv_layers.new('UVMap')
+        second = mesh.uv_layers.new('SecondUV')
+        # Set overlapping UVs on the second layer
+        mesh.add_polygon(
+            [0, 1, 2],
+            [(0.0, 0.0), (0.5, 0.0), (0.5, 0.5)],
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0)],
+        )
+        mesh.add_polygon(
+            [3, 4, 5],
+            [(0.0, 0.0), (0.5, 0.0), (0.5, 0.5)],
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0)],
+        )
+        obj = _register_object(bpy, FakeObjectWithUV('NamedLayerObj', mesh))
+        result = uvs.detect_overlap({
+            'objectId': obj.get('codex_blender_object_id'),
+            'uvLayer': 'SecondUV',
+        })
+        self.assertTrue(result['result']['hasUV'])
+        self.assertEqual(result['result']['layer'], 'SecondUV')
+        self.assertTrue(result['result']['hasOverlaps'])
+
+    def test_missing_uv_layer_raises(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = _make_overlapping_mesh()
+        obj = _register_object(bpy, FakeObjectWithUV('MissingLayerObj', mesh))
+        with self.assertRaises(HarnessError) as ctx:
+            uvs.detect_overlap({
+                'objectId': obj.get('codex_blender_object_id'),
+                'uvLayer': 'NonExistent',
+            })
+        self.assertEqual(ctx.exception.code, 'UV_LAYER_NOT_FOUND')
+
+    def test_missing_uv_layer_raises_on_density(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = _make_unit_square_mesh()
+        obj = _register_object(bpy, FakeObjectWithUV('MissingDensityObj', mesh))
+        with self.assertRaises(HarnessError) as ctx:
+            uvs.measure_texel_density({
+                'objectId': obj.get('codex_blender_object_id'),
+                'uvLayer': 'Ghost',
+                'textureWidth': 512,
+                'textureHeight': 512,
+            })
+        self.assertEqual(ctx.exception.code, 'UV_LAYER_NOT_FOUND')
+
+
+class TestToleranceBoundary(unittest.TestCase):
+    """F2: tolerance must be probed at the boundary, not just far from it."""
+
+    def _make_overlap_with_width(self, overlap_width):
+        """Two unit-height quads overlapping by overlap_width in U.
+        Both quads stay within tile (0,0) so the tile filter does not
+        interfere with the tolerance test."""
+        mesh = FakeMeshWithUV()
+        mesh.uv_layers.new('UVMap')
+        # Quad A: (0,0)-(1,0)-(1,1)-(0,1)
+        # Quad B: (1-overlap_width,0)-(0.9999,0)-(0.9999,1)-(1-overlap_width,1)
+        # Overlap width = 0.9999 - (1-overlap_width) = overlap_width - 0.0001
+        # We want the actual overlap with A to be overlap_width, so B's right
+        # edge must be >= 1.0.  But that puts the centroid past 1.0, landing
+        # on tile (1,0).  Instead, make B a narrow band entirely inside tile 0:
+        #   B left  = 1 - overlap_width - 0.0001
+        #   B right = 1 - 0.0001
+        # Overlap with A = B right - max(A left, B left) = (1-0.0001) - (1-overlap_width-0.0001) = overlap_width
+        left = 1.0 - overlap_width - 0.0001
+        right = 1.0 - 0.0001
+        mesh.add_polygon(
+            [0, 1, 2, 3],
+            [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)],
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)],
+        )
+        mesh.add_polygon(
+            [4, 5, 6, 7],
+            [(left, 0.0), (right, 0.0), (right, 1.0), (left, 1.0)],
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)],
+        )
+        return mesh
+
+    def test_just_below_tolerance_suppressed(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = self._make_overlap_with_width(0.0099)
+        obj = _register_object(bpy, FakeObjectWithUV('BelowTolObj', mesh))
+        result = uvs.detect_overlap({
+            'objectId': obj.get('codex_blender_object_id'),
+            'tolerance': 0.01,
+        })
+        self.assertFalse(result['result']['hasOverlaps'],
+                         'Overlap area 0.0099 must be suppressed at tolerance 0.01')
+
+    def test_just_above_tolerance_reported(self):
+        bpy = FakeBpy()
+        uvs = UVCommands(bpy)
+        mesh = self._make_overlap_with_width(0.0101)
+        obj = _register_object(bpy, FakeObjectWithUV('AboveTolObj', mesh))
+        result = uvs.detect_overlap({
+            'objectId': obj.get('codex_blender_object_id'),
+            'tolerance': 0.01,
+        })
+        self.assertTrue(result['result']['hasOverlaps'],
+                        'Overlap area 0.0101 must be reported at tolerance 0.01')
+        self.assertAlmostEqual(result['result']['overlaps'][0]['area'], 0.0101, places=4)
 
 
 class TestInspectLimitationsUpdated(unittest.TestCase):
