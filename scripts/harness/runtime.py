@@ -84,7 +84,7 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     modifiers = ModifierCommands(bpy_module)
     curves = CurveCommands(bpy_module)
     asset_policy = PathPolicy(approved_asset_roots) if approved_asset_roots else None
-    assets = AssetCommands(bpy_module, asset_policy=asset_policy)
+    assets = AssetCommands(bpy_module, asset_policy=asset_policy, output_root=approved_output_root)
     uvs = UVCommands(bpy_module)
     rigs = RigCommands(bpy_module, adapter=_version_adapter)
     constraints = ConstraintCommands(bpy_module)
@@ -221,6 +221,12 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('path','dataType','names'), optional=('link',)))
     registry.register('asset.pack_resources',assets.pack_resources,validate=closed_arguments())
     registry.register('asset.make_paths_relative',assets.make_paths_relative,validate=closed_arguments())
+    registry.register('asset.dependencies',assets.dependencies,
+                      validate=closed_arguments(optional=('includePacked',)),risk='read')
+    registry.register('asset.validate_portability',assets.validate_portability,
+                      validate=closed_arguments(required=('targetDirectory',)),risk='read')
+    registry.register('asset.package_project',assets.package_project,
+                      validate=closed_arguments(required=('targetDirectory',),optional=('includeCaches','includeProxies')))
     registry.register('uv.mark_seams',uvs.mark_seams,
                       validate=closed_arguments(required=('selection',),optional=('seam',)))
     registry.register('uv.unwrap',uvs.unwrap,

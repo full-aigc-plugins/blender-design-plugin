@@ -3,10 +3,10 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 186,
+      "total": 189,
       "L1": 14,
       "L2": 0,
-      "L3": 169,
+      "L3": 172,
       "L4": 3
     },
     "domains": {
@@ -95,10 +95,13 @@
       "animation.set_frame_range",
       "animation.shape_key_add",
       "animation.shape_key_keyframe",
+      "asset.dependencies",
       "asset.import_file",
       "asset.library",
       "asset.make_paths_relative",
       "asset.pack_resources",
+      "asset.package_project",
+      "asset.validate_portability",
       "camera.add_handheld",
       "camera.aim_at",
       "camera.create",
@@ -270,10 +273,10 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 191,
+      "total": 194,
       "L1": 19,
       "L2": 0,
-      "L3": 169,
+      "L3": 172,
       "L4": 3
     },
     "domains": {
@@ -364,10 +367,13 @@
       "animation.set_frame_range",
       "animation.shape_key_add",
       "animation.shape_key_keyframe",
+      "asset.dependencies",
       "asset.import_file",
       "asset.library",
       "asset.make_paths_relative",
       "asset.pack_resources",
+      "asset.package_project",
+      "asset.validate_portability",
       "camera.add_handheld",
       "camera.aim_at",
       "camera.create",

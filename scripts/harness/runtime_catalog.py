@@ -146,6 +146,10 @@ FIELDS = {
     'rotation': {'type': 'number'},
     'min_x': {'type': 'integer', 'minimum': 0}, 'max_x': {'type': 'integer', 'minimum': 0},
     'min_y': {'type': 'integer', 'minimum': 0}, 'max_y': {'type': 'integer', 'minimum': 0},
+    'targetDirectory': {'type': 'string', 'minLength': 1},
+    'includePacked': {'type': 'boolean'},
+    'includeCaches': {'type': 'boolean'},
+    'includeProxies': {'type': 'boolean'},
 }
 
 TESTS = {
@@ -226,6 +230,13 @@ POSTPRODUCTION_VERIFIED = {
     'compositor.add_node',
 }
 
+# Task 11: project portability commands verified by project_portability_acceptance.py.
+PORTABILITY_VERIFIED = {
+    'asset.dependencies',
+    'asset.validate_portability',
+    'asset.package_project',
+}
+
 # Lifecycle commands graduated to L3 with runtime acceptance evidence.
 LIFECYCLE_VERIFIED = {
     'capability.list', 'capability.describe',
@@ -302,6 +313,9 @@ COMMAND_SKILLS = {
     'object.set_origin': ['codex-blender-hard-surface'],
     'asset.pack_resources': ['codex-blender-render-compositing'],
     'asset.make_paths_relative': ['codex-blender-render-compositing'],
+    'asset.dependencies': ['codex-blender-scene-assembly'],
+    'asset.validate_portability': ['codex-blender-scene-assembly'],
+    'asset.package_project': ['codex-blender-scene-assembly', 'codex-blender-export'],
     'export.extended': ['codex-blender-export', 'codex-blender-render-compositing'],
     'validation.camera_visibility': ['codex-blender-quality-validation', 'codex-blender-cinematography'],
     'validation.floor_penetration': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
@@ -346,6 +360,8 @@ def runtime_evidence(name):
         return ['tests/runtime/surface_motion_acceptance.py']
     if name in POSTPRODUCTION_VERIFIED:
         return ['tests/runtime/postproduction_acceptance.py']
+    if name in PORTABILITY_VERIFIED:
+        return ['tests/runtime/project_portability_acceptance.py']
     if name in P7_VERIFIED:
         return ['tests/runtime/p7_gp_sequence_acceptance.py']
     if name in P6_VERIFIED:
@@ -518,7 +534,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                 'delivery': ['tests/runtime/foreground_lifecycle_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
-        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED or name in POSTPRODUCTION_VERIFIED:
+        elif name in P1_VERIFIED or name in P2A_VERIFIED or name in P2B_VERIFIED or name in P3_VERIFIED or name in P4_VERIFIED or name in P5_VERIFIED or name in P6_VERIFIED or name in P7_VERIFIED or name in P8_VERIFIED or name in SURFACE_MOTION_VERIFIED or name in POSTPRODUCTION_VERIFIED or name in PORTABILITY_VERIFIED:
             defaults['maturity'] = 'L3'
             defaults['verification'] = {
                 'runtime': runtime_evidence(name),
@@ -532,6 +548,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                            'docs/verification/p2-product-acceptance.md' if name in P2A_VERIFIED else
                            'docs/verification/p5-surface-simulation-acceptance.md' if name in SURFACE_MOTION_VERIFIED else
                            'docs/verification/postproduction-acceptance.md' if name in POSTPRODUCTION_VERIFIED else
+                           'docs/verification/project-portability-acceptance.md' if name in PORTABILITY_VERIFIED else
                            'docs/verification/blender-domain-coverage-matrix.md#sceneobjectcollection'],
                 'delivery': [('tests/runtime/p8_frame_pipeline_acceptance.py' if name.startswith('job.') else
                               'tests/runtime/p8_vse_extended_acceptance.py' if name in {'sequence.set_speed','sequence.keyframe_volume'} else
@@ -549,6 +566,7 @@ class RuntimeCommandRegistry(CommandRegistry):
                              'tests/runtime/p2_product_acceptance.py' if name in P2A_VERIFIED else
                              'tests/runtime/surface_motion_acceptance.py' if name in SURFACE_MOTION_VERIFIED else
                              'tests/runtime/postproduction_acceptance.py' if name in POSTPRODUCTION_VERIFIED else
+                             'tests/runtime/project_portability_acceptance.py' if name in PORTABILITY_VERIFIED else
                              'tests/runtime/p1_delivery_acceptance.py'],
                 'recoveryAndCompatibility': [],
             }
