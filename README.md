@@ -90,7 +90,7 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 29 bundled Skills.
+- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 30 bundled Skills.
 - **Connector** adds the 5 optional `official_uploader.*` commands: 169 commands, 154 at L3, 3 at L4, 12 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
@@ -140,7 +140,7 @@ flowchart TB
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
 | `vendor/partme-blender-mcp-addon-0.1.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
 | `vendor/partme-blender-mcp-runtime-0.1.1.zip` | Generic MCP protocol and tool exposure | Codex-specific Skills |
-| `skills/` (29) | Routing and domain instructions for Codex | Runtime enforcement |
+| `skills/` (30) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
@@ -355,7 +355,7 @@ codex-blender-plugin/
 ├── connector/                  # optional Blender Add-on
 ├── scripts/                    # Harness, launcher, exporter, validators
 │   └── harness/                # transport, server, policy, authorization, snapshot
-├── skills/                     # 29 domain and workflow Skills
+├── skills/                     # 30 domain and workflow Skills
 ├── config/                     # release matrix and production profile
 ├── tests/                      # unit, contract, and distribution tests
 └── docs/                       # architecture, technical solution, verification records

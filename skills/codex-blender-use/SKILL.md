@@ -24,6 +24,8 @@ After the implementation brief, load only the required domain Skills:
 - camera work → `codex-blender-cinematography`; acceptance measurements → `codex-blender-quality-validation`
 - sculpt, hair, or simulation → `codex-blender-sculpt-surface`, `codex-blender-hair`, or `codex-blender-simulation`
 - rendering/compositing → `codex-blender-render-compositing`
+- shot-list blocking or timing previews, or a white-model reference video for
+  downstream video generation → `codex-blender-previs`
 - Grease Pencil, tracking, or VSE → `codex-blender-grease-pencil`, `codex-blender-tracking`, or `codex-blender-sequence-editing`
 - `job.*` → `codex-blender-background-jobs`; add render-compositing for EXPORT, RENDER_STILL, or RENDER_ANIMATION_FRAMES; add sequence-editing for COMPOSE_VIDEO; add simulation for BAKE_POINT_CACHES
 

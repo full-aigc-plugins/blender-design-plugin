@@ -86,8 +86,11 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           hdiutil attach "${{ matrix.artifact }}" -nobrowse -mountpoint /Volumes/Blender
-          binary=$(find /Volumes/Blender -name blender -type f | head -1)
-          if [ -z "$binary" ]; then echo "blender binary not found"; exit 1; fi
+          # The bundle binary is Blender.app/Contents/MacOS/Blender (capital B);
+          # find -name is case-sensitive regardless of the filesystem.
+          binary=$(find /Volumes/Blender -type f -ipath '*/Contents/MacOS/blender' | head -1)
+          if [ -z "$binary" ]; then binary=$(find /Volumes/Blender -type f -iname blender | head -1); fi
+          if [ -z "$binary" ]; then echo "blender binary not found"; ls -R /Volumes/Blender | head -40; exit 1; fi
           echo "BLENDER_BIN=$binary" >> "$GITHUB_ENV"
 
       - name: Run certification tests
