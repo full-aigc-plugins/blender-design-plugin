@@ -1,6 +1,6 @@
 ---
 name: blender-mcp-setup
-description: "Set up or diagnose the SHA-pinned PartMe Blender MCP connection used by the Codex Blender plugin."
+description: "Set up or diagnose the plugin-owned Blender MCP connection when Blender is missing, the Add-on is disabled, Start MCP Server has not been clicked, or no guarded Harness session is discoverable."
 ---
 
 # Blender MCP Setup
@@ -8,10 +8,6 @@ description: "Set up or diagnose the SHA-pinned PartMe Blender MCP connection us
 Use this for first use and connection failures. Call `blender_connection_status` before asking the
 user to repeat setup. If it is not connected, call `blender_getting_started` and present its actual
 Blender discovery result, official download URL, Add-on name, steps, and bundled screenshots.
-The Codex plugin already bundles the SHA-pinned PartMe runtime and Add-on artifact. Never ask an
-ordinary user to pip-install a platform archive. When an Add-on ZIP is needed, run the bundled
-`scripts/package_connector.py` helper and present the resulting file; do not recreate or rewrite
-the upstream Add-on.
 
 Use this user-facing summary:
 
@@ -19,9 +15,9 @@ Use this user-facing summary:
 >
 > 打开 Blender，在 偏好设置 > 插件 中启用 MCP 插件，然后在 N 面板中点击 Start MCP Server。
 
-Clarify that the trusted Add-on name is **PartMe Blender MCP** and its N-panel category is
-**PartMe MCP**. A separately installed community Add-on named **MCP for Blender** is not the endpoint for
-this plugin and must not be treated as proof that the guarded Blender Harness is connected.
+Clarify that the trusted Add-on name is **Blender Connector** and its N-panel category is
+**Codex**. A separately installed community Add-on named **MCP for Blender** is not the endpoint for
+this plugin and must not be treated as proof that the Blender Harness is connected.
 
 For illustrated steps, read [the Chinese setup guide](../../docs/getting-started.zh-CN.md) or
 [the English setup guide](../../docs/getting-started.md). Do not install Blender, enable Add-ons, or
