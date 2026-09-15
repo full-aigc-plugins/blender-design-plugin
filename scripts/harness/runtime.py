@@ -453,32 +453,32 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     recipes = RecipeCommands(bpy_module, registry.dispatch)
     registry.register('recipe.hard_surface_shell', recipes.hard_surface_shell,
                       validate=closed_arguments(required=('name','dimensions','wallThickness'), optional=('bevelWidth',)),
-                      metadata={'skills':['codex-blender-hard-surface'],
+                      metadata={'skills':['blender-hard-surface'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p1_recipe_smoke.py']})
     registry.register('recipe.spear', recipes.spear,
                       validate=closed_arguments(required=('name','length','shaftRadius','headLength','headRadius')),
-                      metadata={'skills':['codex-blender-hard-surface'],
+                      metadata={'skills':['blender-hard-surface'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p1_recipe_smoke.py']})
     registry.register('recipe.desktop_speaker',recipes.desktop_speaker,
                       validate=closed_arguments(required=('name','dimensions'),optional=('bevelWidth','wallThickness')),
-                      metadata={'maturity':'L2','skills':['codex-blender-hard-surface','codex-blender-uv-material'],
+                      metadata={'maturity':'L2','skills':['blender-hard-surface','blender-uv-material'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p2_product_acceptance.py']})
     registry.register('recipe.rigged_spear_character',recipes.rigged_spear_character,
                       validate=closed_arguments(required=('name',),optional=('height','releaseFrame','apexFrame','catchFrame')),
-                      metadata={'maturity':'L2','skills':['codex-blender-character-rigging','codex-blender-character-animation'],
+                      metadata={'maturity':'L2','skills':['blender-character-rigging','blender-character-animation'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p2_character_acceptance.py']})
     registry.register('recipe.procedural_courtyard',recipes.procedural_courtyard,
                       validate=closed_arguments(required=('name','dimensions','archCount'),optional=('rubbleDensity',)),
-                      metadata={'maturity':'L2','skills':['codex-blender-procedural-modeling'],
+                      metadata={'maturity':'L2','skills':['blender-procedural-modeling'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p4_courtyard_acceptance.py']})
     registry.register('recipe.update_procedural_courtyard',recipes.update_procedural_courtyard,
                       validate=closed_arguments(required=('name',),optional=('dimensions','archCount','rubbleDensity')),
-                      metadata={'maturity':'L2','skills':['codex-blender-procedural-modeling'],
+                      metadata={'maturity':'L2','skills':['blender-procedural-modeling'],
                                 'effects':{'sceneMutation':True,'longRunning':False,'cancellable':False},
                                 'tests':['tests/runtime/p4_courtyard_acceptance.py']})
     return registry
