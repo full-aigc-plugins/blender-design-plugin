@@ -146,6 +146,27 @@ class JobManager:
 
         return {"changedObjects": [], "result": {"events": list(filtered)}}
 
+    def _release_slot_and_drain(self, job_id):
+        """A job reached a terminal state: free its scheduler slot and dispatch
+        the queued jobs that were waiting behind it (FIFO policy 2).
+
+        Before this, a *successful* worker never released its slot -- the two
+        finished jobs kept active_count at max_active forever and every queued
+        job starved (surfaced by p8_frame_pipeline_acceptance once the disk
+        reserve stopped rejecting every submit).
+        """
+        if not self.scheduler.is_active(job_id):
+            return []
+        self.scheduler.mark_complete(job_id)
+        self.processes.pop(job_id, None)
+        launched = self.scheduler.try_dispatch(
+            self.root.parent,
+            launch_fn=lambda e: self._launch(e.directory, e.spec, e.status),
+        )
+        for entry_status in launched:
+            self._record_event(entry_status["jobId"], "dispatched", "slot freed")
+        return launched
+
     def _dir(self, job_id):
         self._available()
         job_id = self._id(job_id)
@@ -306,13 +327,15 @@ class JobManager:
         if not path.is_file():
             raise HarnessError("JOB_NOT_FOUND", f"job not found: {job_id}")
         result = json.loads(path.read_text(encoding="utf-8"))
+        terminal = {"completed", "failed", "cancelled", "interrupted"}
         process = self.processes.get(job_id)
         if process and process.poll() is not None and result.get("state") in {"queued", "running"}:
             result["state"] = "failed"
             result["error"] = {"message": f"worker exited {process.returncode} without a terminal receipt"}
             self._write(path, result)
             self._record_event(job_id, "failed", f"exit {process.returncode}")
-            self.scheduler.mark_complete(job_id)
+        if result.get("state") in terminal:
+            self._release_slot_and_drain(job_id)
         return {"changedObjects": [], "result": result}
 
     def cancel(self, arguments):
@@ -332,8 +355,8 @@ class JobManager:
         status["cancelRequested"] = True
         self._write(self._dir(job_id) / "status.json", status)
         self._record_event(job_id, "cancelled")
-        self.scheduler.mark_complete(job_id)
         self.scheduler.remove_queued(job_id)
+        self._release_slot_and_drain(job_id)
         return {"changedObjects": [], "result": status}
 
     def recover(self, arguments):
@@ -353,7 +376,7 @@ class JobManager:
             status["recovery"] = "not-restarted"
             self._write(self._dir(status["jobId"]) / "status.json", status)
             self._record_event(status["jobId"], "interrupted", "recovery: not-restarted")
-            self.scheduler.mark_complete(status["jobId"])
+            self._release_slot_and_drain(status["jobId"])
         return {"changedObjects": [], "result": status}
 
     def resume(self, arguments):

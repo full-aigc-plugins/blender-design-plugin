@@ -90,9 +90,12 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     constraints = ConstraintCommands(bpy_module)
     advanced_animation = AdvancedAnimationCommands(bpy_module)
     quality = QualityCommands(bpy_module)
-    from .scheduler import Scheduler as _Scheduler
+    from .scheduler import Scheduler as _Scheduler, effective_disk_reserve as _effective_reserve
+    _reserve_fraction, _reserve_minimum = _effective_reserve()
     _production_scheduler = _Scheduler(
         process_factory=__import__('subprocess').Popen,
+        disk_reserve_fraction=_reserve_fraction,
+        disk_reserve_minimum=_reserve_minimum,
     )
     _journal = None
     if approved_output_root is not None:

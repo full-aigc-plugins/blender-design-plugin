@@ -853,3 +853,110 @@ class SchedulerInternalsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Disk-reserve env overrides (operator relief on constrained volumes;
+# production default must stay 20% / 20 GB unless explicitly overridden)
+# ---------------------------------------------------------------------------
+
+class DiskReserveEnvOverrideTests(unittest.TestCase):
+    GB = 1024 * 1024 * 1024
+
+    def test_default_is_production_policy(self):
+        from scripts.harness.scheduler import effective_disk_reserve
+        frac, mini = effective_disk_reserve()
+        self.assertEqual(frac, 0.20)
+        self.assertEqual(mini, 20 * self.GB)
+
+    def test_env_fraction_override_respected(self):
+        import os
+        from scripts.harness.scheduler import effective_disk_reserve
+        os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"] = "0.05"
+        try:
+            frac, mini = effective_disk_reserve()
+        finally:
+            del os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"]
+        self.assertEqual(frac, 0.05)
+        self.assertEqual(mini, 20 * self.GB)  # min unchanged
+
+    def test_env_min_gb_override_respected(self):
+        import os
+        from scripts.harness.scheduler import effective_disk_reserve
+        os.environ["CODEX_BLENDER_DISK_RESERVE_MIN_GB"] = "1"
+        try:
+            frac, mini = effective_disk_reserve()
+        finally:
+            del os.environ["CODEX_BLENDER_DISK_RESERVE_MIN_GB"]
+        self.assertEqual(frac, 0.20)
+        self.assertEqual(mini, self.GB)
+
+    def test_invalid_env_values_fall_back_to_defaults(self):
+        import os
+        from scripts.harness.scheduler import effective_disk_reserve
+        os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"] = "not-a-number"
+        os.environ["CODEX_BLENDER_DISK_RESERVE_MIN_GB"] = "-3"
+        try:
+            frac, mini = effective_disk_reserve()
+        finally:
+            del os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"]
+            del os.environ["CODEX_BLENDER_DISK_RESERVE_MIN_GB"]
+        self.assertEqual((frac, mini), (0.20, 20 * self.GB))
+
+    def test_explicit_kwargs_beat_env(self):
+        import os
+        from scripts.harness.scheduler import effective_disk_reserve
+        os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"] = "0.9"
+        try:
+            frac, mini = effective_disk_reserve(fraction=0.0, minimum=0)
+        finally:
+            del os.environ["CODEX_BLENDER_DISK_RESERVE_FRACTION"]
+        self.assertEqual((frac, mini), (0.0, 0))
+
+
+# ---------------------------------------------------------------------------
+# Slot release on terminal state (the queue-starvation defect p8 caught):
+# a job whose worker wrote a terminal receipt must free its scheduler slot
+# and let the queued job behind it launch.
+# ---------------------------------------------------------------------------
+
+class SlotReleaseTests(unittest.TestCase):
+    def _make_manager(self):
+        from scripts.harness.jobs import JobManager
+        factory = _CountingProcessFactory()
+        bpy = _FakeBpy()
+        import tempfile
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        manager = JobManager(bpy, output_root=Path(self.tmp.name),
+                             process_factory=factory)
+        return manager, factory
+
+    def _finish_worker(self, manager, job_id, state="completed"):
+        """Simulate a worker writing its terminal receipt to disk."""
+        directory = Path(manager._dir(job_id))
+        status = json.loads((directory / "status.json").read_text())
+        status["state"] = state
+        (directory / "status.json").write_text(json.dumps(status))
+
+    def test_completed_job_frees_slot_and_launches_queued(self):
+        manager, factory = self._make_manager()
+        for name in ("job_a", "job_b", "job_c"):
+            manager.submit({"kind": "RENDER_STILL", "jobId": name,
+                            "parameters": {"width": 32, "height": 32}})
+        self.assertEqual(factory.call_count, 2)          # a, b active; c queued
+        self._finish_worker(manager, "job_a")
+        observed = manager.status({"jobId": "job_a"})["result"]
+        self.assertEqual(observed["state"], "completed")
+        self.assertEqual(factory.call_count, 3, "queued job_c must launch once a slot frees")
+        self.assertTrue(manager.scheduler.is_active("job_c"))
+        self.assertFalse(manager.scheduler.is_active("job_a"))
+
+    def test_failed_worker_receipt_also_drains_queue(self):
+        manager, factory = self._make_manager()
+        for name in ("job_a", "job_b", "job_c"):
+            manager.submit({"kind": "RENDER_STILL", "jobId": name,
+                            "parameters": {"width": 32, "height": 32}})
+        self._finish_worker(manager, "job_b", state="failed")
+        manager.status({"jobId": "job_b"})
+        self.assertEqual(factory.call_count, 3, "failure must free the slot too")

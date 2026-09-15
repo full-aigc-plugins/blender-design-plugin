@@ -35,6 +35,41 @@ LOG_MAX_BYTES = 50 * 1024 * 1024  # 50 MiB
 LOG_ROTATION_COUNT = 5
 
 
+def effective_disk_reserve(fraction=None, minimum=None):
+    """Resolve the disk reserve: explicit kwargs beat env overrides beat defaults.
+
+    Environment overrides let an operator run on a constrained volume (for
+    example a development disk at 89% capacity where the production reserve
+    exceeds free space) without weakening the production default for anyone
+    else:
+
+      CODEX_BLENDER_DISK_RESERVE_FRACTION  float in [0, 1]
+      CODEX_BLENDER_DISK_RESERVE_MIN_GB   non-negative GB
+
+    Invalid values are ignored (defaults stand).
+    """
+    import os
+    frac = DISK_RESERVE_FRACTION if fraction is None else fraction
+    mini = DISK_RESERVE_MINIMUM_BYTES if minimum is None else minimum
+    raw_frac = os.environ.get("CODEX_BLENDER_DISK_RESERVE_FRACTION")
+    if fraction is None and raw_frac:
+        try:
+            value = float(raw_frac)
+            if 0.0 <= value <= 1.0:
+                frac = value
+        except ValueError:
+            pass
+    raw_min = os.environ.get("CODEX_BLENDER_DISK_RESERVE_MIN_GB")
+    if minimum is None and raw_min:
+        try:
+            value = float(raw_min)
+            if value >= 0:
+                mini = int(value * 1024 * 1024 * 1024)
+        except ValueError:
+            pass
+    return frac, mini
+
+
 @dataclass(order=True)
 class _QueueEntry:
     """One entry in the pending-queue.  Lower sort key = earlier service."""
