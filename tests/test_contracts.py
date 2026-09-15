@@ -27,7 +27,7 @@ class TestManifest(unittest.TestCase):
     def test_identity_and_skill_path(self):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text())
         self.assertEqual(manifest["name"], "codex-blender")
-        self.assertEqual(manifest["version"], "0.3.0")
+        self.assertRegex(manifest["version"], r"^0\.3\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["skills"], "./skills/")
 
 

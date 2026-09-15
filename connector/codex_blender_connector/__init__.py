@@ -5,8 +5,8 @@ bl_info = {
     "author": "PartMe.AI",
     "version": (0, 3, 0),
     "blender": (4, 2, 0),
-    "location": "3D View > Sidebar > Codex",
-    "description": "Start or revoke a local Codex Blender Harness session",
+    "location": "3D View > Sidebar > Codex > Start MCP Server",
+    "description": "Expose the guarded Codex Blender Harness through the plugin-owned MCP adapter",
     "category": "Interface",
 }
 

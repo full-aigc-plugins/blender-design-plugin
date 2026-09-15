@@ -35,7 +35,7 @@ flowchart TD
     C --> D[临时加载 Harness]
     A -->|是| E[Connector 模式]
     E --> F[在 Blender 安装 Connector zip]
-    F --> G[Sidebar → Codex → Start Connector]
+    F --> G[Sidebar → Codex → Start MCP Server]
     D --> H[开始设计]
     G --> H
 ```
@@ -63,11 +63,41 @@ Codex 会启动 Blender、临时加载 Harness，并保持 Blender 会话运行�
 2. Blender 中打开 `Edit → Preferences → Add-ons`。
 3. 选择 `Install from Disk` 并安装 zip。
 4. 回到 3D View，按 `N` 打开 Sidebar。
-5. 选择 `Codex`，点击 **Start Connector**。
+5. 选择 `Codex`，点击 **Start MCP Server**。
 6. 告诉 Codex连接当前 Blender。
 7. 随时点击 **Revoke Access** 断开。
 
 Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑。
+
+## 首次使用 MCP
+
+> ### 还没有 Blender？[下载安装包](https://www.blender.org/download/)
+>
+> 打开 Blender，在 **偏好设置 > 插件** 中启用 MCP 插件，然后在 N 面板中点击
+> **Start MCP Server**。
+
+这里的可信插件名称是 **Codex Blender Connector**。不要把另行安装的社区插件
+**MCP for Blender** 当作本插件已经连接；本插件只连接带私有描述符、会话令牌、事务和恢复
+能力的 Codex Blender Harness。
+
+### 1. 打开偏好设置
+
+在 Blender 顶部选择 **Edit → Preferences**：
+
+![在 Blender 中打开 Preferences](../assets/getting-started/blender-preferences-menu.png)
+
+### 2. 安装并启用插件
+
+选择 **Add-ons → Install from Disk**，安装发行包中的 `codex-blender-connector.zip`，然后
+启用 **Codex Blender Connector**。下图展示 Add-on 的启用位置；截图里的社区插件名称仅用于
+说明界面位置，不代表应当启用它作为 Codex Blender 连接器。
+
+![在 Blender Add-ons 中启用插件](../assets/getting-started/blender-enable-mcp-addon.png)
+
+### 3. 启动安全 MCP 连接
+
+回到 3D View，按 `N`，打开 **Codex** 页签，选择允许写入的输出目录和素材目录，然后点击
+**Start MCP Server**。Codex 中的 `blender_connection_status` 返回 `connected: true` 后才算完成。
 
 ## 4. 从提示词到白模的完整流程
 

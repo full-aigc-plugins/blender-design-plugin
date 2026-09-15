@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "codex_blender": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["scripts/blender_mcp_server.py"],
+      "cwd": "."
+    }
+  }
+}

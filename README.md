@@ -63,7 +63,7 @@ Editable Blender scene + verified local exports
 | Host | Codex CLI or ChatGPT desktop app |
 | Current version | `0.3.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
-| MCP configuration | none — the plugin exposes a local Harness protocol, not an MCP server |
+| MCP configuration | Plugin-owned stdio adapter in `.mcp.json`, backed by the guarded local Harness |
 | Primary language | Python 3.13 Harness + Blender Add-on |
 | License | Apache-2.0 |
 
@@ -90,7 +90,7 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 27 bundled Skills.
+- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 29 bundled Skills.
 - **Connector** adds the 5 optional `official_uploader.*` commands: 169 commands, 154 at L3, 3 at L4, 12 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
@@ -139,7 +139,7 @@ flowchart TB
 | `scripts/harness/authorization.py` | Ephemeral HMAC tokens, TTL, action binding | Long-lived credentials |
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
 | `connector/codex_blender_connector/` | Blender Add-on lifecycle for an open session | Harness internals |
-| `skills/` (27) | Routing and domain instructions for Codex | Runtime enforcement |
+| `skills/` (29) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
@@ -156,6 +156,15 @@ Foreground Windows UI takeover is not L4-verified. Only the combinations in `doc
 ### 1. Install Blender first
 
 Download and install Blender from <https://www.blender.org/download/>, launch it once, and confirm the default cube appears. For video export, install FFmpeg and ffprobe and make sure both are on `PATH`.
+
+> **No Blender yet? [Download the installer](https://www.blender.org/download/)**
+>
+> Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` and click
+> **Start MCP Server**.
+
+The trusted Add-on is **Codex Blender Connector**. See the
+[illustrated first-use guide](docs/getting-started.md); a community Add-on named **MCP for Blender**
+does not replace this plugin's guarded Harness connection.
 
 ### 2. Install the plugin
 
@@ -336,7 +345,7 @@ codex-blender-plugin/
 ├── connector/                  # optional Blender Add-on
 ├── scripts/                    # Harness, launcher, exporter, validators
 │   └── harness/                # transport, server, policy, authorization, snapshot
-├── skills/                     # 27 domain and workflow Skills
+├── skills/                     # 29 domain and workflow Skills
 ├── config/                     # release matrix and production profile
 ├── tests/                      # unit, contract, and distribution tests
 └── docs/                       # architecture, technical solution, verification records

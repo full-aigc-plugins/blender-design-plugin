@@ -63,7 +63,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
 | 当前版本 | `0.3.0` |
 | 插件清单 | `.codex-plugin/plugin.json` |
-| MCP 配置 | 无——插件提供本地 Harness 协议，而非 MCP 服务器 |
+| MCP 配置 | `.mcp.json` 中的插件原生 stdio Adapter，后端复用安全 Harness |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
 | 许可证 | Apache-2.0 |
 
@@ -90,7 +90,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 
 运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，由命令注册表生成，并可由 `docs/verification/capability-counts.json` 复现。
 
-- **非侵入模式（Managed）** 注册 164 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、7 条 L1、0 条 L2，横跨 35 个域，路由到 27 个内置 Skill 中的 23 个。
+- **非侵入模式（Managed）** 注册 164 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、7 条 L1、0 条 L2，横跨 35 个域，路由到 29 个内置 Skill 中的 23 个。
 - **Connector 模式** 额外加入 5 条可选 `official_uploader.*` 命令：合计 169 条命令，154 条 L3、3 条 L4、12 条 L1、0 条 L2，横跨 36 个域，路由到 24 个 Skill。
 
 两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。Windows 前台 UI 接管未达到 L4 验证，详见[运行证据](docs/verification/harness-runtime.md)。
@@ -139,7 +139,7 @@ flowchart TB
 | `scripts/harness/authorization.py` | 临时 HMAC 令牌、TTL、动作绑定 | 长期凭据 |
 | `scripts/harness/exporter.py` | 可信导出与媒体探测 | 艺术决策 |
 | `connector/codex_blender_connector/` | 已打开会话的 Add-on 生命周期 | Harness 内部实现 |
-| `skills/`（27 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
+| `skills/`（29 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
 
 ## 兼容性
 
@@ -156,6 +156,15 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 ### 1. 先安装 Blender
 
 从 <https://www.blender.org/download/> 下载并安装 Blender，手工启动一次，确认能看到默认立方体。若需要视频导出，请安装 FFmpeg 与 ffprobe，并确保二者都在 `PATH` 上。
+
+> **还没有 Blender？[下载安装包](https://www.blender.org/download/)**
+>
+> 打开 Blender，在 **偏好设置 > 插件** 中启用 MCP 插件，然后在 N 面板中点击
+> **Start MCP Server**。
+
+本插件的可信 Add-on 名称是 **Codex Blender Connector**。完整图文步骤见
+[首次使用指南](docs/getting-started.zh-CN.md)；另行安装的社区插件 **MCP for Blender** 不能
+代替本插件的安全 Harness 连接。
 
 ### 2. 安装插件
 
@@ -336,7 +345,7 @@ codex-blender-plugin/
 ├── connector/                  # 可选 Blender Add-on
 ├── scripts/                    # Harness、启动器、导出器、校验器
 │   └── harness/                # 传输、服务、策略、授权、快照
-├── skills/                     # 27 个领域与工作流 Skill
+├── skills/                     # 29 个领域与工作流 Skill
 ├── config/                     # 版本矩阵与生产档位
 ├── tests/                      # 单元、契约与分发测试
 └── docs/                       # 架构、技术方案、验证记录

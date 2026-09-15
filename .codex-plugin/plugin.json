@@ -1,21 +1,35 @@
 {
   "name": "codex-blender",
-  "version": "0.3.0",
+  "version": "0.3.0+codex.20260915075313",
   "description": "Let Codex design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
-  "author": {"name": "Full Stack Skills / PartMe.AI", "url": "https://github.com/partme-ai"},
+  "author": {
+    "name": "Full Stack Skills / PartMe.AI",
+    "url": "https://github.com/partme-ai"
+  },
   "homepage": "https://github.com/partme-ai/codex-blender-plugin",
   "repository": "https://github.com/partme-ai/codex-blender-plugin",
   "license": "Apache-2.0",
-  "keywords": ["blender", "3d-design", "modeling", "animation", "export", "codex"],
+  "keywords": [
+    "blender",
+    "3d-design",
+    "modeling",
+    "animation",
+    "export",
+    "codex"
+  ],
   "skills": "./skills/",
-  "receipt_contract_versions": ["1.0.0", "2.0.0", "3.0.0"],
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Codex Blender",
     "shortDescription": "Design, review, and export Blender projects with Codex",
     "longDescription": "Controls Blender through a guarded local Harness in non-invasive managed or Connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports.",
     "developerName": "Full Stack Skills / PartMe.AI",
     "category": "Creativity",
-    "capabilities": ["Interactive", "Read", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://github.com/partme-ai/codex-blender-plugin",
     "privacyPolicyURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/TERMS.md",

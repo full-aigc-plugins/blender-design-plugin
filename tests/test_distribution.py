@@ -41,6 +41,8 @@ EXPECTED_SKILLS = (
     "codex-blender-export",
     "codex-blender-recover",
     "codex-blender-jimeng-web",
+    "codex-blender-harness-driving",
+    "codex-blender-mcp-setup",
 )
 
 
@@ -69,14 +71,30 @@ class TestManifestAndMarketplace(unittest.TestCase):
     def test_manifest_identity(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], PLUGIN_ID)
-        self.assertEqual(manifest["version"], "0.3.0")
+        self.assertRegex(manifest["version"], r"^0\.3\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["repository"], REPOSITORY)
         self.assertEqual(manifest["skills"], "./skills/")
-        self.assertNotIn("mcpServers", manifest)
+        self.assertEqual(manifest["mcpServers"], "./.mcp.json")
 
-    def test_manifest_advertises_the_shared_receipt_contract(self) -> None:
+    def test_native_mcp_uses_plugin_owned_python_stdio_adapter(self) -> None:
+        config = load_json(".mcp.json")
+        self.assertEqual(config, {"mcpServers": {"codex_blender": {
+            "type": "stdio",
+            "command": "python",
+            "args": ["scripts/blender_mcp_server.py"],
+            "cwd": ".",
+        }}})
+        entrypoint = ROOT / "scripts" / "blender_mcp_server.py"
+        self.assertTrue(entrypoint.is_file())
+        self.assertIn("from scripts.harness.mcp_adapter import serve_stdio",
+                      entrypoint.read_text(encoding="utf-8"))
+
+    def test_receipt_contracts_are_packaged_without_unsupported_manifest_fields(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
-        self.assertEqual(manifest.get("receipt_contract_versions"), ["1.0.0", "2.0.0", "3.0.0"])
+        self.assertNotIn("receipt_contract_versions", manifest)
+        for schema in ("artifact_receipt.schema.json", "milestone_receipt.schema.json",
+                       "video_artifact_receipt.schema.json"):
+            self.assertTrue((ROOT / "schemas" / schema).is_file(), schema)
 
     def test_preview_adapter_is_executable(self) -> None:
         adapter = ROOT / "bin" / "blender_adapter"
@@ -161,6 +179,8 @@ class TestStructureLegalAndAssets(unittest.TestCase):
         self.assertEqual(png_shape("assets/logo.png"), (1024, 1024, 6))
         self.assertEqual(png_shape("assets/logo-dark.png"), (1024, 1024, 6))
         self.assertEqual(png_shape("assets/composer-icon.png"), (256, 256, 6))
+        self.assertEqual(png_shape("assets/getting-started/blender-preferences-menu.png")[:2], (610, 469))
+        self.assertEqual(png_shape("assets/getting-started/blender-enable-mcp-addon.png")[:2], (840, 582))
 
     def test_third_party_notices_disclose_no_vendor_runtime(self) -> None:
         text = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
@@ -243,8 +263,8 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._mutate(self.manifest, mutate)
         self._rejects()
 
-    def test_rejects_mcp_servers_declared(self):
-        self._mutate(self.manifest, lambda d: d.update(mcpServers={}))
+    def test_rejects_wrong_mcp_configuration(self):
+        self._mutate(self.manifest, lambda d: d.update(mcpServers="./missing.json"))
         self._rejects()
 
     def test_rejects_inactive_portable_manifest_activated(self):
