@@ -7,7 +7,7 @@ This validator is the union of two complementary sets of checks.
   - the required structure, legal files, and brand assets exist
   - brand PNGs have the expected dimensions and alpha channel
   - the plugin name is a codex-prefixed kebab-case identifier
-  - `mcpServers` points to the plugin-owned Python stdio adapter
+  - `mcpServers` points to the SHA-pinned PartMe Blender MCP stdio adapter
   - the marketplace entry pins this repository as a url source on `main`
   - the portable root `plugin.json` / `mcp.json` stay inactive
 
@@ -29,11 +29,13 @@ A `LICENSE` file is required by project policy.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import struct
 import sys
+import zipfile
 from pathlib import Path
 
 # --- project policy -------------------------------------------------------
@@ -51,8 +53,9 @@ REQUIRED_FILES = (
     "TERMS.md",
     "THIRD_PARTY_NOTICES.md",
     "docs/portable-migration.md",
+    "runtime.lock.json",
 )
-REQUIRED_DIRECTORIES = ("assets", "bin", "skills", "schemas", "scripts", "tests")
+REQUIRED_DIRECTORIES = ("assets", "bin", "skills", "schemas", "scripts", "tests", "vendor")
 EXPECTED_ASSETS = {
     "assets/logo.png": (1024, 1024, 6),
     "assets/logo-dark.png": (1024, 1024, 6),
@@ -67,7 +70,7 @@ EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "main"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_MCP = {
     "mcpServers": {
-        "codex_blender": {
+        "partme_blender": {
             "type": "stdio",
             "command": "python",
             "args": ["scripts/blender_mcp_server.py"],
@@ -104,6 +107,31 @@ BINARY_SUFFIXES = {
     ".exe", ".dll", ".so", ".dylib", ".bin", ".zip", ".tar", ".gz",
 }
 SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
+PARTME_RUNTIME = {
+    "schemaVersion": "1.0.0",
+    "product": "PartMe Blender MCP",
+    "version": "0.1.1",
+    "repository": "https://github.com/partme-ai/blender-mcp",
+    "release": "https://github.com/partme-ai/blender-mcp/releases/tag/v0.1.1",
+}
+PARTME_ARTIFACTS = {
+    "runtime": {
+        "path": "vendor/partme-blender-mcp-runtime-0.1.1.zip",
+        "url": "https://github.com/partme-ai/blender-mcp/releases/download/v0.1.1/partme-blender-mcp-runtime-0.1.1.zip",
+        "sha256": "4adb0f7c765a483b155f8d96a0ba2070a81f783528ff3ab60faa47f051b676af",
+        "members": ("pyproject.toml", "src/partme_blender_mcp/__init__.py"),
+    },
+    "addon": {
+        "path": "vendor/partme-blender-mcp-addon-0.1.1.zip",
+        "url": "https://github.com/partme-ai/blender-mcp/releases/download/v0.1.1/partme-blender-mcp-addon-0.1.1.zip",
+        "sha256": "0247bd29ab6e71912c8036b1d9aff071d883fbc9053a6357f46a99da81583dd2",
+        "members": (
+            "partme_blender_mcp/__init__.py",
+            "partme_blender_mcp/panel.py",
+            "partme_blender_mcp/harness/server.py",
+        ),
+    },
+}
 
 
 # --- Codex manifest rules -------------------------------------------------
@@ -167,6 +195,78 @@ def png_shape(target: Path):
         raise ValueError("not a PNG")
     width, height = struct.unpack(">II", data[16:24])
     return width, height, data[25]
+
+
+def _validate_partme_runtime(root: Path, errors: list[str]) -> None:
+    """Validate the exact upstream release consumed by this plugin."""
+    lock_path = root / "runtime.lock.json"
+    if not lock_path.is_file():
+        errors.append("missing required file: runtime.lock.json")
+        return
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"runtime.lock.json is not valid JSON: {exc}")
+        return
+
+    for key, expected in PARTME_RUNTIME.items():
+        if lock.get(key) != expected:
+            errors.append(f"runtime.lock.json {key} must be {expected!r}")
+
+    artifacts = lock.get("artifacts")
+    if not isinstance(artifacts, dict):
+        errors.append("runtime.lock.json artifacts must be an object")
+        return
+
+    resolved_root = root.resolve()
+    for artifact_name, expected in PARTME_ARTIFACTS.items():
+        record = artifacts.get(artifact_name)
+        if not isinstance(record, dict):
+            errors.append(f"runtime.lock.json missing artifacts.{artifact_name}")
+            continue
+        for key in ("path", "url", "sha256"):
+            if record.get(key) != expected[key]:
+                errors.append(
+                    f"runtime.lock.json artifacts.{artifact_name}.{key} "
+                    f"must be {expected[key]!r}"
+                )
+        raw_path = record.get("path")
+        if not isinstance(raw_path, str):
+            continue
+        target = root / raw_path
+        try:
+            resolved_target = target.resolve(strict=True)
+        except OSError:
+            errors.append(f"pinned PartMe artifact is missing: {raw_path}")
+            continue
+        if target.is_symlink() or resolved_root not in resolved_target.parents:
+            errors.append(f"pinned PartMe artifact must be a regular file inside plugin root: {raw_path}")
+            continue
+        if not resolved_target.is_file():
+            errors.append(f"pinned PartMe artifact is not a file: {raw_path}")
+            continue
+        digest = hashlib.sha256(resolved_target.read_bytes()).hexdigest()
+        if digest != expected["sha256"]:
+            errors.append(
+                f"pinned PartMe artifact SHA-256 mismatch: {raw_path}; "
+                f"expected {expected['sha256']}, got {digest}"
+            )
+            continue
+        try:
+            with zipfile.ZipFile(resolved_target) as archive:
+                names = set(archive.namelist())
+                unsafe = [
+                    name for name in names
+                    if name.startswith("/") or ".." in Path(name).parts
+                ]
+        except (OSError, zipfile.BadZipFile) as exc:
+            errors.append(f"pinned PartMe artifact is not a valid ZIP: {raw_path}: {exc}")
+            continue
+        if unsafe:
+            errors.append(f"pinned PartMe artifact contains unsafe paths: {raw_path}")
+        for member in expected["members"]:
+            if member not in names:
+                errors.append(f"pinned PartMe artifact {raw_path} is missing {member}")
 
 
 # --- validation -----------------------------------------------------------
@@ -340,9 +440,10 @@ def validate(root: Path) -> list[str]:
             errors.append(".mcp.json is not valid JSON")
         else:
             if mcp != EXPECTED_MCP:
-                errors.append("Codex Blender MCP must use the plugin-owned Python stdio adapter")
+                errors.append("Codex Blender must launch the pinned PartMe Blender MCP stdio adapter")
     if not (root / "scripts" / "blender_mcp_server.py").is_file():
         errors.append("plugin-owned MCP stdio entrypoint is missing")
+    _validate_partme_runtime(root, errors)
 
     # -- Codex rule: the name must also be a valid identifier segment --
     segment_error = validate_segment(plugin_id, "plugin name")

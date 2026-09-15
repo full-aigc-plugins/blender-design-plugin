@@ -59,14 +59,14 @@ class TestConnectorPackage(unittest.TestCase):
             package_connector(target)
             with zipfile.ZipFile(target) as archive:
                 names = set(archive.namelist())
-            self.assertIn("codex_blender_connector/__init__.py", names)
-            self.assertIn("codex_blender_connector/runtime.py", names)
-            self.assertIn("codex_blender_connector/harness/session.py", names)
-            self.assertIn("codex_blender_connector/harness/frame_pipeline.py", names)
-            self.assertIn("codex_blender_connector/harness/frame_worker.py", names)
-            self.assertIn("codex_blender_connector/harness/job_worker.py", names)
-            self.assertIn("codex_blender_connector/validate_model_in_blender.py", names)
-            self.assertNotIn("codex_blender_connector/harness/__pycache__/session.pyc", names)
+            self.assertIn("partme_blender_mcp/__init__.py", names)
+            self.assertIn("partme_blender_mcp/runtime.py", names)
+            self.assertIn("partme_blender_mcp/harness/session.py", names)
+            self.assertIn("partme_blender_mcp/harness/frame_pipeline.py", names)
+            self.assertIn("partme_blender_mcp/harness/frame_worker.py", names)
+            self.assertIn("partme_blender_mcp/harness/job_worker.py", names)
+            self.assertIn("partme_blender_mcp/validate_model_in_blender.py", names)
+            self.assertNotIn("partme_blender_mcp/harness/__pycache__/session.pyc", names)
 
 
 if __name__ == "__main__":

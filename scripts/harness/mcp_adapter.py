@@ -290,7 +290,7 @@ class McpAdapter:
             executable = str(candidate) if candidate.is_file() else None
         images = [
             ("Open Edit > Preferences", "assets/getting-started/blender-preferences-menu.png"),
-            ("Enable Codex Blender Connector", "assets/getting-started/blender-enable-mcp-addon.png"),
+            ("Enable PartMe Blender MCP", "assets/getting-started/blender-enable-mcp-addon.png"),
         ]
         return {
             "blenderInstalled": executable is not None,
@@ -300,11 +300,11 @@ class McpAdapter:
                 "zhCN": "还没有 Blender？下载安装包\n\n打开 Blender，在 偏好设置 > 插件 中启用 MCP 插件，然后在 N 面板中点击 Start MCP Server。",
                 "en": "No Blender yet? Download the installer. Open Blender, enable the MCP Add-on in Preferences > Add-ons, then press N and click Start MCP Server.",
             },
-            "addonName": "Codex Blender Connector",
+            "addonName": "PartMe Blender MCP",
             "steps": [
                 "Download Blender from the official Blender website and launch it once.",
-                "Install codex-blender-connector.zip from Edit > Preferences > Add-ons > Install from Disk.",
-                "Enable Codex Blender Connector.",
+                "Install partme-blender-mcp-addon-0.1.1.zip from Edit > Preferences > Add-ons > Install from Disk.",
+                "Enable PartMe Blender MCP.",
                 "In the 3D View press N, open Codex, choose approved output/assets, and click Start MCP Server.",
             ],
             "screenshots": [{"title": title, "path": str((self.plugin_root / relative).resolve())}

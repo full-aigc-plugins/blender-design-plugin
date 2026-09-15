@@ -40,7 +40,7 @@
 - `/private/tmp/codex-blender-export-smoke/`
 - `/private/tmp/codex-blender-media-smoke/`
 - `/private/tmp/codex-blender-milestone-smoke/`
-- `/private/tmp/codex-blender-connector.zip`
+- `/private/tmp/partme-blender-mcp-addon-0.1.1.zip`
 
 These are temporary verification artifacts, not distributed plugin content.
 

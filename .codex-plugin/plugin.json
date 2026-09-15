@@ -1,6 +1,6 @@
 {
   "name": "codex-blender",
-  "version": "0.3.0+codex.20260915082137",
+  "version": "0.3.0+codex.20260915123405",
   "description": "Let Codex design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
   "author": {
     "name": "Full Stack Skills / PartMe.AI",

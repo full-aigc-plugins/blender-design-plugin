@@ -63,7 +63,7 @@ Editable Blender scene + verified local exports
 | Host | Codex CLI or ChatGPT desktop app |
 | Current version | `0.3.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
-| MCP configuration | Plugin-owned stdio adapter in `.mcp.json`, backed by the guarded local Harness |
+| MCP configuration | `.mcp.json` launches SHA-pinned PartMe Blender MCP `v0.1.1`; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
 | License | Apache-2.0 |
 
@@ -138,7 +138,8 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | Which actions are irreversible and need authorization | User intent interpretation |
 | `scripts/harness/authorization.py` | Ephemeral HMAC tokens, TTL, action binding | Long-lived credentials |
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
-| `connector/codex_blender_connector/` | Blender Add-on lifecycle for an open session | Harness internals |
+| `vendor/partme-blender-mcp-addon-0.1.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
+| `vendor/partme-blender-mcp-runtime-0.1.1.zip` | Generic MCP protocol and tool exposure | Codex-specific Skills |
 | `skills/` (29) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
@@ -162,9 +163,9 @@ Download and install Blender from <https://www.blender.org/download/>, launch it
 > Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` and click
 > **Start MCP Server**.
 
-The trusted Add-on is **Codex Blender Connector**. See the
+The trusted Add-on is **PartMe Blender MCP** from the pinned upstream Release. See the
 [illustrated first-use guide](docs/getting-started.md); a community Add-on named **MCP for Blender**
-does not replace this plugin's guarded Harness connection.
+does not replace the PartMe guarded Harness connection.
 
 ### 2. Install the plugin
 
@@ -173,13 +174,22 @@ codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.g
 codex plugin add codex-blender@partme-ai-blender
 ```
 
-### 3. Optional Connector Add-on
+### 3. Connect an open Blender window (one-time setup)
 
-If you want Codex to attach to an already-open Blender window, install the Connector Add-on from `connector/codex_blender_connector/` and package it with:
+The PartMe Blender MCP server is bundled with this Codex plugin. **Do not pip-install a
+`partme-blender-mcp-*.tar.gz` bundle, and do not paste pip's `Processing ...` output back into the
+shell.**
+
+To attach to an open Blender window, install the bundled PartMe Add-on once. Ask Codex to “prepare
+the Blender MCP installer”, or use this expert command:
 
 ```bash
-python3 scripts/package_connector.py dist/codex-blender-connector.zip
+python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.1.1.zip
 ```
+
+In Blender choose **Edit → Preferences → Add-ons → Install from Disk**, select that ZIP, enable
+**PartMe Blender MCP**, then press `N` in the 3D View and click **Start MCP Server** in the
+**PartMe MCP** panel. This is the only one-time manual Blender-side step.
 
 ### Confirm it loaded
 

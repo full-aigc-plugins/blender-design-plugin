@@ -63,7 +63,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
 | 当前版本 | `0.3.0` |
 | 插件清单 | `.codex-plugin/plugin.json` |
-| MCP 配置 | `.mcp.json` 中的插件原生 stdio Adapter，后端复用安全 Harness |
+| MCP 配置 | `.mcp.json` 启动 SHA 锁定的 PartMe Blender MCP `v0.1.1`，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
 | 许可证 | Apache-2.0 |
 
@@ -138,7 +138,8 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | 判定哪些动作不可逆、需要授权 | 解读用户意图 |
 | `scripts/harness/authorization.py` | 临时 HMAC 令牌、TTL、动作绑定 | 长期凭据 |
 | `scripts/harness/exporter.py` | 可信导出与媒体探测 | 艺术决策 |
-| `connector/codex_blender_connector/` | 已打开会话的 Add-on 生命周期 | Harness 内部实现 |
+| `vendor/partme-blender-mcp-addon-0.1.1.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
+| `vendor/partme-blender-mcp-runtime-0.1.1.zip` | 通用 MCP 协议与工具暴露 | Codex 专属 Skills |
 | `skills/`（29 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
 
 ## 兼容性
@@ -162,9 +163,9 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 > 打开 Blender，在 **偏好设置 > 插件** 中启用 MCP 插件，然后在 N 面板中点击
 > **Start MCP Server**。
 
-本插件的可信 Add-on 名称是 **Codex Blender Connector**。完整图文步骤见
+本插件的可信 Add-on 名称是 **PartMe Blender MCP**，来自锁定的上游 Release。完整图文步骤见
 [首次使用指南](docs/getting-started.zh-CN.md)；另行安装的社区插件 **MCP for Blender** 不能
-代替本插件的安全 Harness 连接。
+代替 PartMe 安全 Harness 连接。
 
 ### 2. 安装插件
 
@@ -173,13 +174,21 @@ codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.g
 codex plugin add codex-blender@partme-ai-blender
 ```
 
-### 3. 可选：Connector Add-on
+### 3. 连接已打开的 Blender（一次性设置）
 
-如果希望 Codex 连接已打开的 Blender 窗口，请安装 `connector/codex_blender_connector/` 中的 Connector Add-on，并用以下命令打包：
+安装 Codex 插件时，PartMe Blender MCP 服务端已经随插件一起安装，**不要再用 pip 安装
+`partme-blender-mcp-*.tar.gz`，也不要把 pip 输出中的 `Processing ...` 当作命令执行**。
+
+如果希望 Codex 连接已打开的 Blender 窗口，只需在 Blender 中安装一次随插件提供的
+PartMe Add-on。让 Codex 执行“为我准备 Blender MCP 安装包”，或由熟悉命令行的用户运行：
 
 ```bash
-python3 scripts/package_connector.py dist/codex-blender-connector.zip
+python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.1.1.zip
 ```
+
+随后在 Blender 中选择 **编辑 → 偏好设置 → 插件 → 从磁盘安装**，选择该 ZIP，启用
+**PartMe Blender MCP**；回到 3D 视图，按 `N`，在 **PartMe MCP** 面板点击
+**Start MCP Server**。这是 Blender 侧唯一需要人工完成的一次性操作。
 
 ### 确认加载成功
 

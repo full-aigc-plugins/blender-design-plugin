@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "codex_blender": {
+    "partme_blender": {
       "type": "stdio",
       "command": "python",
       "args": ["scripts/blender_mcp_server.py"],

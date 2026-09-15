@@ -76,9 +76,9 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
 
-    def test_native_mcp_uses_plugin_owned_python_stdio_adapter(self) -> None:
+    def test_native_mcp_uses_pinned_partme_stdio_adapter(self) -> None:
         config = load_json(".mcp.json")
-        self.assertEqual(config, {"mcpServers": {"codex_blender": {
+        self.assertEqual(config, {"mcpServers": {"partme_blender": {
             "type": "stdio",
             "command": "python",
             "args": ["scripts/blender_mcp_server.py"],
@@ -86,7 +86,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
         }}})
         entrypoint = ROOT / "scripts" / "blender_mcp_server.py"
         self.assertTrue(entrypoint.is_file())
-        self.assertIn("from scripts.harness.mcp_adapter import serve_stdio",
+        self.assertIn("from scripts.partme_runtime import activate_runtime",
                       entrypoint.read_text(encoding="utf-8"))
 
     def test_receipt_contracts_are_packaged_without_unsupported_manifest_fields(self) -> None:
@@ -182,9 +182,10 @@ class TestStructureLegalAndAssets(unittest.TestCase):
         self.assertEqual(png_shape("assets/getting-started/blender-preferences-menu.png")[:2], (610, 469))
         self.assertEqual(png_shape("assets/getting-started/blender-enable-mcp-addon.png")[:2], (840, 582))
 
-    def test_third_party_notices_disclose_no_vendor_runtime(self) -> None:
+    def test_third_party_notices_disclose_pinned_partme_runtime(self) -> None:
         text = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
-        self.assertIn("does not redistribute", text)
+        self.assertIn("PartMe Blender MCP 0.1.1", text)
+        self.assertIn("runtime.lock.json", text)
         self.assertNotIn("jimeng_blender_uploader", text)
 
 
@@ -265,6 +266,15 @@ class TestValidatorRejectsDefects(unittest.TestCase):
 
     def test_rejects_wrong_mcp_configuration(self):
         self._mutate(self.manifest, lambda d: d.update(mcpServers="./missing.json"))
+        self._rejects()
+
+    def test_rejects_missing_partme_runtime_lock(self):
+        (self.repo / "runtime.lock.json").unlink()
+        self._rejects()
+
+    def test_rejects_corrupt_pinned_partme_runtime(self):
+        target = self.repo / "vendor/partme-blender-mcp-runtime-0.1.1.zip"
+        target.write_bytes(target.read_bytes() + b"corrupt")
         self._rejects()
 
     def test_rejects_inactive_portable_manifest_activated(self):
