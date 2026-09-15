@@ -225,60 +225,60 @@ NON_SCENE = {'capability', 'session', 'view', 'playback', 'preview', 'export', '
 NON_SCENE.add('job')
 
 DOMAIN_SKILLS = {
-    'scene': ['codex-blender-scene-assembly'],
-    'collection': ['codex-blender-scene-assembly'],
-    'asset': ['codex-blender-scene-assembly'],
-    'object': ['codex-blender-scene-assembly'],
-    'mesh': ['codex-blender-hard-surface'],
-    'modifier': ['codex-blender-hard-surface'],
-    'curve': ['codex-blender-curves'],
-    'uv': ['codex-blender-uv-material'],
-    'material': ['codex-blender-uv-material'],
-    'rig': ['codex-blender-character-rigging'],
-    'constraint': ['codex-blender-character-rigging'],
-    'animation': ['codex-blender-character-animation'],
-    'camera': ['codex-blender-cinematography'],
-    'light': ['codex-blender-render-compositing'],
-    'geometry_nodes': ['codex-blender-procedural-modeling'],
-    'sculpt': ['codex-blender-sculpt-surface'],
-    'hair': ['codex-blender-hair'],
-    'simulation': ['codex-blender-simulation'],
-    'render': ['codex-blender-render-compositing'],
-    'compositor': ['codex-blender-render-compositing'],
-    'grease_pencil': ['codex-blender-grease-pencil'],
-    'tracking': ['codex-blender-tracking'],
-    'sequence': ['codex-blender-sequence-editing'],
-    'validation': ['codex-blender-quality-validation'],
-    'job': ['codex-blender-background-jobs'],
-    'preview': ['codex-blender-preview'],
-    'export': ['codex-blender-export'],
+    'scene': ['blender-scene-assembly'],
+    'collection': ['blender-scene-assembly'],
+    'asset': ['blender-scene-assembly'],
+    'object': ['blender-scene-assembly'],
+    'mesh': ['blender-hard-surface'],
+    'modifier': ['blender-hard-surface'],
+    'curve': ['blender-curves'],
+    'uv': ['blender-uv-material'],
+    'material': ['blender-uv-material'],
+    'rig': ['blender-character-rigging'],
+    'constraint': ['blender-character-rigging'],
+    'animation': ['blender-character-animation'],
+    'camera': ['blender-cinematography'],
+    'light': ['blender-render-compositing'],
+    'geometry_nodes': ['blender-procedural-modeling'],
+    'sculpt': ['blender-sculpt-surface'],
+    'hair': ['blender-hair'],
+    'simulation': ['blender-simulation'],
+    'render': ['blender-render-compositing'],
+    'compositor': ['blender-render-compositing'],
+    'grease_pencil': ['blender-grease-pencil'],
+    'tracking': ['blender-tracking'],
+    'sequence': ['blender-sequence-editing'],
+    'validation': ['blender-quality-validation'],
+    'job': ['blender-background-jobs'],
+    'preview': ['blender-preview'],
+    'export': ['blender-export'],
     'official_uploader': ['codex-blender-jimeng-web'],
     'advanced': ['codex-blender-use'],
     'capability': ['codex-blender-use'],
     'session': ['codex-blender-use'],
     'view': ['codex-blender-use'],
     'playback': ['codex-blender-use'],
-    'retopo': ['codex-blender-retopology'],
+    'retopo': ['blender-retopology'],
 }
 
 COMMAND_SKILLS = {
-    'scene.inspect': ['codex-blender-inspect'],
-    'object.describe': ['codex-blender-inspect', 'codex-blender-scene-assembly'],
-    'object.create_mesh': ['codex-blender-hard-surface'],
-    'object.create_curve': ['codex-blender-curves'],
-    'object.join': ['codex-blender-hard-surface'],
-    'object.separate': ['codex-blender-hard-surface'],
-    'object.apply_transform': ['codex-blender-hard-surface'],
-    'object.set_origin': ['codex-blender-hard-surface'],
-    'asset.pack_resources': ['codex-blender-render-compositing'],
-    'asset.make_paths_relative': ['codex-blender-render-compositing'],
-    'export.extended': ['codex-blender-export', 'codex-blender-render-compositing'],
-    'validation.camera_visibility': ['codex-blender-quality-validation', 'codex-blender-cinematography'],
-    'validation.floor_penetration': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
-    'validation.foot_drift': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
-    'validation.limb_length': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
-    'validation.motion_discontinuity': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
-    'validation.prop_handoff': ['codex-blender-quality-validation', 'codex-blender-character-animation'],
+    'scene.inspect': ['blender-inspect'],
+    'object.describe': ['blender-inspect', 'blender-scene-assembly'],
+    'object.create_mesh': ['blender-hard-surface'],
+    'object.create_curve': ['blender-curves'],
+    'object.join': ['blender-hard-surface'],
+    'object.separate': ['blender-hard-surface'],
+    'object.apply_transform': ['blender-hard-surface'],
+    'object.set_origin': ['blender-hard-surface'],
+    'asset.pack_resources': ['blender-render-compositing'],
+    'asset.make_paths_relative': ['blender-render-compositing'],
+    'export.extended': ['blender-export', 'blender-render-compositing'],
+    'validation.camera_visibility': ['blender-quality-validation', 'blender-cinematography'],
+    'validation.floor_penetration': ['blender-quality-validation', 'blender-character-animation'],
+    'validation.foot_drift': ['blender-quality-validation', 'blender-character-animation'],
+    'validation.limb_length': ['blender-quality-validation', 'blender-character-animation'],
+    'validation.motion_discontinuity': ['blender-quality-validation', 'blender-character-animation'],
+    'validation.prop_handoff': ['blender-quality-validation', 'blender-character-animation'],
 }
 
 
@@ -286,7 +286,7 @@ def command_skills(name, domain, metadata):
     explicit = (metadata or {}).get('skills')
     if explicit:
         return list(explicit)
-    return list(COMMAND_SKILLS.get(name, DOMAIN_SKILLS.get(domain, ['codex-blender-design'])))
+    return list(COMMAND_SKILLS.get(name, DOMAIN_SKILLS.get(domain, ['blender-design'])))
 
 
 def runtime_evidence(name):
@@ -436,11 +436,11 @@ class RuntimeCommandRegistry(CommandRegistry):
         if name.startswith('rig.rigify_'):defaults['versions']['extensions']=['Rigify (bundled enable preferred; official download requires explicit authorization)']
         if name == 'job.submit':
             defaults['skillRouting'] = {'byArguments': {'kind': {
-                'EXPORT': ['codex-blender-render-compositing'],
-                'RENDER_STILL': ['codex-blender-render-compositing'],
-                'BAKE_POINT_CACHES': ['codex-blender-simulation'],
-                'RENDER_ANIMATION_FRAMES': ['codex-blender-render-compositing','codex-blender-background-jobs'],
-                'COMPOSE_VIDEO': ['codex-blender-sequence-editing','codex-blender-background-jobs'],
+                'EXPORT': ['blender-render-compositing'],
+                'RENDER_STILL': ['blender-render-compositing'],
+                'BAKE_POINT_CACHES': ['blender-simulation'],
+                'RENDER_ANIMATION_FRAMES': ['blender-render-compositing','blender-background-jobs'],
+                'COMPOSE_VIDEO': ['blender-sequence-editing','blender-background-jobs'],
             }}}
         defaults.update(metadata or {})
         if name in LIFECYCLE_VERIFIED:

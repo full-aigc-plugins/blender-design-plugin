@@ -46,7 +46,7 @@ class CapabilityCatalogTests(unittest.TestCase):
         registry = CommandRegistry()
         # L3 registration is gated on real evidence, so the fixture must carry it.
         registry.register('mesh.inspect', lambda _: {}, risk='read', metadata={
-            'domain': 'mesh', 'maturity': 'L3', 'skills': ['codex-blender-inspect'],
+            'domain': 'mesh', 'maturity': 'L3', 'skills': ['blender-inspect'],
             'verification': {'runtime': ['run-1'], 'visual': ['shot-1'], 'delivery': ['artifact-1']}})
         registry.register('mesh.rename', lambda _: {}, risk='standard',
                           metadata={'domain': 'mesh', 'maturity': 'L1'})
@@ -60,7 +60,7 @@ class CapabilityCatalogTests(unittest.TestCase):
     def test_domain_without_commands_is_l0(self):
         registry = CommandRegistry()
         registry.register('mesh.inspect', lambda _: {}, risk='read', metadata={
-            'domain': 'mesh', 'maturity': 'L3', 'skills': ['codex-blender-inspect'],
+            'domain': 'mesh', 'maturity': 'L3', 'skills': ['blender-inspect'],
             'verification': {'runtime': ['run-1'], 'visual': ['shot-1'], 'delivery': ['artifact-1']}})
         domains = registry.list_capabilities({})['domains']
         self.assertEqual(domains['sculpt']['maturity'], 'L0')

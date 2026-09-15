@@ -33,16 +33,16 @@ REPOSITORY = "https://github.com/partme-ai/codex-blender-plugin"
 BRAND_COLOR = "#F97316"
 EXPECTED_SKILLS = (
     "codex-blender-use",
-    "codex-blender-inspect",
+    "blender-inspect",
     "codex-blender-managed",
     "codex-blender-connector",
-    "codex-blender-design",
-    "codex-blender-preview",
-    "codex-blender-export",
+    "blender-design",
+    "blender-preview",
+    "blender-export",
     "codex-blender-recover",
     "codex-blender-jimeng-web",
     "codex-blender-harness-driving",
-    "codex-blender-mcp-setup",
+    "blender-mcp-setup",
 )
 
 

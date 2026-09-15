@@ -77,15 +77,15 @@ EXPECTED_MCP = {
 }
 EXPECTED_SKILLS = (
     "codex-blender-use",
-    "codex-blender-inspect",
+    "blender-inspect",
     "codex-blender-managed",
     "codex-blender-connector",
-    "codex-blender-design",
-    "codex-blender-preview",
-    "codex-blender-export",
+    "blender-design",
+    "blender-preview",
+    "blender-export",
     "codex-blender-recover",
     "codex-blender-jimeng-web",
-    "codex-blender-mcp-setup",
+    "blender-mcp-setup",
 )
 
 SECRET_PATTERNS = (

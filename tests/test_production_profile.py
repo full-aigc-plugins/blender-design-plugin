@@ -44,7 +44,7 @@ def _registry_with_l3():
     reg = CommandRegistry()
     reg.register('mesh.inspect', lambda _: {}, risk='read',
                  metadata={'domain': 'mesh', 'maturity': 'L3',
-                           'skills': ['codex-blender-inspect'],
+                           'skills': ['blender-inspect'],
                            'verification': {
                                'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -58,7 +58,7 @@ def _registry_with_l4():
     reg = CommandRegistry()
     reg.register('rig.rigify_install', lambda _: {}, risk='gated',
                  metadata={'domain': 'rig', 'maturity': 'L4',
-                           'skills': ['codex-blender-character-rigging'],
+                           'skills': ['blender-character-rigging'],
                            'verification': {
                                'runtime': ['tests/runtime/p9_rigify_install_acceptance.py'],
                                'visual': ['docs/verification/windows-l4-rigify.md'],
@@ -73,7 +73,7 @@ def _registry_with_optional():
     reg = CommandRegistry()
     reg.register('mesh.inspect', lambda _: {}, risk='read',
                  metadata={'domain': 'mesh', 'maturity': 'L3',
-                           'skills': ['codex-blender-inspect'],
+                           'skills': ['blender-inspect'],
                            'verification': {
                                'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -119,7 +119,7 @@ class ProductionProfileVerdictTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('scene.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'scene', 'maturity': 'L1',
-                               'skills': ['codex-blender-inspect']})
+                               'skills': ['blender-inspect']})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         verdict = profile.verdict('scene.inspect', _identity(), reg)
         self.assertEqual(verdict.status, 'not_production')
@@ -130,7 +130,7 @@ class ProductionProfileVerdictTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('recipe.desktop_speaker', lambda _: {}, risk='standard',
                      metadata={'domain': 'recipe', 'maturity': 'L2',
-                               'skills': ['codex-blender-hard-surface']})
+                               'skills': ['blender-hard-surface']})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         verdict = profile.verdict('recipe.desktop_speaker', _identity(), reg)
         self.assertEqual(verdict.status, 'not_production')
@@ -202,7 +202,7 @@ class ProductionProfileExclusionTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -229,7 +229,7 @@ class ProductionProfileExclusionTests(_TmpdirMixin, unittest.TestCase):
                                'class': 'expert'})
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -272,7 +272,7 @@ class ProductionProfileEvidencePathTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/NONEXISTENT_FILE.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -294,7 +294,7 @@ class ProductionProfileEvidencePathTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -308,7 +308,7 @@ class ProductionProfileEvidencePathTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('rig.rigify_install', lambda _: {}, risk='gated',
                      metadata={'domain': 'rig', 'maturity': 'L4',
-                               'skills': ['codex-blender-character-rigging'],
+                               'skills': ['blender-character-rigging'],
                                'verification': {
                                    'runtime': ['tests/runtime/p9_rigify_install_acceptance.py'],
                                    'visual': ['docs/verification/windows-l4-rigify.md'],
@@ -331,7 +331,7 @@ class ProductionProfileL1CommandsTests(_TmpdirMixin, unittest.TestCase):
                                'skills': ['codex-blender-use']})
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/p1_foundation_smoke.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],
@@ -413,7 +413,7 @@ class ProductionProfileStatusTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
-                               'skills': ['codex-blender-inspect'],
+                               'skills': ['blender-inspect'],
                                'verification': {
                                    'runtime': ['tests/runtime/NONEXISTENT.py'],
                                    'visual': ['docs/verification/blender-domain-coverage-matrix.md'],

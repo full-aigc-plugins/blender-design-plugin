@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "package": "blender-skills",
+      "repo": "https://github.com/full-aigc-skills/blender-skills.git",
+      "ref": "v1.0.0",
+      "sha": "cff49f150759063aceb076a2c900a1589f0339bc",
+      "skills": [
+        "blender-background-jobs",
+        "blender-character-animation",
+        "blender-character-rigging",
+        "blender-cinematography",
+        "blender-curves",
+        "blender-design",
+        "blender-export",
+        "blender-grease-pencil",
+        "blender-hair",
+        "blender-hard-surface",
+        "blender-inspect",
+        "blender-mcp-setup",
+        "blender-preview",
+        "blender-procedural-modeling",
+        "blender-quality-validation",
+        "blender-render-compositing",
+        "blender-retopology",
+        "blender-scene-assembly",
+        "blender-sculpt-surface",
+        "blender-sequence-editing",
+        "blender-simulation",
+        "blender-tracking",
+        "blender-uv-material"
+      ],
+      "dest": "skills/",
+      "sha256": {
+        "blender-background-jobs": "d71e6be3c281cba12c25fe3077cefa36a2ee65916518d06272e60f36f92217b2",
+        "blender-character-animation": "abc3adfa577dd125ec5291fd04a2cfaf748948a2bd9df48a966291cdb4a7f28c",
+        "blender-character-rigging": "446951a281f110e6655e85e13a01bbdb5351885c49932ab84d291a3921c796c3",
+        "blender-cinematography": "4e3de137d7e700cce7171800174d7fb782dd009e9dc2c8da7a8dacec3b17d590",
+        "blender-curves": "35ecababf102a82f81171bbad8976dffefd2a159ed98936cd276319f4f29d629",
+        "blender-design": "356fddbd619c8ca830bebd5c251e36a117c7bfd9ca263e224c53f7e0c80d7bad",
+        "blender-export": "ca84cb5f0c5101379c0822f8f0fb05f53dc266009e13aeba3abe77410f82c0ea",
+        "blender-grease-pencil": "919609382f363744bd31325edebbf9a34105d24d184d220627ad840950fe3f41",
+        "blender-hair": "faded688117f9fbbce67d8a732ba96b272c67cd53a104268f0381d7b0780e8b1",
+        "blender-hard-surface": "0a70dc0383a66ba0d85504b8f568e435c2c0d249f910e5ddd38ee5a672cfac80",
+        "blender-inspect": "7bb4e92d2b92d8e8e88768f0874f750903ce4f151f4a0fa4a2044d15ef14daa7",
+        "blender-mcp-setup": "35a4e28db25940e96ea99a491741fef12da1ebe24b27e1ea9b4c4e9483c19ec3",
+        "blender-preview": "50cb52bdf4ac57aa314410d11ab17d93b913bce7587c9d7f804fa51aaa4450a9",
+        "blender-procedural-modeling": "ea4487d4acd7408e9ca290b0270a18b2cc094595ea18d935184489b3e3980781",
+        "blender-quality-validation": "0c710515ed39b99b8278a64b9c5b061489f5df91744590e099bff626dbe1887c",
+        "blender-render-compositing": "224bfb9ad860ea170b6957f63cdddf8c761ea502644991bbc8cd6b7006099d82",
+        "blender-retopology": "2dc067e9114e485e7b45c40b7c62ab1bab7ce119f0b376cadaf6fbd9e4f29df6",
+        "blender-scene-assembly": "a0c537430320e719b05980e5a91998f1fe26df3f3f97a39c170471922dd12184",
+        "blender-sculpt-surface": "647cfdbfef3c6cb6180c9f51e10f7d27c2a45c256e17e3f0e4a0353d4313a105",
+        "blender-sequence-editing": "87be7e23153a03c5cf38ca9520de9af4cb5562ee1a20a54fa701a18d5498c91a",
+        "blender-simulation": "a4d60ae32746770fbb3929a648e0881f6f6a089db6298fc9973ba5bf2fabd033",
+        "blender-tracking": "475938370bf3479f21e2857e99d7ad64d1b4c4987e098ae0d7b9f2fc96c2ad42",
+        "blender-uv-material": "336cd6c80660017bd9ea2fa42c62a49cfe01f815c94458e1c376c94937ecf966"
+      }
+    }
+  ]
+}
