@@ -30,6 +30,12 @@ class RecordingBridge:
 
 
 class TestNativeMcpCatalog(unittest.TestCase):
+    def test_command_names_use_portable_single_underscore_snake_case(self):
+        from scripts.harness.mcp_adapter import command_tool_name
+
+        self.assertEqual(command_tool_name("animation.pose_keyframe"),
+                         "blender_animation_pose_keyframe")
+
     def test_every_registered_harness_command_has_one_mcp_tool(self):
         from scripts.harness.mcp_adapter import build_tool_catalog, command_tool_name
         from scripts.harness.runtime import build_registry
@@ -55,6 +61,19 @@ class TestNativeMcpCatalog(unittest.TestCase):
         command_tools = [tool for tool in tools if tool.get("_meta", {}).get("codexBlenderCommand")]
         self.assertEqual(len(command_tools), len(registry.capabilities()))
         self.assertEqual(len({tool["name"] for tool in tools}), len(tools))
+        self.assertTrue(all("__" not in tool["name"] for tool in command_tools))
+
+    def test_catalog_rejects_command_name_collisions(self):
+        from scripts.harness.mcp_adapter import McpAdapterError, build_tool_catalog
+        from scripts.harness.registry import CommandRegistry
+        from scripts.harness.commands.validation import closed_arguments
+
+        registry = CommandRegistry()
+        registry.register("a.b_c", lambda _args: {}, validate=closed_arguments())
+        registry.register("a_b.c", lambda _args: {}, validate=closed_arguments())
+        with self.assertRaises(McpAdapterError) as caught:
+            build_tool_catalog(registry=registry, plugin_root=ROOT)
+        self.assertEqual(caught.exception.code, "MCP_TOOL_NAME_COLLISION")
 
     def test_onboarding_tools_are_available_without_blender(self):
         from scripts.harness.mcp_adapter import McpAdapter
@@ -73,9 +92,9 @@ class TestNativeMcpCatalog(unittest.TestCase):
         from scripts.harness.mcp_adapter import McpAdapter
 
         names = {tool["name"] for tool in McpAdapter(bridge=None, plugin_root=ROOT).tools}
-        self.assertIn("blender__official_uploader__inspect", names)
-        self.assertIn("blender__official_uploader__render_and_link", names)
-        self.assertIn("blender__export__file", names)
+        self.assertIn("blender_official_uploader_inspect", names)
+        self.assertIn("blender_official_uploader_render_and_link", names)
+        self.assertIn("blender_export_file", names)
 
     def test_control_tool_annotations_do_not_claim_read_only(self):
         from scripts.harness.mcp_adapter import McpAdapter
@@ -93,7 +112,7 @@ class TestNativeMcpForwarding(unittest.TestCase):
 
         bridge = RecordingBridge()
         adapter = McpAdapter(bridge=bridge, plugin_root=ROOT)
-        result = adapter.call_tool("blender__scene__inspect", {
+        result = adapter.call_tool("blender_scene_inspect", {
             "_requestId": "inspect-1", "_transactionId": "audit"
         })
         self.assertFalse(result["isError"])
@@ -112,7 +131,7 @@ class TestNativeMcpForwarding(unittest.TestCase):
                       "retryable": False},
         })
         result = McpAdapter(bridge=bridge, plugin_root=ROOT).call_tool(
-            "blender__object__delete", {"name": "Cube", "_transactionId": "milestone-1"}
+            "blender_object_delete", {"name": "Cube", "_transactionId": "milestone-1"}
         )
         self.assertTrue(result["isError"])
         self.assertEqual(result["structuredContent"]["error"]["code"], "AUTHORIZATION_REQUIRED")
@@ -123,7 +142,7 @@ class TestNativeMcpForwarding(unittest.TestCase):
 
         bridge = RecordingBridge()
         result = McpAdapter(bridge=bridge, plugin_root=ROOT).call_tool(
-            "blender__scene__inspect", {"shell": "unsafe"}
+            "blender_scene_inspect", {"shell": "unsafe"}
         )
         self.assertTrue(result["isError"])
         self.assertEqual(result["structuredContent"]["error"]["code"], "INVALID_ARGUMENT")

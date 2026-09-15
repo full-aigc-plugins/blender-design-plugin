@@ -41,7 +41,7 @@ class McpAdapterError(RuntimeError):
 
 def command_tool_name(command: str) -> str:
     """Return a stable MCP-safe name which remains reversible by inspection."""
-    return "blender__" + command.replace(".", "__")
+    return "blender_" + command.replace(".", "_")
 
 
 def _static_registry():
@@ -142,7 +142,15 @@ def build_tool_catalog(*, registry=None, plugin_root: Path | None = None) -> lis
                             "idempotentHint": False, "openWorldHint": False},
             "_meta": {"codexBlenderControl": command},
         })
-    tools.extend(_command_tool(registry, capability) for capability in registry.capabilities())
+    command_tools = [_command_tool(registry, capability) for capability in registry.capabilities()]
+    all_names = [tool["name"] for tool in tools] + [tool["name"] for tool in command_tools]
+    duplicates = sorted({name for name in all_names if all_names.count(name) > 1})
+    if duplicates:
+        raise McpAdapterError(
+            "MCP_TOOL_NAME_COLLISION",
+            "Harness command names do not map uniquely to MCP tools: " + ", ".join(duplicates),
+        )
+    tools.extend(command_tools)
     return tools
 
 

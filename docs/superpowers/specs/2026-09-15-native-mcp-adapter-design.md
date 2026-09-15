@@ -29,7 +29,8 @@ descriptor. The descriptor token is never returned to the MCP client.
 - `blender_transaction_begin`, `blender_transaction_commit`, `blender_transaction_rollback`, and
   `blender_authorize`: preserve Harness lifecycle operations which are intercepted before registry
   dispatch.
-- One deterministic tool per registered command: `blender__<domain>__<operation>`. Its input schema is
+- One deterministic snake-case tool per registered command: `blender_<domain>_<operation>`. Catalog
+  construction fails if two Harness IDs map to the same MCP name. Its input schema is
   the registered closed argument schema plus `_transactionId`, `_requestId`,
   `_expectedSceneRevision`, and `_authorization` envelope fields where applicable.
 
