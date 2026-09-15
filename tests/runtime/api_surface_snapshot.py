@@ -132,9 +132,12 @@ def _probe_vse(bpy_module):
     """Probe VSE API."""
     scene = bpy_module.context.scene
     editor = scene.sequence_editor_create()
-    strips_rna = editor.strips.bl_rna
+    # Blender 4.2 calls the strip collection `sequences`; 4.5+ renamed it `strips`.
+    strips_attr = 'strips' if hasattr(editor, 'strips') else 'sequences'
+    strips_rna = getattr(editor, strips_attr).bl_rna
     new_effect_params = {p.identifier for p in strips_rna.functions.get('new_effect', type('F', (), {'parameters': []})).parameters} if 'new_effect' in {f.identifier for f in strips_rna.functions} else set()
     return {
+        'strips_collection_attr': strips_attr,
         'strips_new_effect_has_length': 'length' in new_effect_params,
         'strips_new_effect_has_seq1': 'seq1' in new_effect_params,
         'has_sequences_attr': hasattr(editor, 'sequences'),
