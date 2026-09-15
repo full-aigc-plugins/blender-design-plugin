@@ -7,7 +7,7 @@ from . import runtime
 
 class CODEXBLENDER_OT_start(bpy.types.Operator):
     bl_idname = "codex_blender.start_connector"
-    bl_label = "Start Connector"
+    bl_label = "Start MCP Server"
 
     def execute(self, context):
         output_root = bpy.path.abspath(context.scene.codex_blender_output_root or "")
@@ -42,7 +42,7 @@ class CODEXBLENDER_OT_revoke(bpy.types.Operator):
 
 
 class VIEW3D_PT_codex_blender_connector(bpy.types.Panel):
-    bl_label = "Codex Blender Connector"
+    bl_label = "Codex Blender MCP"
     bl_idname = "VIEW3D_PT_codex_blender_connector"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

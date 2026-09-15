@@ -11,6 +11,10 @@ already-open Blender windows to `codex-blender-connector`, design work to
 `codex-blender-preview`, approved outputs to `codex-blender-export`, and failures to
 `codex-blender-recover`.
 
+On first use, call `blender_connection_status`. If no guarded Harness session is connected, route to
+`codex-blender-mcp-setup` and call `blender_getting_started`; do not assume that Blender, the trusted
+Add-on, or a session exists merely because this Skill was loaded.
+
 After the implementation brief, load only the required domain Skills:
 
 - scene organization and approved imports → `codex-blender-scene-assembly`

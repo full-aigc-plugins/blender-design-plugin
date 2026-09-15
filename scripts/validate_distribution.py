@@ -7,7 +7,7 @@ This validator is the union of two complementary sets of checks.
   - the required structure, legal files, and brand assets exist
   - brand PNGs have the expected dimensions and alpha channel
   - the plugin name is a codex-prefixed kebab-case identifier
-  - `mcpServers` is forbidden while no MCP server exists
+  - `mcpServers` points to the plugin-owned Python stdio adapter
   - the marketplace entry pins this repository as a url source on `main`
   - the portable root `plugin.json` / `mcp.json` stay inactive
 
@@ -65,6 +65,16 @@ REQUIRED_INTERFACE_FIELDS = (
 REPO_URL = "https://github.com/partme-ai/codex-blender-plugin"
 EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "main"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
+EXPECTED_MCP = {
+    "mcpServers": {
+        "codex_blender": {
+            "type": "stdio",
+            "command": "python",
+            "args": ["scripts/blender_mcp_server.py"],
+            "cwd": ".",
+        }
+    }
+}
 EXPECTED_SKILLS = (
     "codex-blender-use",
     "codex-blender-inspect",
@@ -75,6 +85,7 @@ EXPECTED_SKILLS = (
     "codex-blender-export",
     "codex-blender-recover",
     "codex-blender-jimeng-web",
+    "codex-blender-mcp-setup",
 )
 
 SECRET_PATTERNS = (
@@ -86,6 +97,7 @@ SECRET_PATTERNS = (
 )
 
 MAX_BINARY_BYTES = 1024 * 1024
+LARGE_BINARY_ALLOWLIST = {"assets/blender-cover.png"}
 SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules"}
 BINARY_SUFFIXES = {
     ".png", ".jpg", ".jpeg", ".gif", ".mp4", ".mov", ".webm", ".avi",
@@ -271,7 +283,9 @@ def _validate_tree(root, errors):
             data = target.read_bytes()
         except OSError:
             continue
-        if size > MAX_BINARY_BYTES and target.suffix.lower() in BINARY_SUFFIXES:
+        relative = target.relative_to(root).as_posix()
+        if (size > MAX_BINARY_BYTES and target.suffix.lower() in BINARY_SUFFIXES
+                and relative not in LARGE_BINARY_ALLOWLIST):
             errors.append(
                 f"binary exceeds {MAX_BINARY_BYTES} bytes: "
                 f"{target.relative_to(root)} ({size} bytes)"
@@ -302,7 +316,7 @@ def validate(root: Path) -> list[str]:
 
     plugin_id = manifest.get("name", "")
 
-    # -- project policy: identity, version, forbidden MCP --
+    # -- project policy: identity, version, plugin-owned MCP --
     if NAME_PATTERN.fullmatch(plugin_id) is None or not plugin_id.startswith("codex-"):
         errors.append("manifest name must be a codex-prefixed kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
@@ -312,10 +326,23 @@ def validate(root: Path) -> list[str]:
     for field in ("description", "skills"):
         if not manifest.get(field):
             errors.append(f"manifest missing required field: {field}")
-    if manifest.get("receipt_contract_versions") != ["1.0.0", "2.0.0", "3.0.0"]:
-        errors.append("manifest receipt_contract_versions must be ['1.0.0', '2.0.0', '3.0.0']")
-    if "mcpServers" in manifest or (root / ".mcp.json").exists():
-        errors.append("MCP configuration is forbidden until an MCP server exists")
+    if "receipt_contract_versions" in manifest:
+        errors.append("unsupported manifest field: receipt_contract_versions")
+    if manifest.get("mcpServers") != "./.mcp.json":
+        errors.append("manifest mcpServers must point to ./.mcp.json")
+    mcp_path = root / ".mcp.json"
+    if not mcp_path.is_file():
+        errors.append("plugin-owned .mcp.json is missing")
+    else:
+        try:
+            mcp = json.loads(mcp_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            errors.append(".mcp.json is not valid JSON")
+        else:
+            if mcp != EXPECTED_MCP:
+                errors.append("Codex Blender MCP must use the plugin-owned Python stdio adapter")
+    if not (root / "scripts" / "blender_mcp_server.py").is_file():
+        errors.append("plugin-owned MCP stdio entrypoint is missing")
 
     # -- Codex rule: the name must also be a valid identifier segment --
     segment_error = validate_segment(plugin_id, "plugin name")

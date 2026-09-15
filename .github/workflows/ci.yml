@@ -17,7 +17,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
+      # Full history: BaselineProvenanceTests resolves recorded SHAs with
+      # `git cat-file -e <sha>^{commit}` to catch invented or stale ones,
+      # which a shallow default checkout cannot do.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
