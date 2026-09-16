@@ -50,7 +50,7 @@
       ]
     },
     "skills": {
-      "onDisk": 30,
+      "onDisk": 31,
       "referenced": 23,
       "referencedNames": [
         "blender-background-jobs",
@@ -74,8 +74,8 @@
         "blender-sequence-editing",
         "blender-simulation",
         "blender-tracking",
-        "blender-uv-material",
-        "codex-blender-use"
+        "blender-use",
+        "blender-uv-material"
       ]
     },
     "commandIds": [
@@ -296,7 +296,7 @@
       ]
     },
     "skills": {
-      "onDisk": 30,
+      "onDisk": 31,
       "referenced": 24,
       "referencedNames": [
         "blender-background-jobs",
@@ -319,10 +319,10 @@
         "blender-sculpt-surface",
         "blender-sequence-editing",
         "blender-simulation",
+        "blender-to-dreamina",
         "blender-tracking",
-        "blender-uv-material",
-        "codex-blender-jimeng-web",
-        "codex-blender-use"
+        "blender-use",
+        "blender-uv-material"
       ]
     },
     "commandIds": [
