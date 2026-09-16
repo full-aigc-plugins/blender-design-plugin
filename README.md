@@ -1,7 +1,7 @@
 # Codex Blender Plugin
 
 <p align="center">
-  <img src="assets/banner.webp" alt="Codex × Blender — Turn ideas into Blender scenes" width="100%">
+  <img src="assets/banner.webp" alt="Blender × Coding Agents — Turn ideas into editable 3D scenes. Supports Codex, Kimi, ZCode, and more." width="100%">
 </p>
 
 <p align="center">
@@ -170,7 +170,7 @@ does not replace the PartMe guarded Harness connection.
 ### 2. Install the plugin
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
 codex plugin add codex-blender@partme-ai-blender
 ```
 
@@ -211,6 +211,51 @@ capability.describe
 ```
 
 The catalog is generated from the command registry, never hand-maintained, and counts are reproduced by `docs/verification/capability-counts.json`.
+
+### Installing on ZCode
+
+The same repository carries a ZCode adapter (`.zcode-plugin/plugin.json`, plugin id `blender`).
+
+Local marketplace (fastest):
+
+1. Create a marketplace folder with a `marketplace.json` pointing at this repository:
+
+   ```json
+   {
+     "name": "partme-ai",
+     "plugins": [
+       {
+         "name": "blender",
+         "source": { "source": "directory", "path": "/absolute/path/to/partme-blender-plugin" },
+         "category": "Creativity"
+       }
+     ]
+   }
+   ```
+
+2. ZCode → 设置 → 插件 → 创建 → 添加插件市场，填该 marketplace 文件夹路径。
+3. 在「个人」分段安装 `blender`，新开会话。
+4. Optional userConfig: `blender_session_descriptor`（多 Blender 会话消歧）与 `ffprobe_path`（导出校验），缺省均可留空。
+
+Expected after install: `/blender` command group (9 slash commands), 30 skills, `plugin:blender:partme_blender` MCP server, and a SessionStart environment check.
+
+### Installing on Kimi Code CLI
+
+The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blender`).
+
+1. In Kimi Code CLI run `/plugins` and add this repository by local path or GitHub URL
+   (`https://github.com/partme-ai/partme-blender-plugin`).
+2. Run `/reload` or start a new session.
+
+Expected after install: 30 skills (`/skill:blender-use` as the router), `blender:*` slash
+commands, the `partme_blender` MCP server, and bundled hooks (SessionStart / UserPromptSubmit /
+Stop).
+
+### Hook trust note (Codex first enable)
+
+The bundled `hooks/hooks.json` is a non-managed hook set. On first enable, Codex asks you to
+review and trust it; the hooks are advisory-only (environment check, intent routing hint,
+closeout reminder), always exit 0, and never block a turn.
 
 ## Quick start
 
@@ -348,7 +393,7 @@ Recorded evidence:
 ## Project structure
 
 ```text
-codex-blender-plugin/
+partme-blender-plugin/
 ├── .codex-plugin/plugin.json   # identity, presentation metadata, receipt contract versions
 ├── .agents/plugins/marketplace.json
 ├── bin/blender_adapter         # preview-only bridge adapter
@@ -372,7 +417,7 @@ codex-blender-plugin/
 
 ## Contributing and support
 
-Open functional issues at <https://github.com/partme-ai/codex-blender-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
+Open functional issues at <https://github.com/partme-ai/partme-blender-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
 
 ## License
 

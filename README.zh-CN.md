@@ -1,7 +1,7 @@
 # Codex Blender 插件
 
 <p align="center">
-  <img src="assets/banner.webp" alt="Codex × Blender — 把想法变成 Blender 场景" width="100%">
+  <img src="assets/banner.webp" alt="Blender × Coding Agents — 把想法变成可编辑的 3D 场景；支持 Codex、Kimi、ZCode 等多个平台" width="100%">
 </p>
 
 <p align="center">
@@ -170,7 +170,7 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 ### 2. 安装插件
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
 codex plugin add codex-blender@partme-ai-blender
 ```
 
@@ -347,7 +347,7 @@ python3 scripts/validate_model_in_blender.py
 ## 项目结构
 
 ```text
-codex-blender-plugin/
+partme-blender-plugin/
 ├── .codex-plugin/plugin.json   # 身份、展示元数据、回执契约版本
 ├── .agents/plugins/marketplace.json
 ├── bin/blender_adapter         # 仅预览的桥接适配器
@@ -371,7 +371,7 @@ codex-blender-plugin/
 
 ## 贡献与支持
 
-功能问题请提交到 <https://github.com/partme-ai/codex-blender-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
+功能问题请提交到 <https://github.com/partme-ai/partme-blender-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
 
 ## 许可证
 

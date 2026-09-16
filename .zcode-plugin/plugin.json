@@ -1,0 +1,55 @@
+{
+  "name": "blender",
+  "displayName": "Blender",
+  "displayName_i18n": {
+    "en": "Blender",
+    "zh-CN": "Blender 三维设计"
+  },
+  "version": "0.3.0",
+  "description": "Design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
+  "description_i18n": {
+    "en": "Design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
+    "zh-CN": "通过受控操作、里程碑截图、事务回滚与校验导出，让智能体安全地设计 Blender 场景；含白模预演（previs）与即梦交接。"
+  },
+  "author": {
+    "name": "Full Stack Skills / PartMe.AI",
+    "url": "https://github.com/partme-ai"
+  },
+  "homepage": "https://github.com/partme-ai/partme-blender-plugin",
+  "repository": "https://github.com/partme-ai/partme-blender-plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "blender",
+    "3d-design",
+    "modeling",
+    "animation",
+    "export",
+    "previs"
+  ],
+  "skills": "skills",
+  "commands": "commands",
+  "mcpServers": {
+    "partme_blender": {
+      "command": "python3",
+      "args": ["${ZCODE_PLUGIN_ROOT}/scripts/blender_mcp_server.py"],
+      "env": {
+        "CODEX_BLENDER_DESCRIPTOR": "${user_config.blender_session_descriptor}",
+        "CODEX_BLENDER_FFPROBE": "${user_config.ffprobe_path}"
+      }
+    }
+  },
+  "userConfig": {
+    "blender_session_descriptor": {
+      "type": "string",
+      "title": "Blender 会话描述符",
+      "description": "多个 Blender 会话同时活跃时用于消歧；单会话留空即可（对应 CODEX_BLENDER_DESCRIPTOR）。",
+      "required": false
+    },
+    "ffprobe_path": {
+      "type": "string",
+      "title": "ffprobe 路径",
+      "description": "导出校验用的 ffprobe 可执行文件路径；留空则自动在 PATH 中查找（对应 CODEX_BLENDER_FFPROBE）。",
+      "required": false
+    }
+  }
+}

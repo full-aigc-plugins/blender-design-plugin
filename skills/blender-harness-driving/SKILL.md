@@ -1,5 +1,5 @@
 ---
-name: codex-blender-harness-driving
+name: blender-harness-driving
 description: "Drive the Codex Blender Harness from a shell client: launch a session, dispatch the closed request contract, keep the sceneRevision chain coherent, sign action-bound authorizations for gated commands, and verify exported artifacts independently."
 ---
 
@@ -14,7 +14,7 @@ modeling, lookdev, jobs, and validation decisions to the precise domain Skill ad
 
 Start one session per production task with `scripts/launch_harness.py`, then dispatch through
 `scripts/harness_cli.py --descriptor <descriptor> --request <file>`; see
-[managed sessions](../codex-blender-managed/SKILL.md). An installed copy may live under a
+[managed sessions](../blender-managed/SKILL.md). An installed copy may live under a
 different root than this repository, so hold the plugin root in one constant rather than
 rebuilding paths, and do not restart a session simply because the root moved — the process and
 its descriptor stay valid.

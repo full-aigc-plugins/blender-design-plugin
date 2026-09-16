@@ -1,4 +1,4 @@
-"""Structural tests for the codex-blender-previs Skill.
+"""Structural tests for the blender-previs Skill.
 
 The previs Skill is a contract carrier: its schemas and handoff template are what
 downstream Dreamina/Seedance Skills consume. These tests pin the contract shape —
@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_DIR = ROOT / "skills" / "codex-blender-previs"
+SKILL_DIR = ROOT / "skills" / "blender-previs"
 
 try:
     import jsonschema

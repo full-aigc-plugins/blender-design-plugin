@@ -1,6 +1,6 @@
 # Codex Blender 安装与使用
 
-<p align="center"><img src="../assets/logo.png" alt="Codex Blender" width="120"></p>
+<p align="center"><img src="../assets/logo.png" alt="PartMe Blender" width="120"></p>
 
 ## 1. 安装 Blender
 
@@ -18,7 +18,7 @@ macOS 默认路径：
 ## 2. 安装 Codex 插件
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/codex-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
 codex plugin add codex-blender@partme-ai-blender
 codex plugin list --available --json
 ```

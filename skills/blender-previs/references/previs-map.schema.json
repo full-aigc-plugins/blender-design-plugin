@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/partme-ai/codex-blender-plugin/skills/codex-blender-previs/references/previs-map.schema.json",
+  "$id": "https://github.com/partme-ai/codex-blender-plugin/skills/blender-previs/references/previs-map.schema.json",
   "title": "White-model geometry-to-role map",
   "description": "Declares which placeholder geometry stands for which story role, and states what the geometry deliberately does not encode. This file travels with the previs video to the downstream video-generation handoff.",
   "type": "object",

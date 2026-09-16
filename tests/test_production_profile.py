@@ -81,7 +81,7 @@ def _registry_with_optional():
                            }})
     reg.register('official_uploader.status', lambda _: {}, risk='read',
                  metadata={'domain': 'official_uploader', 'maturity': 'L1',
-                           'skills': ['codex-blender-jimeng-web']})
+                           'skills': ['blender-to-dreamina']})
     return reg
 
 
@@ -182,7 +182,7 @@ class ProductionProfileExclusionTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('advanced.execute_python', lambda _: {}, risk='gated',
                      metadata={'domain': 'advanced', 'maturity': 'L1',
-                               'skills': ['codex-blender-use'],
+                               'skills': ['blender-use'],
                                'class': 'expert'})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         verdict = profile.verdict('advanced.execute_python', _identity(), reg)
@@ -192,7 +192,7 @@ class ProductionProfileExclusionTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('experimental.test', lambda _: {}, risk='standard',
                      metadata={'domain': 'experimental', 'maturity': 'L1',
-                               'skills': ['codex-blender-use'],
+                               'skills': ['blender-use'],
                                'class': 'experimental'})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         verdict = profile.verdict('experimental.test', _identity(), reg)
@@ -225,7 +225,7 @@ class ProductionProfileExclusionTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('advanced.execute_python', lambda _: {}, risk='gated',
                      metadata={'domain': 'advanced', 'maturity': 'L1',
-                               'skills': ['codex-blender-use'],
+                               'skills': ['blender-use'],
                                'class': 'expert'})
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
@@ -328,7 +328,7 @@ class ProductionProfileL1CommandsTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('playback.set', lambda _: {}, risk='read',
                      metadata={'domain': 'playback', 'maturity': 'L1',
-                               'skills': ['codex-blender-use']})
+                               'skills': ['blender-use']})
         reg.register('mesh.inspect', lambda _: {}, risk='read',
                      metadata={'domain': 'mesh', 'maturity': 'L3',
                                'skills': ['blender-inspect'],
@@ -348,7 +348,7 @@ class ProductionProfileL1CommandsTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('advanced.execute_python', lambda _: {}, risk='gated',
                      metadata={'domain': 'advanced', 'maturity': 'L1',
-                               'skills': ['codex-blender-use'],
+                               'skills': ['blender-use'],
                                'class': 'expert'})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         status = profile.status(_identity(), reg)
@@ -359,7 +359,7 @@ class ProductionProfileL1CommandsTests(_TmpdirMixin, unittest.TestCase):
         reg = CommandRegistry()
         reg.register('official_uploader.status', lambda _: {}, risk='read',
                      metadata={'domain': 'official_uploader', 'maturity': 'L1',
-                               'skills': ['codex-blender-jimeng-web']})
+                               'skills': ['blender-to-dreamina']})
         profile = ProductionProfile.load(_make_profile({}, self.tmpdir))
         status = profile.status(_identity(), reg)
         self.assertNotIn('official_uploader.status', status['l1Commands'])

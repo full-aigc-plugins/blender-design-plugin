@@ -29,19 +29,19 @@ from validate_distribution import main as validate_main, validate_segment
 
 PLUGIN_ID = "codex-blender"
 DISPLAY_NAME = "Codex Blender"
-REPOSITORY = "https://github.com/partme-ai/codex-blender-plugin"
+REPOSITORY = "https://github.com/partme-ai/partme-blender-plugin"
 BRAND_COLOR = "#F97316"
 EXPECTED_SKILLS = (
-    "codex-blender-use",
+    "blender-use",
     "blender-inspect",
-    "codex-blender-managed",
-    "codex-blender-connector",
+    "blender-managed",
+    "blender-connector",
     "blender-design",
     "blender-preview",
     "blender-export",
-    "codex-blender-recover",
-    "codex-blender-jimeng-web",
-    "codex-blender-harness-driving",
+    "blender-recover",
+    "blender-to-dreamina",
+    "blender-harness-driving",
     "blender-mcp-setup",
 )
 
@@ -303,13 +303,13 @@ class TestValidatorRejectsDefects(unittest.TestCase):
 
     def test_rejects_skill_name_not_matching_directory(self):
         shutil.copytree(
-            self.repo / "skills" / "codex-blender-use",
+            self.repo / "skills" / "blender-use",
             self.repo / "skills" / "mismatched-name",
         )
         self._rejects()
 
     def test_rejects_skill_without_frontmatter(self):
-        (self.repo / "skills" / "codex-blender-use" / "SKILL.md").write_text(
+        (self.repo / "skills" / "blender-use" / "SKILL.md").write_text(
             "# no frontmatter here\n", encoding="utf-8"
         )
         self._rejects()

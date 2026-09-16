@@ -1,5 +1,5 @@
 ---
-name: codex-blender-jimeng-web
+name: blender-to-dreamina
 description: "Use an already enabled official Jimeng Blender uploader to render or select a local video and create a Jimeng Web handoff link."
 ---
 

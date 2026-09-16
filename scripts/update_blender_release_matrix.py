@@ -41,7 +41,7 @@ class Sha256Entry:
 def _default_fetcher(version: str, blender_dir: str) -> str:
     """Fetch the official sha256 file for a Blender version."""
     url = f"https://download.blender.org/release/{blender_dir}/blender-{version}.sha256"
-    req = urllib.request.Request(url, headers={"User-Agent": "codex-blender-plugin/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "partme-blender-plugin/1.0"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8")
 

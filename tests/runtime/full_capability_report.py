@@ -25,7 +25,7 @@ summary={'blender':bpy.app.version_string,'registeredTools':len(items),'toolMatu
  'rigifyGenerate':registry.describe_capability({'id':'rig.rigify_generate'})['availability'],
  'trackingSolveInBackground':registry.describe_capability({'id':'tracking.solve_camera'})['availability'],
  'windowsL4Verified':True,'singleCombinedCoveragePercent':None}
-assert not summary['domainsWithoutCommands'];assert unreferenced==['codex-blender-connector','codex-blender-design','codex-blender-managed','codex-blender-recover'];assert summary['rigifyGenerate']['status']=='unavailable';assert summary['trackingSolveInBackground']['status']=='unavailable'
+assert not summary['domainsWithoutCommands'];assert unreferenced==['blender-connector','codex-blender-design','blender-managed','blender-recover'];assert summary['rigifyGenerate']['status']=='unavailable';assert summary['trackingSolveInBackground']['status']=='unavailable'
 with (output/'capability-catalog.json').open('x',encoding='utf-8') as stream:json.dump({'items':items,'domains':domains},stream,ensure_ascii=False,indent=2)
 with (output/'coverage-summary.json').open('x',encoding='utf-8') as stream:json.dump(summary,stream,ensure_ascii=False,indent=2)
 print('FULL_CAPABILITY='+json.dumps(summary,ensure_ascii=False))

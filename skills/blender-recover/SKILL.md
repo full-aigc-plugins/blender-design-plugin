@@ -1,5 +1,5 @@
 ---
-name: codex-blender-recover
+name: blender-recover
 description: "Rollback a failed Blender milestone or resume from the latest confirmed checkpoint without replaying uncommitted commands."
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: codex-blender-managed
+name: blender-managed
 description: "Start a non-invasive Blender design session from Codex without installing a Blender Add-on. Use for new projects or when the user wants Codex to launch Blender."
 ---
 
@@ -22,4 +22,4 @@ Verify `session.status` reports the requested mode. The temporary Codex Live Ses
 viewport header expose progress and takeover controls. Use `view.set`, `view.focus`,
 `playback.set_frame` and `playback.set` rather than an expert script for UI review.
 If no foreground viewport exists, report that specific condition; do not claim the user can
-see operations. Read [command reference](../codex-blender-use/references/foreground-policy.md).
+see operations. Read [command reference](../blender-use/references/foreground-policy.md).

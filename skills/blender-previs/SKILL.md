@@ -1,5 +1,5 @@
 ---
-name: codex-blender-previs
+name: blender-previs
 description: "Use when turning a story or shot list into a color-coded white-model previs video in Blender, producing placeholder blocking, exact cut timing, and a machine-readable geometry-to-role map for downstream Seedance video generation."
 ---
 

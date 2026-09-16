@@ -15,10 +15,10 @@ class TestProductBoundary(unittest.TestCase):
     def test_only_official_handoff_skill_names_jimeng_and_never_claims_generation(self):
         for path in (ROOT / "skills").glob("*/SKILL.md"):
             text = path.read_text(encoding="utf-8").lower()
-            if path.parent.name == "codex-blender-jimeng-web":
+            if path.parent.name == "blender-to-dreamina":
                 self.assertIn("jimenglinkready", text, path)
                 self.assertIn("does not mean seedance completed", text, path)
-            elif path.parent.name == "codex-blender-use":
+            elif path.parent.name == "blender-use":
                 self.assertIn("jimeng_web", text, path)
                 self.assertIn("jimenglinkready", text, path)
             else:
@@ -31,7 +31,7 @@ class TestProductBoundary(unittest.TestCase):
         self.assertNotIn("dreamina", text)
 
     def test_router_exposes_three_explicit_delivery_choices(self):
-        text = (ROOT / "skills" / "codex-blender-use" / "SKILL.md").read_text(encoding="utf-8")
+        text = (ROOT / "skills" / "blender-use" / "SKILL.md").read_text(encoding="utf-8")
         for route in ("preview_only", "jimeng_web", "downstream_seedance"):
             self.assertIn(route, text)
 

@@ -42,7 +42,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/validate_distribution.py .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python scripts/package_connector.py dist/codex-blender-connector-0.3.0-windows-l4.zip
+          python scripts/package_connector.py dist/blender-connector-0.3.0-windows-l4.zip
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run real Blender recovery and Rigify acceptance
         shell: pwsh
@@ -61,6 +61,6 @@ jobs:
           name: codex-blender-windows-l4
           path: |
             artifacts
-            dist/codex-blender-connector-0.3.0-windows-l4.zip
+            dist/blender-connector-0.3.0-windows-l4.zip
           if-no-files-found: warn
           retention-days: 14

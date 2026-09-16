@@ -65,7 +65,7 @@ REQUIRED_INTERFACE_FIELDS = (
     "displayName", "shortDescription", "longDescription", "developerName",
     "category", "brandColor", "composerIcon", "logo", "logoDark",
 )
-REPO_URL = "https://github.com/partme-ai/codex-blender-plugin"
+REPO_URL = "https://github.com/partme-ai/partme-blender-plugin"
 EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "main"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_MCP = {
@@ -79,15 +79,15 @@ EXPECTED_MCP = {
     }
 }
 EXPECTED_SKILLS = (
-    "codex-blender-use",
+    "blender-use",
     "blender-inspect",
-    "codex-blender-managed",
-    "codex-blender-connector",
+    "blender-managed",
+    "blender-connector",
     "blender-design",
     "blender-preview",
     "blender-export",
-    "codex-blender-recover",
-    "codex-blender-jimeng-web",
+    "blender-recover",
+    "blender-to-dreamina",
     "blender-mcp-setup",
 )
 
@@ -101,7 +101,7 @@ SECRET_PATTERNS = (
 
 MAX_BINARY_BYTES = 1024 * 1024
 LARGE_BINARY_ALLOWLIST = {"assets/blender-cover.png"}
-SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules"}
+SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules", ".worktrees"}
 BINARY_SUFFIXES = {
     ".png", ".jpg", ".jpeg", ".gif", ".mp4", ".mov", ".webm", ".avi",
     ".exe", ".dll", ".so", ".dylib", ".bin", ".zip", ".tar", ".gz",

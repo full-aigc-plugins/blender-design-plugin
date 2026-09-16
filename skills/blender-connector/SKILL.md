@@ -1,5 +1,5 @@
 ---
-name: codex-blender-connector
+name: blender-connector
 description: "Connect Codex to an already-open Blender window through the pinned PartMe Blender MCP Add-on."
 ---
 

@@ -252,12 +252,12 @@ DOMAIN_SKILLS = {
     'job': ['blender-background-jobs'],
     'preview': ['blender-preview'],
     'export': ['blender-export'],
-    'official_uploader': ['codex-blender-jimeng-web'],
-    'advanced': ['codex-blender-use'],
-    'capability': ['codex-blender-use'],
-    'session': ['codex-blender-use'],
-    'view': ['codex-blender-use'],
-    'playback': ['codex-blender-use'],
+    'official_uploader': ['blender-to-dreamina'],
+    'advanced': ['blender-use'],
+    'capability': ['blender-use'],
+    'session': ['blender-use'],
+    'view': ['blender-use'],
+    'playback': ['blender-use'],
     'retopo': ['blender-retopology'],
 }
 

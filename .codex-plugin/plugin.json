@@ -1,13 +1,13 @@
 {
   "name": "codex-blender",
-  "version": "0.3.0+codex.20260915123405",
+  "version": "0.3.0+codex.20260916231938",
   "description": "Let Codex design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
   "author": {
     "name": "Full Stack Skills / PartMe.AI",
     "url": "https://github.com/partme-ai"
   },
-  "homepage": "https://github.com/partme-ai/codex-blender-plugin",
-  "repository": "https://github.com/partme-ai/codex-blender-plugin",
+  "homepage": "https://github.com/partme-ai/partme-blender-plugin",
+  "repository": "https://github.com/partme-ai/partme-blender-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "blender",
@@ -30,9 +30,9 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/partme-ai/codex-blender-plugin",
-    "privacyPolicyURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/partme-ai/codex-blender-plugin/blob/main/TERMS.md",
+    "websiteURL": "https://github.com/partme-ai/partme-blender-plugin",
+    "privacyPolicyURL": "https://github.com/partme-ai/partme-blender-plugin/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/partme-ai/partme-blender-plugin/blob/main/TERMS.md",
     "defaultPrompt": [
       "Create a Blender scene from this idea and show milestone previews",
       "Connect to my open Blender project and continue the design safely",
