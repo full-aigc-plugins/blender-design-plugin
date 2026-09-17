@@ -257,6 +257,31 @@ The bundled `hooks/hooks.json` is a non-managed hook set. On first enable, Codex
 review and trust it; the hooks are advisory-only (environment check, intent routing hint,
 closeout reminder), always exit 0, and never block a turn.
 
+### China mirror (AtomGit)
+
+If GitHub is slow or unreachable, install from the AtomGit mirror instead. The
+commands are identical apart from the marketplace URL:
+
+```bash
+codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin add blender-design@partme-ai-blender
+```
+
+To install the whole partme-ai plugin catalog from the mirror in one step:
+
+```bash
+codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git
+codex plugin add blender-design@partme-ai-blender
+```
+
+Notes:
+
+- The AtomGit source and the GitHub source share marketplace names, so adding
+  one replaces the other. Switch back with
+  `codex plugin marketplace add https://github.com/partme-ai/plugins.git`.
+- For ZCode or Kimi, clone the mirror repository and register the local
+  directory in the respective marketplace configuration.
+
 ## Quick start
 
 ### 1. Prerequisites
