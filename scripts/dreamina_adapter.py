@@ -28,7 +28,7 @@ def build_preview_receipt(artifact: dict, request: dict, media: dict) -> dict:
     camera_name = str(request["camera_name"])
     return {
         "schema_version": "1.0.0",
-        "producer_plugin": "codex-blender",
+        "producer_plugin": "blender-design",
         "producer_version": "0.3.0",
         "artifact_id": str(request["artifact_id"]),
         "path": str(artifact["path"]),

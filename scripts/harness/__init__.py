@@ -1,4 +1,4 @@
-"""Codex Blender Harness core."""
+"""Blender Design Harness core."""
 
 from .session import HarnessSession
 

@@ -128,7 +128,7 @@ class Exporter:
                     scene.frame_start = int(parameters["frameStart"])
                 if "frameEnd" in parameters:
                     scene.frame_end = int(parameters["frameEnd"])
-                with tempfile.TemporaryDirectory(prefix="codex-blender-frames-") as directory:
+                with tempfile.TemporaryDirectory(prefix="blender-design-frames-") as directory:
                     prefix = Path(directory) / "frame_"
                     render.filepath = str(prefix)
                     self.bpy.ops.render.render(animation=True)

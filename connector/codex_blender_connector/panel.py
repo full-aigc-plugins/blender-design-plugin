@@ -42,7 +42,7 @@ class CODEXBLENDER_OT_revoke(bpy.types.Operator):
 
 
 class VIEW3D_PT_codex_blender_connector(bpy.types.Panel):
-    bl_label = "Codex Blender MCP"
+    bl_label = "Blender Design MCP"
     bl_idname = "VIEW3D_PT_codex_blender_connector"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

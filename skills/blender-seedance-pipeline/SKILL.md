@@ -3,8 +3,8 @@ name: blender-seedance-pipeline
 description: Drive a Blender preview through the validated Dreamina 3D pipeline. Use when the user has a Blender scene and wants a Seedance 2.5 render from it.
 metadata:
   type: workflow
-  plugin: codex-blender
-  source_dcc: codex-blender
+  plugin: blender-design
+  source_dcc: blender-design
   status: stable
 ---
 
@@ -13,7 +13,7 @@ metadata:
 ## When to use
 
 The user wants a Dreamina 3D render from a Blender scene. Companion
-`codex-blender` is already installed.
+`blender-design` is already installed.
 
 ## Workflow
 
@@ -38,7 +38,7 @@ Because Dreamina Design currently exposes no authoritative quote tool,
 one fully specified `auto_exact_request`; that grants one submission only and
 does not bypass the native paid-action approval in Dreamina Design.
 
-1. **Inspect.** Call `inspect_scene(executable=codex-blender_adapter,
+1. **Inspect.** Call `inspect_scene(executable=blender-design_adapter,
    scene=<user_scene>)`. Reject if the scene cannot be inspected.
 2. **Specify preview.** Collect user-approved camera, frame range, output
    path, and dimensions. Build a `PreviewSpec`.

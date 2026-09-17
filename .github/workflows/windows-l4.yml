@@ -58,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: codex-blender-windows-l4
+          name: blender-design-windows-l4
           path: |
             artifacts
             dist/blender-connector-0.3.0-windows-l4.zip

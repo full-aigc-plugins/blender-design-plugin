@@ -29,7 +29,7 @@ def find_blender() -> str:
 
 
 def stale_sockets() -> list[str]:
-    base = Path(os.environ.get("TMPDIR", "/tmp")) / "codex-blender"
+    base = Path(os.environ.get("TMPDIR", "/tmp")) / "blender-design"
     if not base.is_dir():
         return []
     hits = []
@@ -61,7 +61,7 @@ def main() -> int:
 
     sockets = stale_sockets()
     if sockets:
-        lines.append(f"残留 socket: {len(sockets)} 个于 codex-blender 临时目录，可能是上次会话未收尾")
+        lines.append(f"残留 socket: {len(sockets)} 个于 blender-design 临时目录，可能是上次会话未收尾")
 
     # Consume stdin if present so the writer never sees EPIPE; payload unused.
     try:

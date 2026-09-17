@@ -1,12 +1,12 @@
-# Codex Blender 插件架构
+# Blender Design 插件架构
 
 > **文档信息**
 >
 > | 字段 | 值 |
 > |---|---|
-> | 状态 | `codex-blender` `0.3.0` 的已交付架构 |
+> | 状态 | `blender-design` `0.3.0` 的已交付架构 |
 > | 取代 | 面向即梦上传器的旧架构，归档于 `docs/archive/legacy-uploader/` |
-> | 权威设计记录 | [Codex Blender Harness Design](superpowers/specs/2026-09-12-codex-blender-harness-design.md) |
+> | 权威设计记录 | [Blender Design Harness Design](superpowers/specs/2026-09-12-blender-design-harness-design.md) |
 > | 运行证据 | [harness-runtime.md](verification/harness-runtime.md) |
 > | 最近一次结构修订 | 2026-09-14 |
 
@@ -29,7 +29,7 @@ Codex 已经能用语言描述场景。它做不到的是把描述可靠地变�
 
 ## 3. 范围与非目标
 
-`codex-blender` 负责：发现 Blender 并创建或接入会话；场景、对象、修改器、材质、相机、灯光、动画、预览、保存与导出操作；里程碑截图与评审检查点；事务快照、回滚、修订控制与审计记录；以及承载大小、`SHA-256`、参数与校验状态的结构化产物回执。
+`blender-design` 负责：发现 Blender 并创建或接入会话；场景、对象、修改器、材质、相机、灯光、动画、预览、保存与导出操作；里程碑截图与评审检查点；事务快照、回滚、修订控制与审计记录；以及承载大小、`SHA-256`、参数与校验状态的结构化产物回执。
 
 它不负责 Dreamina 登录、报价、批准、提交、轮询、付费生成或最终产物下载。这些属于 `codex-dreamina-3d` 及其配套设计插件。任何 Blender 导出都不隐含交接、上传、认证、报价或付费动作。
 

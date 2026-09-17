@@ -50,7 +50,7 @@ class TestConnectorPackage(unittest.TestCase):
         panel = (Path(__file__).resolve().parents[1] /
                  "connector/codex_blender_connector/panel.py").read_text(encoding="utf-8")
         self.assertIn('bl_label = "Start MCP Server"', panel)
-        self.assertIn('bl_label = "Codex Blender MCP"', panel)
+        self.assertIn('bl_label = "Blender Design MCP"', panel)
         self.assertNotIn('bl_label = "Start Connector"', panel)
 
     def test_package_contains_addon_and_shared_harness(self):

@@ -24,7 +24,7 @@ def _endpoint(descriptor):
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Send a JSON command to Codex Blender Harness")
+    parser = argparse.ArgumentParser(description="Send a JSON command to Blender Design Harness")
     parser.add_argument("--descriptor", required=True)
     parser.add_argument("--request", required=True, help="request JSON file")
     args = parser.parse_args(argv)

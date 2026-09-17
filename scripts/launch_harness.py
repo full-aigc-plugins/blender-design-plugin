@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch a non-invasive Codex Blender managed session."""
+"""Launch a non-invasive Blender Design managed session."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def main(argv=None) -> int:
             raise ValueError("--project must be an existing non-symlink file")
         output_root = Path(args.output_root).resolve()
         output_root.mkdir(parents=True, exist_ok=True)
-        runtime_dir = Path(args.runtime_dir).resolve() if args.runtime_dir else Path(tempfile.gettempdir()) / "codex-blender"
+        runtime_dir = Path(args.runtime_dir).resolve() if args.runtime_dir else Path(tempfile.gettempdir()) / "blender-design"
         policy_data = {"mode": args.execution_mode, "approvedOutputRoot": str(output_root),
                        "allowDesignedProxies": args.allow_designed_proxies}
         if args.export_format is not None:

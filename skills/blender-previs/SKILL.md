@@ -19,12 +19,12 @@ have no costume, texture, or limb articulation by design.
 - An existing previs shot is rejected and must be re-blocked without touching the others.
 
 Do not use this Skill for lookdev, final renders, or character performance. Route those
-to `codex-blender-render-compositing` and `codex-blender-character-animation`.
+to `blender-design-render-compositing` and `blender-design-character-animation`.
 
 ## Workflow
 
 1. **Read status first.** Call `blender_connection_status`. With no guarded Harness
-   session connected, route to `codex-blender-mcp-setup`; never assume Blender exists
+   session connected, route to `blender-design-mcp-setup`; never assume Blender exists
    because this Skill was loaded.
 2. **Fix the shot table.** Accept a structured shot table conforming to
    [previs-shot-table.schema.json](references/previs-shot-table.schema.json), or derive
@@ -44,16 +44,16 @@ to `codex-blender-render-compositing` and `codex-blender-character-animation`.
    segments and drag a tracked subject off-center. Limb articulation, facial
    performance, and physics are intentionally absent; say so in the deliverable
    instead of approximating them.
-5. **Camera per shot.** Follow `codex-blender-cinematography` for placement, lens
+5. **Camera per shot.** Follow `blender-design-cinematography` for placement, lens
    intent, and moves. A search/POV shot aims at what the character is looking for —
    key the tracking target onto the subject being found, not at empty space. Cuts
    are hard frame-range boundaries from the shot table; add a transition only when
    the table explicitly requests one.
 6. **Render cheap, per shot.** Render each shot as its own frame-range job
    (`job.submit` with `RENDER_ANIMATION_FRAMES`, Workbench or low-sample EEVEE) so a
-   rejected shot re-renders alone. Via `codex-blender-background-jobs`.
+   rejected shot re-renders alone. Via `blender-design-background-jobs`.
 7. **Stitch with exact cut frames.** Assemble the per-shot clips in the sequencer
-   (`COMPOSE_VIDEO`, via `codex-blender-sequence-editing`) and verify the composited
+   (`COMPOSE_VIDEO`, via `blender-design-sequence-editing`) and verify the composited
    duration equals the shot-table total in integer frames.
 8. **Deliver the previs package:** the previs video, the shot table, the geometry-to-role
    map, and the downstream handoff prompt drafted from

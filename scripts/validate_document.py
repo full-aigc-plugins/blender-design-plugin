@@ -1,4 +1,4 @@
-"""Minimal JSON Schema validator for codex-blender receipt schemas.
+"""Minimal JSON Schema validator for blender-design receipt schemas.
 
 Uses only the Python standard library. Supports:
   - type checks (string, integer, number, boolean, array, object, null)

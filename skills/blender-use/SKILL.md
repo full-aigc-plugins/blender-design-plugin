@@ -3,31 +3,31 @@ name: blender-use
 description: "Route requests to managed or Connector Blender workflows when a user wants Codex to create, modify, review, save, or export a Blender design."
 ---
 
-# Codex Blender Router
+# Blender Design Router
 
 Use this as the entry point. Route new or Codex-launched sessions to `blender-managed`,
 already-open Blender windows to `blender-connector`, design work to
-`codex-blender-design`, read-only questions to `codex-blender-inspect`, visual evidence to
-`codex-blender-preview`, approved outputs to `codex-blender-export`, and failures to
+`blender-design-design`, read-only questions to `blender-design-inspect`, visual evidence to
+`blender-design-preview`, approved outputs to `blender-design-export`, and failures to
 `blender-recover`.
 
 On first use, call `blender_connection_status`. If no guarded Harness session is connected, route to
-`codex-blender-mcp-setup` and call `blender_getting_started`; do not assume that Blender, the trusted
+`blender-design-mcp-setup` and call `blender_getting_started`; do not assume that Blender, the trusted
 Add-on, or a session exists merely because this Skill was loaded.
 
 After the implementation brief, load only the required domain Skills:
 
-- scene organization and approved imports → `codex-blender-scene-assembly`
-- mesh/product work → `codex-blender-hard-surface`; curves → `codex-blender-curves`
-- UV/material work → `codex-blender-uv-material`; procedural nodes → `codex-blender-procedural-modeling`
-- rigs → `codex-blender-character-rigging`; animation → `codex-blender-character-animation`
-- camera work → `codex-blender-cinematography`; acceptance measurements → `codex-blender-quality-validation`
-- sculpt, hair, or simulation → `codex-blender-sculpt-surface`, `codex-blender-hair`, or `codex-blender-simulation`
-- rendering/compositing → `codex-blender-render-compositing`
+- scene organization and approved imports → `blender-design-scene-assembly`
+- mesh/product work → `blender-design-hard-surface`; curves → `blender-design-curves`
+- UV/material work → `blender-design-uv-material`; procedural nodes → `blender-design-procedural-modeling`
+- rigs → `blender-design-character-rigging`; animation → `blender-design-character-animation`
+- camera work → `blender-design-cinematography`; acceptance measurements → `blender-design-quality-validation`
+- sculpt, hair, or simulation → `blender-design-sculpt-surface`, `blender-design-hair`, or `blender-design-simulation`
+- rendering/compositing → `blender-design-render-compositing`
 - shot-list blocking or timing previews, or a white-model reference video for
   downstream video generation → `blender-previs`
-- Grease Pencil, tracking, or VSE → `codex-blender-grease-pencil`, `codex-blender-tracking`, or `codex-blender-sequence-editing`
-- `job.*` → `codex-blender-background-jobs`; add render-compositing for EXPORT, RENDER_STILL, or RENDER_ANIMATION_FRAMES; add sequence-editing for COMPOSE_VIDEO; add simulation for BAKE_POINT_CACHES
+- Grease Pencil, tracking, or VSE → `blender-design-grease-pencil`, `blender-design-tracking`, or `blender-design-sequence-editing`
+- `job.*` → `blender-design-background-jobs`; add render-compositing for EXPORT, RENDER_STILL, or RENDER_ANIMATION_FRAMES; add sequence-editing for COMPOSE_VIDEO; add simulation for BAKE_POINT_CACHES
 
 For multi-domain or conditional requests, read the maintained [Skill routing reference](references/skill-routing.md).
 
@@ -84,7 +84,7 @@ Downstream AI rendering platforms are outside this plugin's responsibility.
 
 After the Blender artifact is ready, choose exactly one explicit route:
 
-- `preview_only`: use `codex-blender-preview` or the receipt adapter and stop
+- `preview_only`: use `blender-design-preview` or the receipt adapter and stop
   with a verified local file.
 - `jimeng_web`: use `blender-to-dreamina` against an already enabled
   official uploader in the foreground Connector session; stop at

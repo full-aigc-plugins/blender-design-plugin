@@ -1,6 +1,6 @@
 # Privacy
 
-Codex Blender is a local Codex plugin. It does not include telemetry, advertising, or a hosted
+Blender Design is a local Codex plugin. It does not include telemetry, advertising, or a hosted
 data service of its own.
 
 ## Local processing

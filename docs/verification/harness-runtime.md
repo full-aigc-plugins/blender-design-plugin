@@ -1,4 +1,4 @@
-# Codex Blender Harness Runtime Verification
+# Blender Design Harness Runtime Verification
 
 **Date:** 2026-09-12  
 **Platform:** macOS Apple Silicon  

@@ -60,7 +60,7 @@ reference-video input.
 ## Scope notes for this repository
 
 - The feature parity target for the Codex integration is the **Blender** surface. The Maya
-  add-on is described here for context only; `codex-blender` is Blender-scoped and the plan
+  add-on is described here for context only; `blender-design` is Blender-scoped and the plan
   claims no Maya support.
 - Where the manual says "click 渲染 in the local-upload flow", the underlying behaviour is that
   a non-MP4 local file is converted before it can be uploaded; the render step in that flow is

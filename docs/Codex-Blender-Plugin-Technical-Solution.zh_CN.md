@@ -1,10 +1,10 @@
-# Codex Blender 插件技术方案
+# Blender Design 插件技术方案
 
 > **文档信息**
 >
 > | 字段 | 值 |
 > |---|---|
-> | 状态 | `codex-blender` `0.3.0` 已实现；Windows 运行门禁记为 `NOT RUN` |
+> | 状态 | `blender-design` `0.3.0` 已实现；Windows 运行门禁记为 `NOT RUN` |
 > | 范围 | 技术选型、契约、配置优先级、错误模型、测试与发布规则 |
 > | 读者 | 扩展或评审本插件的实现者 |
 > | 运行证据 | [harness-runtime.md](verification/harness-runtime.md) |
@@ -62,7 +62,7 @@ schemas/video_artifact_receipt.schema.json
 ## 4. 目录结构
 
 ```text
-.codex-plugin/plugin.json     plugin manifest (id codex-blender)
+.codex-plugin/plugin.json     plugin manifest (id blender-design)
 bin/                          executable adapters consumed by sibling plugins
 connector/codex_blender_connector/   the Connector Add-on
 docs/                         architecture, technical solution, verification evidence

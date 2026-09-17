@@ -1,10 +1,10 @@
-# Codex Blender Plugin Technical Solution
+# Blender Design Plugin Technical Solution
 
 > **Document control**
 >
 > | Field | Value |
 > |---|---|
-> | Status | Implemented for `codex-blender` `0.3.0`; Windows runtime gates recorded `NOT RUN` |
+> | Status | Implemented for `blender-design` `0.3.0`; Windows runtime gates recorded `NOT RUN` |
 > | Scope | Technology choices, contracts, configuration precedence, error model, tests, and release rules |
 > | Audience | Implementers extending or reviewing this plugin |
 > | Runtime evidence | [harness-runtime.md](verification/harness-runtime.md) |
@@ -62,7 +62,7 @@ schemas/video_artifact_receipt.schema.json
 ## 4. Directory layout
 
 ```text
-.codex-plugin/plugin.json     plugin manifest (id codex-blender)
+.codex-plugin/plugin.json     plugin manifest (id blender-design)
 bin/                          executable adapters consumed by sibling plugins
 connector/codex_blender_connector/   the Connector Add-on
 docs/                         architecture, technical solution, verification evidence

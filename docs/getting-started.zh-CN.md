@@ -1,4 +1,4 @@
-# Codex Blender 安装与使用
+# Blender Design 安装与使用
 
 <p align="center"><img src="../assets/logo.png" alt="PartMe Blender" width="120"></p>
 
@@ -19,7 +19,7 @@ macOS 默认路径：
 
 ```bash
 codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
-codex plugin add codex-blender@partme-ai-blender
+codex plugin add blender-design@partme-ai-blender
 codex plugin list --available --json
 ```
 
@@ -78,7 +78,7 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 
 这里的可信插件名称是 **PartMe Blender MCP**。不要把另行安装的社区插件
 **MCP for Blender** 当作本插件已经连接；本插件只连接带私有描述符、会话令牌、事务和恢复
-能力的 Codex Blender Harness。
+能力的 Blender Design Harness。
 
 ### 1. 打开偏好设置
 
@@ -90,7 +90,7 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 
 选择 **Add-ons → Install from Disk**，安装发行包中的 `partme-blender-mcp-addon-0.1.1.zip`，然后
 启用 **PartMe Blender MCP**。下图展示 Add-on 的启用位置；截图里的社区插件名称仅用于
-说明界面位置，不代表应当启用它作为 Codex Blender 连接器。
+说明界面位置，不代表应当启用它作为 Blender Design 连接器。
 
 ![在 Blender Add-ons 中启用插件](../assets/getting-started/blender-enable-mcp-addon.png)
 

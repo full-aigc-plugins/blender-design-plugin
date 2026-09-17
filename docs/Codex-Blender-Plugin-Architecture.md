@@ -1,12 +1,12 @@
-# Codex Blender Plugin Architecture
+# Blender Design Plugin Architecture
 
 > **Document control**
 >
 > | Field | Value |
 > |---|---|
-> | Status | Delivered architecture for `codex-blender` `0.3.0` |
+> | Status | Delivered architecture for `blender-design` `0.3.0` |
 > | Supersedes | The Jimeng-uploader-oriented architecture, archived under `docs/archive/legacy-uploader/` |
-> | Authoritative design record | [Codex Blender Harness Design](superpowers/specs/2026-09-12-codex-blender-harness-design.md) |
+> | Authoritative design record | [Blender Design Harness Design](superpowers/specs/2026-09-12-blender-design-harness-design.md) |
 > | Runtime evidence | [harness-runtime.md](verification/harness-runtime.md) |
 > | Last structural revision | 2026-09-14 |
 
@@ -29,7 +29,7 @@ The failure modes that drove this architecture were: an agent mutating a user's 
 
 ## 3. Scope and non-goals
 
-`codex-blender` owns Blender discovery and session creation or attachment; scene, object, modifier, material, camera, light, animation, preview, save, and export operations; milestone screenshots and review checkpoints; transaction snapshots, rollback, revision control, and audit records; and structured artifact receipts carrying size, `SHA-256`, parameters, and validation status.
+`blender-design` owns Blender discovery and session creation or attachment; scene, object, modifier, material, camera, light, animation, preview, save, and export operations; milestone screenshots and review checkpoints; transaction snapshots, rollback, revision control, and audit records; and structured artifact receipts carrying size, `SHA-256`, parameters, and validation status.
 
 It does not own Dreamina login, quotation, approval, submission, polling, paid generation, or final Dreamina artifact download. Those belong to `codex-dreamina-3d` and its companion design plugin. No Blender export implies a handoff, an upload, an authentication step, a quotation, or a paid action.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the codex-blender plugin distribution.
+"""Validate the blender-design plugin distribution.
 
 This validator is the union of two complementary sets of checks.
 
@@ -57,8 +57,7 @@ REQUIRED_FILES = (
 )
 REQUIRED_DIRECTORIES = ("assets", "bin", "skills", "schemas", "scripts", "tests", "vendor")
 EXPECTED_ASSETS = {
-    "assets/logo.png": (1024, 1024, 6),
-    "assets/logo-dark.png": (1024, 1024, 6),
+    "assets/official-logo.png": (2049, 550, 6),
     "assets/composer-icon.png": (256, 256, 6),
 }
 REQUIRED_INTERFACE_FIELDS = (
@@ -417,8 +416,8 @@ def validate(root: Path) -> list[str]:
     plugin_id = manifest.get("name", "")
 
     # -- project policy: identity, version, plugin-owned MCP --
-    if NAME_PATTERN.fullmatch(plugin_id) is None or not plugin_id.startswith("codex-"):
-        errors.append("manifest name must be a codex-prefixed kebab-case identifier")
+    if NAME_PATTERN.fullmatch(plugin_id) is None:
+        errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
             "release version must be 0.3.0, optionally with a +build cachebuster"
@@ -440,7 +439,7 @@ def validate(root: Path) -> list[str]:
             errors.append(".mcp.json is not valid JSON")
         else:
             if mcp != EXPECTED_MCP:
-                errors.append("Codex Blender must launch the pinned PartMe Blender MCP stdio adapter")
+                errors.append("Blender Design must launch the pinned PartMe Blender MCP stdio adapter")
     if not (root / "scripts" / "blender_mcp_server.py").is_file():
         errors.append("plugin-owned MCP stdio entrypoint is missing")
     _validate_partme_runtime(root, errors)

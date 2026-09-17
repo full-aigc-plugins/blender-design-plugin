@@ -12,12 +12,12 @@ class TestEndpointSelection(unittest.TestCase):
     def test_macos_prefers_unix_socket(self):
         endpoint = choose_endpoint("darwin", session_id="s1", runtime_dir="/tmp/runtime")
         self.assertEqual(endpoint.kind, "unix")
-        self.assertTrue(endpoint.address.endswith("codex-blender-s1.sock"))
+        self.assertTrue(endpoint.address.endswith("blender-design-s1.sock"))
 
     def test_windows_prefers_named_pipe(self):
         endpoint = choose_endpoint("win32", session_id="s1", runtime_dir="ignored")
         self.assertEqual(endpoint.kind, "pipe")
-        self.assertEqual(endpoint.address, r"\\.\pipe\codex-blender-s1")
+        self.assertEqual(endpoint.address, r"\\.\pipe\blender-design-s1")
 
 
 class TestJsonLineServer(unittest.TestCase):
@@ -49,7 +49,7 @@ class TestJsonLineServer(unittest.TestCase):
 @unittest.skipUnless(sys.platform == 'win32','requires Windows named pipes')
 class TestWindowsNamedPipe(unittest.TestCase):
     def test_authenticated_named_pipe_round_trip(self):
-        endpoint=Endpoint('pipe',rf'\\.\pipe\codex-blender-test-{uuid.uuid4().hex}')
+        endpoint=Endpoint('pipe',rf'\\.\pipe\blender-design-test-{uuid.uuid4().hex}')
         server=JsonLineServer(endpoint,token='secret',handle=lambda payload:{'echo':payload['value']})
         server.start()
         try:self.assertEqual(send_request(endpoint,'secret',{'value':42}),{'echo':42})

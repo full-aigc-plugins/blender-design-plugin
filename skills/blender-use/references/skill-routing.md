@@ -4,7 +4,7 @@ Read this only when a request spans multiple Blender domains or when a command a
 
 ## Naming rule
 
-Every Skill uses `codex-blender-<clear-action-or-domain>`, lowercase ASCII and hyphens. The folder and frontmatter name must match. Lifecycle names (`use`, `managed`, `connector`, `inspect`, `preview`, `export`, `recover`) follow the same convention used by the Codex Maya and Dreamina 3D plugins.
+Every Skill uses `blender-design-<clear-action-or-domain>`, lowercase ASCII and hyphens. The folder and frontmatter name must match. Lifecycle names (`use`, `managed`, `connector`, `inspect`, `preview`, `export`, `recover`) follow the same convention used by the Codex Maya and Dreamina 3D plugins.
 
 ## Routing matrix
 

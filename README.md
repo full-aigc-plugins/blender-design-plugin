@@ -1,4 +1,4 @@
-# Codex Blender Plugin
+# Blender Design Plugin
 
 <p align="center">
   <img src="assets/banner.webp" alt="Blender × Coding Agents — Turn ideas into editable 3D scenes. Supports Codex, Kimi, ZCode, and more." width="100%">
@@ -18,7 +18,7 @@
 
 ## Positioning
 
-`codex-blender` lets Codex drive a real Blender session through a guarded local Harness. Instead of returning a disposable image, it builds editable scene objects, materials, lights, cameras, animation, checkpoints, previews, and export receipts that you keep.
+`blender-design` lets Codex drive a real Blender session through a guarded local Harness. Instead of returning a disposable image, it builds editable scene objects, materials, lights, cameras, animation, checkpoints, previews, and export receipts that you keep.
 
 The Harness is a closed, structured-command surface: arbitrary Python is disabled by default, Blender data mutates only on the main thread, and every irreversible action needs an action-bound authorization token.
 
@@ -45,7 +45,7 @@ Idea / references / action timeline
       │
       ▼
 ┌──────────────────────────────────────────────────────────┐
-│ codex-blender                                            │
+│ blender-design                                            │
 │  ① plan     executable design + safety policy            │
 │  ② connect  managed launch, or Connector Add-on          │
 │  ③ build    structured commands on the Blender main thread│
@@ -59,7 +59,7 @@ Editable Blender scene + verified local exports
 
 | Property | Value |
 |---|---|
-| Plugin ID | `codex-blender` |
+| Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
 | Current version | `0.3.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
@@ -171,7 +171,7 @@ does not replace the PartMe guarded Harness connection.
 
 ```bash
 codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
-codex plugin add codex-blender@partme-ai-blender
+codex plugin add blender-design@partme-ai-blender
 ```
 
 ### 3. Connect an open Blender window (one-time setup)
@@ -200,7 +200,7 @@ codex plugin list
 Expected entry:
 
 ```text
-codex-blender@partme-ai-blender  installed, enabled
+blender-design@partme-ai-blender  installed, enabled
 ```
 
 Then ask Codex to start managed mode and list capabilities. Running-session truth comes from the Harness itself:
@@ -411,8 +411,8 @@ partme-blender-plugin/
 - [Architecture](docs/Codex-Blender-Plugin-Architecture.md) · [架构文档](docs/Codex-Blender-Plugin-Architecture.zh_CN.md)
 - [Technical solution](docs/Codex-Blender-Plugin-Technical-Solution.md) · [技术方案](docs/Codex-Blender-Plugin-Technical-Solution.zh_CN.md)
 - [Getting started (中文)](docs/getting-started.zh-CN.md)
-- [Harness design](docs/superpowers/specs/2026-09-12-codex-blender-harness-design.md)
-- [Implementation plan](docs/superpowers/plans/2026-09-12-codex-blender-harness-implementation.md)
+- [Harness design](docs/superpowers/specs/2026-09-12-blender-design-harness-design.md)
+- [Implementation plan](docs/superpowers/plans/2026-09-12-blender-design-harness-implementation.md)
 - [Runtime evidence](docs/verification/harness-runtime.md)
 
 ## Contributing and support

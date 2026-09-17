@@ -1,6 +1,6 @@
 # Skill routing TRACE review
 
-Scope: 26 distributed Codex Blender Skills after precise-routing remediation. This evaluates the plugin Skill system and each changed Skill's trigger/safety text; it does not substitute for Blender runtime evidence.
+Scope: 26 distributed Blender Design Skills after precise-routing remediation. This evaluates the plugin Skill system and each changed Skill's trigger/safety text; it does not substitute for Blender runtime evidence.
 
 ## T — Trust
 

@@ -20,9 +20,9 @@ class Endpoint:
 def choose_endpoint(platform: str, *, session_id: str, runtime_dir: str) -> Endpoint:
     safe_id = "".join(character for character in session_id if character.isalnum() or character in "-_")
     if platform == "win32":
-        return Endpoint("pipe", rf"\\.\pipe\codex-blender-{safe_id}")
+        return Endpoint("pipe", rf"\\.\pipe\blender-design-{safe_id}")
     if platform == "darwin":
-        return Endpoint("unix", str(Path(runtime_dir) / f"codex-blender-{safe_id}.sock"))
+        return Endpoint("unix", str(Path(runtime_dir) / f"blender-design-{safe_id}.sock"))
     return Endpoint("tcp", ("127.0.0.1", 0))
 
 
@@ -91,12 +91,12 @@ class JsonLineServer:
         elif self.endpoint.kind == "pipe":
             from multiprocessing.connection import Listener
             self._pipe_listener = Listener(str(self.endpoint.address), family="AF_PIPE", authkey=self._token.encode("utf-8"))
-            self._thread = threading.Thread(target=self._serve_pipe, name="codex-blender-pipe", daemon=True)
+            self._thread = threading.Thread(target=self._serve_pipe, name="blender-design-pipe", daemon=True)
             self._thread.start()
             return self.endpoint
         else:
             raise ValueError(f"unknown transport kind: {self.endpoint.kind}")
-        self._thread = threading.Thread(target=self._server.serve_forever, name="codex-blender-transport", daemon=True)
+        self._thread = threading.Thread(target=self._server.serve_forever, name="blender-design-transport", daemon=True)
         self._thread.start()
         return self.endpoint
 

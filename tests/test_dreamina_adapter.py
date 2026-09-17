@@ -22,7 +22,7 @@ class TestPreviewHandoffReceipt(unittest.TestCase):
         }
         media = {"codec": "h264", "width": 1280, "height": 720, "fps": 24.0, "duration_seconds": 2.0}
         receipt = build_preview_receipt(artifact, request, media)
-        self.assertEqual(receipt["producer_plugin"], "codex-blender")
+        self.assertEqual(receipt["producer_plugin"], "blender-design")
         self.assertEqual(receipt["artifact_id"], "blender_preview_1")
         self.assertEqual(receipt["dimensions"], {"width": 1280, "height": 720})
         self.assertEqual(receipt["restoration"]["status"], "confirmed")

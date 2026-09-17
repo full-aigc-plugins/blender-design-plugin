@@ -24,7 +24,7 @@ def start(bpy_module, *, session_id: str | None = None, runtime_dir: Path | None
     if _CURRENT is not None and not getattr(_CURRENT, "closed", False):
         return _CURRENT
     session_id = session_id or "connector-" + secrets.token_hex(8)
-    runtime_dir = Path(runtime_dir or os.environ.get("CODEX_BLENDER_RUNTIME_DIR") or (Path(tempfile.gettempdir()) / "codex-blender"))
+    runtime_dir = Path(runtime_dir or os.environ.get("CODEX_BLENDER_RUNTIME_DIR") or (Path(tempfile.gettempdir()) / "blender-design"))
     function = start_function or _default_start_function()
     _CURRENT = function(
         bpy_module,

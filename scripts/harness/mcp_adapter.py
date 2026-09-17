@@ -1,4 +1,4 @@
-"""Plugin-owned MCP adapter for the guarded Codex Blender Harness."""
+"""Plugin-owned MCP adapter for the guarded Blender Design Harness."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def _static_registry():
     return build_registry(
         bpy_metadata,
         runtime_mode="connector",
-        approved_output_root=Path(tempfile.gettempdir()) / "codex-blender-mcp-catalog",
+        approved_output_root=Path(tempfile.gettempdir()) / "blender-design-mcp-catalog",
     )
 
 
@@ -69,7 +69,7 @@ def _command_tool(registry, capability: dict) -> dict:
         schema["required"] = required
     schema["additionalProperties"] = False
     requirements = detail.get("context", {}).get("requirements", [])
-    description = f"Codex Blender Harness command `{command}`. Risk: {capability['risk']}; maturity: {detail['maturity']}."
+    description = f"Blender Design Harness command `{command}`. Risk: {capability['risk']}; maturity: {detail['maturity']}."
     if requirements:
         description += " Requirements: " + "; ".join(requirements)
     return {
@@ -95,7 +95,7 @@ def build_tool_catalog(*, registry=None, plugin_root: Path | None = None) -> lis
         {
             "name": "blender_getting_started",
             "title": "Install and connect Blender",
-            "description": "Show the official Blender download and illustrated Codex Blender MCP setup guide.",
+            "description": "Show the official Blender download and illustrated Blender Design MCP setup guide.",
             "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
             "outputSchema": {"type": "object"},
             "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
@@ -186,7 +186,7 @@ class DescriptorBridge:
         try:
             stat = path.stat()
         except FileNotFoundError as error:
-            raise McpAdapterError("BLENDER_NOT_CONNECTED", "No active Codex Blender Harness session") from error
+            raise McpAdapterError("BLENDER_NOT_CONNECTED", "No active Blender Design Harness session") from error
         if os.name != "nt" and stat.st_mode & 0o077:
             raise McpAdapterError("UNSAFE_DESCRIPTOR", "Harness descriptor permissions are not private")
         try:
@@ -241,7 +241,7 @@ def discover_bridge(runtime_dir: Path | None = None) -> DescriptorBridge:
     if explicit:
         return DescriptorBridge(descriptor_path=Path(explicit))
     root = Path(runtime_dir or os.environ.get("CODEX_BLENDER_RUNTIME_DIR") or
-                (Path(tempfile.gettempdir()) / "codex-blender"))
+                (Path(tempfile.gettempdir()) / "blender-design"))
     live = []
     for path in sorted(root.glob("*.json")) if root.is_dir() else []:
         bridge = DescriptorBridge(descriptor_path=path)
@@ -251,7 +251,7 @@ def discover_bridge(runtime_dir: Path | None = None) -> DescriptorBridge:
         except McpAdapterError:
             continue
     if not live:
-        raise McpAdapterError("BLENDER_NOT_CONNECTED", "No active Codex Blender Harness session")
+        raise McpAdapterError("BLENDER_NOT_CONNECTED", "No active Blender Design Harness session")
     if len(live) != 1:
         raise McpAdapterError("AMBIGUOUS_SESSION", "Multiple Blender sessions are active; set CODEX_BLENDER_DESCRIPTOR")
     return live[0]
@@ -393,7 +393,7 @@ def serve_stdio(input_stream=None, output_stream=None, adapter: McpAdapter | Non
                 result = {
                     "protocolVersion": MCP_PROTOCOL_VERSION,
                     "capabilities": {"tools": {"listChanged": False}},
-                    "serverInfo": {"name": "codex-blender", "title": "Codex Blender", "version": "0.3.0"},
+                    "serverInfo": {"name": "codex-blender", "title": "Blender Design", "version": "0.3.0"},
                 }
             elif method == "ping":
                 result = {}

@@ -1,12 +1,12 @@
 """Optional Connector Add-on for attaching Codex to an open Blender session."""
 
 bl_info = {
-    "name": "Codex Blender Connector",
+    "name": "Blender Design Connector",
     "author": "PartMe.AI",
     "version": (0, 3, 0),
     "blender": (4, 2, 0),
     "location": "3D View > Sidebar > Codex > Start MCP Server",
-    "description": "Expose the guarded Codex Blender Harness through the plugin-owned MCP adapter",
+    "description": "Expose the guarded Blender Design Harness through the plugin-owned MCP adapter",
     "category": "Interface",
 }
 

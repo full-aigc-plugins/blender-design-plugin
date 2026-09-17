@@ -1,4 +1,4 @@
-# Codex Blender 插件
+# Blender Design 插件
 
 <p align="center">
   <img src="assets/banner.webp" alt="Blender × Coding Agents — 把想法变成可编辑的 3D 场景；支持 Codex、Kimi、ZCode 等多个平台" width="100%">
@@ -18,7 +18,7 @@
 
 ## 项目定位
 
-`codex-blender` 让 Codex 通过一个受约束的本地 Harness 驱动真实的 Blender 会话。它不返回一次性图片，而是构建可编辑的场景对象、材质、灯光、相机、动画、检查点、预览和导出回执，全部由你保留。
+`blender-design` 让 Codex 通过一个受约束的本地 Harness 驱动真实的 Blender 会话。它不返回一次性图片，而是构建可编辑的场景对象、材质、灯光、相机、动画、检查点、预览和导出回执，全部由你保留。
 
 Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数据只在主线程修改，且每个不可逆操作都需要动作绑定的授权令牌。
 
@@ -45,7 +45,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
       │
       ▼
 ┌──────────────────────────────────────────────────────────┐
-│ codex-blender                                            │
+│ blender-design                                            │
 │  ① plan     可执行设计与安全策略                         │
 │  ② connect  非侵入启动，或 Connector Add-on              │
 │  ③ build    在 Blender 主线程执行结构化命令              │
@@ -59,7 +59,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 
 | 项目属性 | 值 |
 |---|---|
-| 插件 ID | `codex-blender` |
+| 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
 | 当前版本 | `0.3.0` |
 | 插件清单 | `.codex-plugin/plugin.json` |
@@ -171,7 +171,7 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 
 ```bash
 codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
-codex plugin add codex-blender@partme-ai-blender
+codex plugin add blender-design@partme-ai-blender
 ```
 
 ### 3. 连接已打开的 Blender（一次性设置）
@@ -199,7 +199,7 @@ codex plugin list
 预期条目：
 
 ```text
-codex-blender@partme-ai-blender  installed, enabled
+blender-design@partme-ai-blender  installed, enabled
 ```
 
 然后让 Codex 以非侵入模式启动并列出能力。运行时事实以 Harness 本身为准：
@@ -365,8 +365,8 @@ partme-blender-plugin/
 - [Architecture](docs/Codex-Blender-Plugin-Architecture.md) · [架构文档](docs/Codex-Blender-Plugin-Architecture.zh_CN.md)
 - [Technical solution](docs/Codex-Blender-Plugin-Technical-Solution.md) · [技术方案](docs/Codex-Blender-Plugin-Technical-Solution.zh_CN.md)
 - [安装与使用（中文）](docs/getting-started.zh-CN.md)
-- [Harness 设计规格](docs/superpowers/specs/2026-09-12-codex-blender-harness-design.md)
-- [实施计划](docs/superpowers/plans/2026-09-12-codex-blender-harness-implementation.md)
+- [Harness 设计规格](docs/superpowers/specs/2026-09-12-blender-design-harness-design.md)
+- [实施计划](docs/superpowers/plans/2026-09-12-blender-design-harness-implementation.md)
 - [运行证据](docs/verification/harness-runtime.md)
 
 ## 贡献与支持

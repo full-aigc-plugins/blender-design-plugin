@@ -1,6 +1,6 @@
 ---
 name: blender-harness-driving
-description: "Drive the Codex Blender Harness from a shell client: launch a session, dispatch the closed request contract, keep the sceneRevision chain coherent, sign action-bound authorizations for gated commands, and verify exported artifacts independently."
+description: "Drive the Blender Design Harness from a shell client: launch a session, dispatch the closed request contract, keep the sceneRevision chain coherent, sign action-bound authorizations for gated commands, and verify exported artifacts independently."
 ---
 
 # Driving the Harness
@@ -62,7 +62,7 @@ Keys are whitelisted per format and an unknown key is `INVALID_ARGUMENT`:
 There is no `export_cameras` or `export_lights` and no object-type filter, so a mesh-only model
 requires temporarily setting studio lights and cameras invisible, exporting with
 `use_visible`, then restoring them. Keep the `.blend` exported separately: a project file carries
-the studio rig, a GLB or FBX should not. See [export](../codex-blender-export/SKILL.md).
+the studio rig, a GLB or FBX should not. See [export](../blender-design-export/SKILL.md).
 
 ## Verify what you ship
 
@@ -86,5 +86,5 @@ Normalise scene scale to real units before lighting; a part built as 90 Blender 
 operation produces a defect, preserve the broken object as a hidden `*_DEFECTIVE` record in a
 `QA_Verify` collection, rebuild the part, and let the export omit it.
 
-For long or high-quality renders, use [background jobs](../codex-blender-background-jobs/SKILL.md);
+For long or high-quality renders, use [background jobs](../blender-design-background-jobs/SKILL.md);
 the synchronous `preview.capture` path is EEVEE-bound and client-timeout-bound.

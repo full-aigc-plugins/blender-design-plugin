@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Stop hook: remind about unfinished Blender work before the turn ends.
 
-Advisory only — always exits 0, prints only when live codex-blender state
-(active sockets / checkpoints) is found under $TMPDIR/codex-blender.
+Advisory only — always exits 0, prints only when live blender-design state
+(active sockets / checkpoints) is found under $TMPDIR/blender-design.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ STATE_PATTERNS = ("*.sock", "*.socket", "*checkpoint*")
 
 
 def live_state() -> list[str]:
-    base = Path(os.environ.get("TMPDIR", "/tmp")) / "codex-blender"
+    base = Path(os.environ.get("TMPDIR", "/tmp")) / "blender-design"
     if not base.is_dir():
         return []
     hits: list[str] = []
@@ -27,7 +27,7 @@ def main() -> int:
     hits = live_state()
     if hits:
         print(
-            f"提醒：codex-blender 仍有 {len(hits)} 项活跃状态（socket/checkpoint），"
+            f"提醒：blender-design 仍有 {len(hits)} 项活跃状态（socket/checkpoint），"
             "确认后台作业已收尾、事务已提交或回滚后再结束本轮。"
         )
     try:
