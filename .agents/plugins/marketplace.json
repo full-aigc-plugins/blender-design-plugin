@@ -8,7 +8,7 @@
       "name": "blender-design",
       "source": {
         "source": "url",
-        "url": "https://github.com/partme-ai/partme-blender-plugin.git",
+        "url": "https://atomgit.com/partme-ai/partme-blender-plugin.git",
         "ref": "main"
       },
       "policy": {
@@ -18,11 +18,11 @@
       "category": "Creativity",
       "version": "0.3.0",
       "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
-      "icon": "https://raw.githubusercontent.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png",
+      "icon": "https://atomgit.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png",
       "interface": {
         "displayName": "Blender Design",
         "shortDescription": "Design, review, and export Blender projects",
-        "logo": "https://raw.githubusercontent.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png"
+        "logo": "https://atomgit.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png"
       }
     }
   ]
