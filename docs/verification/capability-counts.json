@@ -3,8 +3,8 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 164,
-      "L1": 7,
+      "total": 165,
+      "L1": 8,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -50,7 +50,7 @@
       ]
     },
     "skills": {
-      "onDisk": 31,
+      "onDisk": 32,
       "referenced": 23,
       "referencedNames": [
         "blender-background-jobs",
@@ -90,6 +90,7 @@
       "animation.set_frame_range",
       "animation.shape_key_add",
       "animation.shape_key_keyframe",
+      "asset.fetch_url",
       "asset.import_file",
       "asset.library",
       "asset.make_paths_relative",
@@ -248,8 +249,8 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 169,
-      "L1": 12,
+      "total": 170,
+      "L1": 13,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -296,7 +297,7 @@
       ]
     },
     "skills": {
-      "onDisk": 31,
+      "onDisk": 32,
       "referenced": 24,
       "referencedNames": [
         "blender-background-jobs",
@@ -337,6 +338,7 @@
       "animation.set_frame_range",
       "animation.shape_key_add",
       "animation.shape_key_keyframe",
+      "asset.fetch_url",
       "asset.import_file",
       "asset.library",
       "asset.make_paths_relative",

@@ -90,8 +90,8 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 164 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 7 at L1, and 0 at L2, across 35 domains, routed through 23 of the 30 bundled Skills.
-- **Connector** adds the 5 optional `official_uploader.*` commands: 169 commands, 154 at L3, 3 at L4, 12 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
+- **Managed** registers 165 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 8 at L1, and 0 at L2, across 35 domains, routed through 23 of the 32 bundled Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 170 commands, 154 at L3, 3 at L4, 13 at L1, and 0 at L2, across 36 domains, routed through 25 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
 
@@ -237,7 +237,7 @@ Local marketplace (fastest):
 3. 在「个人」分段安装 `blender`，新开会话。
 4. Optional userConfig: `blender_session_descriptor`（多 Blender 会话消歧）与 `ffprobe_path`（导出校验），缺省均可留空。
 
-Expected after install: `/blender` command group (9 slash commands), 30 skills, `plugin:blender:partme_blender` MCP server, and a SessionStart environment check.
+Expected after install: `/blender` command group (9 slash commands), 32 skills, `plugin:blender:partme_blender` MCP server, and a SessionStart environment check.
 
 ### Installing on Kimi Code CLI
 
@@ -247,7 +247,7 @@ The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blend
    (`https://github.com/partme-ai/partme-blender-plugin`).
 2. Run `/reload` or start a new session.
 
-Expected after install: 30 skills (`/skill:blender-use` as the router), `blender:*` slash
+Expected after install: 32 skills (`/skill:blender-use` as the router), `blender:*` slash
 commands, the `partme_blender` MCP server, and bundled hooks (SessionStart / UserPromptSubmit /
 Stop).
 
@@ -425,7 +425,7 @@ partme-blender-plugin/
 ├── connector/                  # optional Blender Add-on
 ├── scripts/                    # Harness, launcher, exporter, validators
 │   └── harness/                # transport, server, policy, authorization, snapshot
-├── skills/                     # 30 domain and workflow Skills
+├── skills/                     # 32 domain and workflow Skills
 ├── config/                     # release matrix and production profile
 ├── tests/                      # unit, contract, and distribution tests
 └── docs/                       # architecture, technical solution, verification records
