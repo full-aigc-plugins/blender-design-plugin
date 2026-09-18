@@ -48,8 +48,11 @@ license: Apache-2.0
 ## 版权与边界
 
 - PolyHaven 全库 CC0：免费、可商用、无需署名；不要为 PolyHaven 资产添加署名节点。
-- 若后续接入 Poly Pizza（CC-BY）等需署名库，必须把署名写入对象的 custom
-  property 并随交付说明输出。
+- Poly Pizza（CC-BY 为主）已接入：`asset.polypizza_search`（query/licence/limit）
+  与 `asset.polypizza_download`（modelId）。密钥走环境变量 `POLYPIZZA_API_KEY`
+  （poly.pizza/settings/api 免费获取）；下载同时生成 license.json 署名边车，
+  交付说明中必须包含其中的 attribution 文本。CDN 偶尔拦截数据中心 IP：
+  403 时建议用户用普通网络重试或到 poly.pizza 手动下载后走 `asset.import_file`。
 - `asset.fetch_url` 只允许白名单域名与白名单后缀（.hdr/.exr/.glb/.gltf/.png/.jpg），
   单文件 200MB 硬上限；不要尝试绕过，也不要建议用户手动下载超大体积。
 

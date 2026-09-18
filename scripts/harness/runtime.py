@@ -223,6 +223,10 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     registry.register('asset.make_paths_relative',assets.make_paths_relative,validate=closed_arguments())
     registry.register('asset.fetch_url',assets.fetch_url,
                       validate=closed_arguments(required=('url',),optional=('filename',)))
+    registry.register('asset.polypizza_search',assets.polypizza_search,
+                      validate=closed_arguments(required=(),optional=('query','licence','limit')))
+    registry.register('asset.polypizza_download',assets.polypizza_download,
+                      validate=closed_arguments(required=('modelId',)))
     registry.register('uv.mark_seams',uvs.mark_seams,
                       validate=closed_arguments(required=('selection',),optional=('seam',)))
     registry.register('uv.unwrap',uvs.unwrap,

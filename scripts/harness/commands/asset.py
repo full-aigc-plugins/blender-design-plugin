@@ -64,6 +64,97 @@ class AssetCommands:
     FETCH_ALLOWED_HOSTS=frozenset({'api.polyhaven.com','dl.polyhaven.org'})
     FETCH_ALLOWED_SUFFIXES=frozenset({'.hdr','.exr','.glb','.gltf','.png','.jpg','.jpeg'})
     FETCH_MAX_BYTES=200*1024*1024
+    POLYPIZZA_API_BASE='https://api.poly.pizza/v1.1'
+    POLYPIZZA_MAX_BYTES=100*1024*1024
+    POLYPIZZA_SUFFIXES=frozenset({'.glb','.gltf'})
+
+    def _polypizza_headers(self):
+        import os
+        key=os.environ.get('POLYPIZZA_API_KEY')
+        if not key:
+            raise HarnessError('POLYPIZZA_KEY_MISSING','set POLYPIZZA_API_KEY (free key: https://poly.pizza/settings/api)')
+        return {'x-auth-token':key,'User-Agent':'partme-blender-plugin'}
+
+    def _polypizza_fetch_json(self, path):
+        import urllib.request
+        request=urllib.request.Request(self.POLYPIZZA_API_BASE+path,headers=self._polypizza_headers())
+        try:
+            with urllib.request.urlopen(request,timeout=30) as response:
+                import json as _json
+                return _json.loads(response.read().decode('utf-8'))
+        except HarnessError: raise
+        except Exception as exc: raise HarnessError('DOWNLOAD_FAILED','Poly Pizza API request did not finish') from exc
+
+    def polypizza_search(self,arguments):
+        """Search the Poly Pizza low-poly library (API key via POLYPIZZA_API_KEY env)."""
+        import json as _json
+        from urllib.parse import quote
+        query=arguments.get('query')
+        licence=arguments.get('licence')
+        if licence not in (None,'','CC0','CC-BY'):
+            raise HarnessError('INVALID_ARGUMENT',"licence must be 'CC0' or 'CC-BY'")
+        limit=arguments.get('limit',8)
+        if not isinstance(limit,int) or not 1<=limit<=32: raise HarnessError('INVALID_ARGUMENT','limit must be an integer in 1-32')
+        params=[f'Limit={limit}']
+        if isinstance(licence,str) and licence:
+            params.append('License=1' if licence=='CC0' else 'License=0')
+        path='/search/'+quote(str(query),safe='') if query else '/search'
+        data=self._polypizza_fetch_json(path+'?'+'&'.join(params))
+        models=[]
+        for item in data.get('results',[]) if isinstance(data,dict) else []:
+            creator=item.get('Creator') or {}
+            models.append({'id':item.get('ID'),'title':item.get('Title'),
+                           'creator':creator.get('Username') if isinstance(creator,dict) else None,
+                           'licence':'CC-BY' if item.get('Licence')==0 else 'CC0',
+                           'triCount':item.get('Tri Count'),'animated':bool(item.get('Animated'))})
+        return {'changedObjects':[],'result':{'total':data.get('total',len(models)) if isinstance(data,dict) else 0,'models':models}}
+
+    def polypizza_download(self,arguments):
+        """Download a Poly Pizza model into the approved roots and record its CC-BY attribution."""
+        import json as _json
+        import urllib.request
+        from urllib.parse import urlparse,quote
+        model_id=arguments.get('modelId')
+        if not isinstance(model_id,str) or not model_id.strip():
+            raise HarnessError('INVALID_ARGUMENT','modelId is required')
+        detail=self._polypizza_fetch_json('/model/'+quote(model_id.strip(),safe=''))
+        if not isinstance(detail,dict) or not detail.get('Download'):
+            raise HarnessError('ASSET_NOT_FOUND',f'no downloadable file for model: {model_id}')
+        download_url=str(detail['Download'])
+        parsed=urlparse(download_url)
+        suffix=Path(parsed.path).suffix.lower()
+        if suffix not in self.POLYPIZZA_SUFFIXES:
+            suffix='.glb' if 'glb' in download_url.lower() else '.zip'
+        if self.policy is None: raise HarnessError('ASSET_NOT_AUTHORIZED','no asset root was approved')
+        root=self.policy.roots[0]
+        subdir=root/'polypizza'/model_id.strip()
+        subdir.mkdir(parents=True,exist_ok=True)
+        target=subdir/('model'+suffix)
+        creator=(detail.get('Creator') or {})
+        creator_name=creator.get('Username') if isinstance(creator,dict) else None
+        licence='CC0' if detail.get('Licence')==1 else 'CC-BY'
+        attribution=f"Model '{detail.get('Title', model_id)}' by {creator_name or 'unknown'} — {licence} — https://poly.pizza/m/{model_id}"
+        downloaded=0
+        partial=target.with_name(target.name+'.part')
+        try:
+            with urllib.request.urlopen(download_url,timeout=180) as response:
+                with open(partial,'wb') as sink:
+                    while True:
+                        chunk=response.read(1024*256)
+                        if not chunk: break
+                        downloaded+=len(chunk)
+                        if downloaded>self.POLYPIZZA_MAX_BYTES:
+                            raise HarnessError('INVALID_ARGUMENT',f'model exceeds the {self.POLYPIZZA_MAX_BYTES//1024//1024}MB download cap')
+                        sink.write(chunk)
+        except HarnessError:
+            partial.unlink(missing_ok=True); raise
+        except Exception as exc:
+            partial.unlink(missing_ok=True)
+            raise HarnessError('DOWNLOAD_FAILED','Poly Pizza model download did not finish (CDN may block datacenter IPs; retry from a regular connection or download manually at https://poly.pizza)') from exc
+        partial.replace(target)
+        sidecar=subdir/'license.json'
+        sidecar.write_text(_json.dumps({'attribution':attribution,'title':detail.get('Title'),'creator':creator_name,'licence':licence,'source':f'https://poly.pizza/m/{model_id}'},ensure_ascii=False,indent=1),encoding='utf-8')
+        return {'changedObjects':[],'result':{'path':str(target),'bytes':downloaded,'licence':licence,'attribution':attribution,'sidecar':str(sidecar)}}
 
     def fetch_url(self,arguments):
         """Download an asset from an approved asset-library host into the approved roots."""

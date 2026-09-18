@@ -5,7 +5,7 @@
   "author": {
     "name": "Full Stack Skills / PartMe.AI"
   },
-  "homepage": "https://atomgit.com/partme-ai/partme-blender-plugin",
+  "homepage": "https://github.com/partme-ai/partme-blender-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "blender",
@@ -18,7 +18,7 @@
     "shortDescription": "Design, review, and export Blender projects",
     "longDescription": "Controls Blender through a guarded local harness in managed or connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports. Includes white-model previs and Jimeng handoff workflows.",
     "developerName": "Full Stack Skills / PartMe.AI",
-    "websiteURL": "https://atomgit.com/partme-ai/partme-blender-plugin"
+    "websiteURL": "https://github.com/partme-ai/partme-blender-plugin"
   },
   "skills": "./skills/",
   "commands": "./commands/",

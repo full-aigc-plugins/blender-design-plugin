@@ -3,8 +3,8 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 165,
-      "L1": 8,
+      "total": 167,
+      "L1": 10,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -95,6 +95,8 @@
       "asset.library",
       "asset.make_paths_relative",
       "asset.pack_resources",
+      "asset.polypizza_download",
+      "asset.polypizza_search",
       "camera.add_handheld",
       "camera.aim_at",
       "camera.create",
@@ -249,8 +251,8 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 170,
-      "L1": 13,
+      "total": 172,
+      "L1": 15,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -343,6 +345,8 @@
       "asset.library",
       "asset.make_paths_relative",
       "asset.pack_resources",
+      "asset.polypizza_download",
+      "asset.polypizza_search",
       "camera.add_handheld",
       "camera.aim_at",
       "camera.create",

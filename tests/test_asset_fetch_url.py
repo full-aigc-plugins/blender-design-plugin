@@ -86,5 +86,20 @@ class FetchUrlTests(unittest.TestCase):
             cmds.fetch_url({"url": "https://dl.polyhaven.org/x/payload.exe"})
 
 
+
+
+
+class DefaultAssetRootTests(unittest.TestCase):
+    def test_default_root_fallback(self):
+        from scripts.harness.server import default_asset_roots
+        self.assertEqual(
+            default_asset_roots(()),
+            (Path.home() / "Documents" / "partme-blender" / "assets",),
+        )
+
+    def test_explicit_roots_win_over_default(self):
+        from scripts.harness.server import default_asset_roots
+        self.assertEqual(default_asset_roots(("/custom/root",)), ("/custom/root",))
+
 if __name__ == "__main__":
     unittest.main()
