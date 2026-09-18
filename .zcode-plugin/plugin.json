@@ -13,10 +13,10 @@
   },
   "author": {
     "name": "Full Stack Skills / PartMe.AI",
-    "url": "https://github.com/partme-ai"
+    "url": "https://atomgit.com/partme-ai"
   },
-  "homepage": "https://github.com/partme-ai/partme-blender-plugin",
-  "repository": "https://github.com/partme-ai/partme-blender-plugin",
+  "homepage": "https://atomgit.com/partme-ai/partme-blender-plugin",
+  "repository": "https://atomgit.com/partme-ai/partme-blender-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "blender",

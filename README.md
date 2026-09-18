@@ -170,7 +170,7 @@ does not replace the PartMe guarded Harness connection.
 ### 2. Install the plugin
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -244,7 +244,7 @@ Expected after install: `/blender` command group (9 slash commands), 32 skills, 
 The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blender`).
 
 1. In Kimi Code CLI run `/plugins` and add this repository by local path or GitHub URL
-   (`https://github.com/partme-ai/partme-blender-plugin`).
+   (`https://atomgit.com/partme-ai/partme-blender-plugin`).
 2. Run `/reload` or start a new session.
 
 Expected after install: 32 skills (`/skill:blender-use` as the router), `blender:*` slash
@@ -278,7 +278,7 @@ Notes:
 
 - The AtomGit source and the GitHub source share marketplace names, so adding
   one replaces the other. Switch back with
-  `codex plugin marketplace add https://github.com/partme-ai/plugins.git`.
+  `codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git`.
 - For ZCode or Kimi, clone the mirror repository and register the local
   directory in the respective marketplace configuration.
 
@@ -442,7 +442,7 @@ partme-blender-plugin/
 
 ## Contributing and support
 
-Open functional issues at <https://github.com/partme-ai/partme-blender-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
+Open functional issues at <https://atomgit.com/partme-ai/partme-blender-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
 
 ## License
 

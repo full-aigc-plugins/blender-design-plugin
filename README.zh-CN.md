@@ -170,7 +170,7 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 ### 2. 安装插件
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -230,7 +230,7 @@ codex plugin add blender-design@partme-ai-blender
 注意事项：
 
 - AtomGit 源与 GitHub 源共用市场名，后添加的会覆盖先添加的。切回官方源执行
-  `codex plugin marketplace add https://github.com/partme-ai/plugins.git`。
+  `codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git`。
 - ZCode 与 Kimi 用户可先将镜像仓库克隆到本地，再在各平台的 marketplace 配置中登记本地目录。
 
 ## 快速开始
@@ -393,7 +393,7 @@ partme-blender-plugin/
 
 ## 贡献与支持
 
-功能问题请提交到 <https://github.com/partme-ai/partme-blender-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
+功能问题请提交到 <https://atomgit.com/partme-ai/partme-blender-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
 
 ## 许可证
 
