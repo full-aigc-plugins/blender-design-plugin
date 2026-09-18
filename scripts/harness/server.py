@@ -55,6 +55,14 @@ class HarnessRuntime:
             self.frontend = None
 
 
+def default_asset_roots(approved_asset_roots=()):
+    """Fall back to the Documents library root so asset-library commands work
+    without extra configuration (polyhaven/, polypizza/ subfolders land here)."""
+    if approved_asset_roots:
+        return approved_asset_roots
+    return (Path.home() / "Documents" / "partme-blender" / "assets",)
+
+
 def start_harness(
     bpy_module,
     *,
@@ -70,6 +78,7 @@ def start_harness(
     runtime_dir = Path(runtime_dir)
     runtime_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(runtime_dir, 0o700)
+    approved_asset_roots = default_asset_roots(approved_asset_roots)
     token = secrets.token_urlsafe(32)
     checkpoint_store = BlenderCheckpointStore(bpy_module, runtime_dir / "checkpoints")
     transactions = TransactionManager(
