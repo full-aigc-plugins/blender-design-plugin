@@ -235,14 +235,29 @@ def install_addon(addons_dir: Path, zip_path: Path, module: str = ADDON_MODULE) 
     return target
 
 
-def enable_addon_persistently(blender_bin: Path, module: str = ADDON_MODULE) -> bool:
-    expression = (
-        "import addon_utils, bpy\n"
-        f"addon_utils.enable({module!r}, default_set=True, persistent=True)\n"
-        "bpy.ops.wm.save_userpref()\n"
-        "mods = {m.__name__: enabled for m, enabled in addon_utils.modules_ref()}\n"
-        f"print('PARTME_ENABLED=' + str({module!r} in mods and mods[{module!r}]))\n"
-    )
+LEGACY_COMMUNITY_MODULE = "blender_mcp"  # 旧版手动安装的社区 addon 单文件模块名
+
+
+def enable_addon_persistently(blender_bin: Path, module: str = ADDON_MODULE,
+                              disable_legacy: str | None = None) -> bool:
+    """启用并持久保存。不使用 --factory-startup：必须加载用户偏好再保存，
+    否则会把出厂偏好覆盖写入用户配置。验证用 preferences.addons（跨版本稳定）。"""
+    lines = ["import addon_utils, bpy, traceback"]
+    if disable_legacy:
+        lines.append("try:")
+        lines.append(f"    addon_utils.disable({disable_legacy!r}, default_set=True)")
+        lines.append("except Exception:")
+        lines.append("    traceback.print_exc()  # 旧副本卸载崩溃不阻塞")
+    lines += [
+        "try:",
+        f"    addon_utils.enable({module!r}, default_set=True, persistent=True)",
+        "    bpy.ops.wm.save_userpref()",
+        f"    print('PARTME_ENABLED=' + str(bpy.context.preferences.addons.get({module!r}) is not None))",
+        "except Exception:",
+        "    traceback.print_exc()",
+        "    print('PARTME_ENABLED=False')",
+    ]
+    expression = "\n".join(lines) + "\n"
     out = subprocess.run(
         [str(blender_bin), "--background", "--python-expr", expression],
         capture_output=True, text=True, timeout=CLI_QUERY_TIMEOUT, check=False,
@@ -344,7 +359,18 @@ def run_auto_setup(
             ),
         }
 
-    enabled = enable_addon_persistently(blender_bin)
+    # 旧版手动安装的社区 addon（blender_mcp.py 单文件）与新 vendored 副本注册冲突：
+    # 检测到就从启用清单移除（文件保留，不删用户数据）。
+    legacy = None
+    try:
+        if (addons_dir / f"{LEGACY_COMMUNITY_MODULE}.py").exists():
+            legacy = LEGACY_COMMUNITY_MODULE
+    except Exception:  # noqa: BLE001 - legacy detection is best-effort
+        legacy = None
+    enabled = enable_addon_persistently(blender_bin, disable_legacy=legacy)
+    if legacy:
+        steps.append({"step": "disable-legacy-community", "ok": True,
+                      "detail": f"已禁用旧版社区 addon（{legacy}.py 文件保留，可手动删除）"})
     steps.append({"step": "enable", "ok": enabled, "detail": "已持久启用" if enabled else "启用结果未知（将尝试继续）"})
     community_enabled = enable_addon_persistently(blender_bin, module=COMMUNITY_MODULE)
     steps.append({"step": "enable-community", "ok": community_enabled,

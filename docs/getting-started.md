@@ -41,7 +41,7 @@ Choose **Edit > Preferences**.
 
 ## 2. Install and enable the Add-on
 
-Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.2.0.zip`, and enable
+Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.2.1.zip`, and enable
 **PartMe Blender MCP**. The screenshot demonstrates the Add-ons location; its community Add-on
 name is illustrative and is not the trusted Blender Design endpoint.
 

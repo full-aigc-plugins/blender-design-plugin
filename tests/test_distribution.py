@@ -71,7 +71,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
     def test_manifest_identity(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], PLUGIN_ID)
-        self.assertRegex(manifest["version"], r"^0\.7.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
+        self.assertRegex(manifest["version"], r"^0\.8\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["repository"], REPOSITORY)
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
@@ -271,7 +271,7 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_rejects_corrupt_pinned_partme_runtime(self):
-        target = self.repo / "vendor/partme-blender-mcp-runtime-0.2.0.zip"
+        target = self.repo / "vendor/partme-blender-mcp-runtime-0.2.1.zip"
         target.write_bytes(target.read_bytes() + b"corrupt")
         self._rejects()
 
@@ -331,14 +331,14 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_accepts_cachebuster_build_suffix(self):
-        """Local iteration requires 0.7.0+codex.<cachebuster>.
+        """Local iteration requires 0.8.0+codex.<cachebuster>.
 
         Hard-pinning the version would reject the documented form, so this
         guards against reintroducing that pin.
         """
         self._mutate(
             self.manifest,
-            lambda d: d.update(version="0.7.0+codex.local-20260914-120000"),
+            lambda d: d.update(version="0.8.0+codex.local-20260914-120000"),
         )
         self.assertEqual(validate_main(str(self.repo)), 0)
 
