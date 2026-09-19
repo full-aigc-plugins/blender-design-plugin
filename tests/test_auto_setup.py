@@ -4,32 +4,12 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 from scripts import auto_setup
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
-
-
-def _fake_blender(script_root: Path, enabled: bool = True) -> Path:
-    """A stub blender binary answering the CLI queries auto_setup relies on."""
-    body = f"""#!/bin/sh
-for last in "$@"; do :; done
-case "$last" in
-  *PARTME_SCRIPTS*)
-    echo "PARTME_SCRIPTS={script_root}"
-    ;;
-  *addon_utils*)
-    echo "PARTME_ENABLED={'True' if enabled else 'False'}"
-    ;;
-esac
-exit 0
-"""
-    path = script_root.parent / "fake-blender.sh"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body)
-    path.chmod(0o755)
-    return path
 
 
 def _make_addon_zip(target: Path) -> Path:
@@ -61,8 +41,9 @@ class ResolveScriptsRootTests(unittest.TestCase):
     def test_cli_query_creates_addons_dir(self):
         with tempfile.TemporaryDirectory() as tmp:
             script_root = Path(tmp) / "4.5" / "scripts"
-            blender_bin = _fake_blender(script_root)
-            addons = auto_setup.resolve_scripts_root(blender_bin)
+            completed = SimpleNamespace(stdout=f"PARTME_SCRIPTS={script_root}\n", returncode=0)
+            with mock.patch.object(auto_setup.subprocess, "run", return_value=completed):
+                addons = auto_setup.resolve_scripts_root(Path(tmp) / "blender")
             self.assertEqual(addons, script_root / "addons")
 
     def test_fallback_scan_when_cli_fails(self):
@@ -131,25 +112,26 @@ class InstallAddonTests(unittest.TestCase):
 
 class EnableAndLaunchTests(unittest.TestCase):
     def test_enable_persists(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            script_root = Path(tmp) / "4.5" / "scripts"
-            blender_bin = _fake_blender(script_root, enabled=True)
-            self.assertTrue(auto_setup.enable_addon_persistently(blender_bin))
+        completed = SimpleNamespace(stdout="PARTME_ENABLED=True\n", returncode=0)
+        with mock.patch.object(auto_setup.subprocess, "run", return_value=completed):
+            self.assertTrue(auto_setup.enable_addon_persistently(Path("blender")))
 
     def test_autostart_expression_targets_connector_operator(self):
-        expression = auto_setup.autostart_expression(Path("/tmp/out"))
+        output_root = Path("/tmp/out")
+        expression = auto_setup.autostart_expression(output_root)
         self.assertIn("partme_blender_output_root", expression)
         self.assertIn("partme_blender.start_connector", expression)
-        self.assertIn("/tmp/out", expression)
+        self.assertIn(str(output_root).replace("\\", "\\\\"), expression)
 
 
 class RunAutoSetupTests(unittest.TestCase):
     def test_running_blender_blocks_enable_with_hint(self):
         with tempfile.TemporaryDirectory() as tmp:
             script_root = Path(tmp) / "4.5" / "scripts"
-            blender_bin = _fake_blender(script_root)
+            blender_bin = Path(tmp) / "blender"
             with mock.patch.object(auto_setup, "discover_blender", return_value=blender_bin), \
                  mock.patch.object(auto_setup, "blender_running", return_value=True), \
+                 mock.patch.object(auto_setup, "resolve_scripts_root", return_value=script_root / "addons"), \
                  mock.patch.dict(__import__("os").environ, {"PARTME_BLENDER_OUTPUT_ROOT": str(Path(tmp) / "out")}):
                 result = auto_setup.run_auto_setup(PLUGIN_ROOT)
             self.assertFalse(result["ok"])
@@ -161,11 +143,13 @@ class RunAutoSetupTests(unittest.TestCase):
     def test_happy_path_installs_enables_launches(self):
         with tempfile.TemporaryDirectory() as tmp:
             script_root = Path(tmp) / "4.5" / "scripts"
-            blender_bin = _fake_blender(script_root)
+            blender_bin = Path(tmp) / "blender"
             launched = mock.Mock(pid=4321)
             venv_python = Path(tmp) / "runtime" / "venv" / "bin" / "python"
             with mock.patch.object(auto_setup, "discover_blender", return_value=blender_bin), \
                  mock.patch.object(auto_setup, "blender_running", return_value=False), \
+                 mock.patch.object(auto_setup, "resolve_scripts_root", return_value=script_root / "addons"), \
+                 mock.patch.object(auto_setup, "enable_addon_persistently", return_value=True), \
                  mock.patch.object(auto_setup, "launch_connected", return_value=launched) as launch, \
                  mock.patch.object(auto_setup, "configure_partme_runtime", return_value=True) as configure, \
                  mock.patch.object(auto_setup.sys, "executable", str(venv_python)), \

@@ -8,12 +8,14 @@ import json
 import zipfile
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def _feed(digest, relative: str, data: bytes) -> None:
-    digest.update(relative.encode("utf-8") + b"\0" + data + b"\0")
+    # Git may materialize text files with CRLF on Windows. The compatibility
+    # boundary tracks source content, not checkout-specific line endings.
+    normalized = data.replace(b"\r\n", b"\n")
+    digest.update(relative.encode("utf-8") + b"\0" + normalized + b"\0")
 
 
 def local_tree_hash(root: Path = ROOT) -> str:
@@ -56,4 +58,3 @@ if __name__ == "__main__":
     if failures:
         raise SystemExit("\n".join(failures))
     print("Harness boundary is unchanged")
-

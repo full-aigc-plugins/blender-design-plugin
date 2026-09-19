@@ -342,12 +342,13 @@ class DualInstallTests(unittest.TestCase):
     def test_happy_path_installs_both_addons(self):
         with tempfile.TemporaryDirectory() as tmp:
             script_root = Path(tmp) / "4.5" / "scripts"
-            from tests.test_auto_setup import _fake_blender
-
-            blender_bin = _fake_blender(script_root)
+            blender_bin = Path(tmp) / "blender"
             launched = mock.Mock(pid=9999)
             with mock.patch.object(auto_setup, "discover_blender", return_value=blender_bin), \
                  mock.patch.object(auto_setup, "blender_running", return_value=False), \
+                 mock.patch.object(auto_setup, "resolve_scripts_root", return_value=script_root / "addons"), \
+                 mock.patch.object(auto_setup, "enable_addon_persistently", return_value=True), \
+                 mock.patch.object(auto_setup, "configure_partme_runtime", return_value=True), \
                  mock.patch.object(auto_setup, "launch_connected", return_value=launched), \
                  mock.patch.dict(__import__("os").environ, {"PARTME_BLENDER_OUTPUT_ROOT": str(Path(tmp) / "out")}):
                 result = auto_setup.run_auto_setup(PLUGIN_ROOT)
