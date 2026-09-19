@@ -16,7 +16,7 @@
         "authentication": "ON_USE"
       },
       "category": "Creativity",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
       "icon": "https://github.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png",
       "interface": {

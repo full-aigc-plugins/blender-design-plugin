@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start the pinned PartMe Blender MCP runtime bundled with the Codex plugin.
+"""Start the pinned PartMe Blender MCP runtime bundled with the Codex/ZCode/Kimi plugin.
 
 运行时上游（partme_blender_mcp）逐字不动；本入口以插件侧 PluginMcpAdapter 包装，
 在标准工具之外注入 blender_auto_setup（首次使用自动安装并连接）。

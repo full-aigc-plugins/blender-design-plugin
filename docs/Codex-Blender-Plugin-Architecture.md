@@ -197,7 +197,7 @@ Milestone approval binds `sceneRevision + snapshotId`, and the final export must
 
 ## 11. Deployment, operations, and evolution
 
-The plugin ships as a Codex plugin with the manifest at `.codex-plugin/plugin.json` and the skills under `skills/`. There is no daemon and no installed service: Blender is launched on demand, and the Connector Add-on is installed by the user into their own Blender when they choose that mode.
+The plugin ships as a Codex/ZCode/Kimi plugin with platform manifests at `.codex-plugin/plugin.json` and the skills under `skills/`. There is no daemon and no installed service: Blender is launched on demand, and the Connector Add-on is installed by the user into their own Blender when they choose that mode.
 
 ### Observability
 

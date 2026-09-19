@@ -176,7 +176,7 @@ codex plugin add blender-design@partme-ai-blender
 
 ### 3. Connect an open Blender window (one-time setup)
 
-The PartMe Blender MCP server is bundled with this Codex plugin. **Do not pip-install a
+The PartMe Blender MCP server is bundled with this Codex/ZCode/Kimi plugin. **Do not pip-install a
 `partme-blender-mcp-*.tar.gz` bundle, and do not paste pip's `Processing ...` output back into the
 shell.**
 
