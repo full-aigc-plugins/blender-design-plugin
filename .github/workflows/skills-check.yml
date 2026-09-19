@@ -23,9 +23,13 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
-          # skills/blender-design-* is the native harness namespace, maintained in
-          # this repository; only vendored skill bodies require the lockfile.
-          vendored="$(echo "$changed" | grep '^skills/' | grep -v '^skills/blender-design-' || true)"
+          # The harness-specific blender-design/blender-mcp-setup skills and the
+          # skills/blender-design-* namespace are maintained in this repository;
+          # only upstream-vendored skill bodies require the lockfile.
+          vendored="$(echo "$changed" | grep '^skills/' \
+            | grep -v '^skills/blender-design/' \
+            | grep -v '^skills/blender-mcp-setup/' \
+            | grep -v '^skills/blender-design-' || true)"
           if [ -n "$vendored" ] && ! echo "$changed" | grep -q '^skills\.lock\.json$'; then
             echo "::error::vendored skills/ changed without skills.lock.json. Skill bodies are vendored; edit the source package and run scripts/vendor/skill_vendor.py update."
             echo "$vendored"
