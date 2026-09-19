@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "partme-provider-catalog/v1",
+  "providers": [
+    {
+      "providerId": "polyhaven",
+      "label": "Poly Haven",
+      "category": "asset_library",
+      "source": "community",
+      "risks": ["read", "network_download", "scene_import"],
+      "status": {"state": "ready", "statusText": "可用"},
+      "actions": ["browse"]
+    },
+    {
+      "providerId": "sketchfab",
+      "label": "Sketchfab",
+      "category": "asset_library",
+      "source": "community",
+      "risks": ["read", "network_download", "scene_import"],
+      "status": {"state": "configuration_required", "statusText": "需要配置密钥"},
+      "actions": ["configure", "browse"]
+    },
+    {
+      "providerId": "hyper3d",
+      "label": "Hyper3D Rodin",
+      "category": "ai_model",
+      "source": "community",
+      "risks": ["read", "paid_generation", "network_download", "scene_import"],
+      "status": {"state": "configuration_required", "statusText": "未配置 · 生成可能计费"},
+      "actions": ["configure", "generate"]
+    },
+    {
+      "providerId": "hunyuan3d",
+      "label": "Tencent Hunyuan 3D",
+      "category": "ai_model",
+      "source": "community",
+      "risks": ["read", "paid_generation", "network_download", "scene_import"],
+      "status": {"state": "configuration_required", "statusText": "未配置 · 生成可能计费"},
+      "actions": ["configure", "generate"]
+    }
+  ]
+}

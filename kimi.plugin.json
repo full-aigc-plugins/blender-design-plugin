@@ -1,11 +1,11 @@
 {
   "name": "blender-design",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "author": {
     "name": "Full Stack Skills / PartMe.AI"
   },
-  "homepage": "https://github.com/partme-ai/partme-blender-plugin",
+  "homepage": "https://github.com/full-aigc-plugins/blender-design-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "blender",
@@ -18,7 +18,7 @@
     "shortDescription": "Design, review, and export Blender projects",
     "longDescription": "Controls Blender through a guarded local harness in managed or connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports. Includes white-model previs and Jimeng handoff workflows.",
     "developerName": "Full Stack Skills / PartMe.AI",
-    "websiteURL": "https://github.com/partme-ai/partme-blender-plugin"
+    "websiteURL": "https://github.com/full-aigc-plugins/blender-design-plugin"
   },
   "skills": "./skills/",
   "commands": "./commands/",

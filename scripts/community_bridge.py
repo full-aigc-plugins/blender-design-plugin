@@ -33,30 +33,40 @@ COMMUNITY_COMMANDS: dict[str, str] = {
     "get_polyhaven_status": "polyhaven",
     "get_polyhaven_categories": "polyhaven",
     "search_polyhaven_assets": "polyhaven",
-    "download_polyhaven_asset": "polyhaven",
-    "set_texture": "polyhaven",
     # sketchfab
     "get_sketchfab_status": "sketchfab",
     "search_sketchfab_models": "sketchfab",
     "get_sketchfab_model_preview": "sketchfab",
-    "download_sketchfab_model": "sketchfab",
-    # polypizza
-    "get_polypizza_status": "polypizza",
-    "search_polypizza_models": "polypizza",
-    "download_polypizza_model": "polypizza",
     # hyper3d rodin
     "get_hyper3d_status": "hyper3d",
     "create_rodin_job": "hyper3d",
     "poll_rodin_job_status": "hyper3d",
-    "import_generated_asset": "hyper3d",
     # hunyuan3d
     "get_hunyuan3d_status": "hunyuan3d",
     "create_hunyuan_job": "hunyuan3d",
     "poll_hunyuan_job_status": "hunyuan3d",
-    "import_generated_asset_hunyuan": "hunyuan3d",
 }
 
-PROVIDERS = ["base", "polyhaven", "sketchfab", "polypizza", "hyper3d", "hunyuan3d"]
+PROVIDERS = ["base", "polyhaven", "sketchfab", "hyper3d", "hunyuan3d"]
+
+# 社区实现中会直接下载或改写场景的命令不再公开。下载结果先由 PartMe
+# `asset.fetch_url` / `asset.fetch_generated` 写入授权目录，再单独调用 `asset.import_file`。
+BLOCKED_COMMUNITY_COMMANDS = {
+    "download_polyhaven_asset", "set_texture", "download_sketchfab_model",
+    "get_polypizza_status", "search_polypizza_models", "download_polypizza_model",
+    "import_generated_asset", "import_generated_asset_hunyuan",
+}
+
+COMMUNITY_COMMAND_RISKS = {
+    **{command: "read" for command in COMMUNITY_COMMANDS},
+    "export_scene": "external_export",
+    "create_rodin_job": "paid_generation",
+    "create_hunyuan_job": "paid_generation",
+}
+
+
+def command_risk(command: str) -> str:
+    return COMMUNITY_COMMAND_RISKS.get(command, "read")
 
 # 插件自有 Harness 的资产命令面（不经 9876，走受控 MCP 工具，密钥用环境变量）。
 NATIVE_ASSET_COMMANDS = {
@@ -64,6 +74,7 @@ NATIVE_ASSET_COMMANDS = {
     "asset.polypizza_search": "search Poly Pizza (POLYPIZZA_API_KEY env)",
     "asset.polypizza_download": "download a Poly Pizza model (POLYPIZZA_API_KEY env)",
     "asset.fetch_url": "fetch an asset from any approved URL into the scene",
+    "asset.fetch_generated": "stage an approved AI result before importing it",
     "asset.import_file": "import a local file under approved asset roots",
     "asset.pack_resources": "pack external resources into the .blend",
     "asset.make_paths_relative": "make asset paths relative for portable scenes",
@@ -83,6 +94,12 @@ def call_community(command: str, params: dict | None = None, *, host: str | None
     port = COMMUNITY_PORT if port is None else port
     timeout = RECV_TIMEOUT if timeout is None else timeout
     if command not in COMMUNITY_COMMANDS:
+        if command in BLOCKED_COMMUNITY_COMMANDS:
+            raise CommunityBridgeError(
+                "COMMUNITY_COMMAND_REQUIRES_PARTME_FLOW",
+                f"{command} bypasses the PartMe approval/import boundary; stage with "
+                "asset.fetch_url or asset.fetch_generated, then import with asset.import_file",
+            )
         raise CommunityBridgeError(
             "UNKNOWN_COMMAND",
             f"community command not in allowlist: {command}",

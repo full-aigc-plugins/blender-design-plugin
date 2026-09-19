@@ -51,8 +51,9 @@ def _fake_community_server(responses: dict | None = None):
 
 class CommunityBridgeTests(unittest.TestCase):
     def test_allowlist_covers_all_providers(self):
-        for provider in ("polyhaven", "sketchfab", "polypizza", "hyper3d", "hunyuan3d"):
+        for provider in ("polyhaven", "sketchfab", "hyper3d", "hunyuan3d"):
             self.assertTrue(any(g == provider for g in community_bridge.COMMUNITY_COMMANDS.values()))
+        self.assertNotIn("polypizza", set(community_bridge.COMMUNITY_COMMANDS.values()))
         # execute_code 与遥测命令刻意不在白名单：社区的原生代码执行会绕过
         # PartMe Harness 的守卫（事务/审批/恢复），宿主侧必须走我们的受控命令面。
         self.assertNotIn("execute_code", community_bridge.COMMUNITY_COMMANDS)
@@ -62,6 +63,16 @@ class CommunityBridgeTests(unittest.TestCase):
         with self.assertRaises(CommunityBridgeError) as ctx:
             community_bridge.call_community("rm_rf_everything")
         self.assertEqual(ctx.exception.code, "UNKNOWN_COMMAND")
+
+    def test_direct_community_import_is_blocked_with_partme_migration(self):
+        with self.assertRaises(CommunityBridgeError) as ctx:
+            community_bridge.call_community("import_generated_asset", {"url": "https://example.test/a.glb"})
+        self.assertEqual(ctx.exception.code, "COMMUNITY_COMMAND_REQUIRES_PARTME_FLOW")
+
+    def test_risk_levels_separate_generation_from_polling(self):
+        self.assertEqual(community_bridge.command_risk("create_rodin_job"), "paid_generation")
+        self.assertEqual(community_bridge.command_risk("poll_rodin_job_status"), "read")
+        self.assertEqual(community_bridge.command_risk("export_scene"), "external_export")
 
     def test_roundtrip_success(self):
         server = _fake_community_server({
@@ -106,6 +117,33 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         self.assertEqual(set(enum), set(community_bridge.COMMUNITY_COMMANDS))
         self.assertEqual(COMMUNITY_CALL_TOOL["name"], "blender_community_call")
 
+    def test_real_plugin_adapter_paginates_the_combined_catalog_once(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=mock.Mock())
+        names = []
+        cursor = None
+        while True:
+            page = adapter.list_tools(cursor=cursor, limit=7)
+            self.assertLessEqual(len(page["tools"]), 7)
+            names.extend(tool["name"] for tool in page["tools"])
+            cursor = page.get("nextCursor")
+            if cursor is None:
+                break
+        self.assertEqual(len(names), len(set(names)))
+        for name in ("blender_auto_setup", "blender_community_status", "blender_community_call"):
+            self.assertEqual(names.count(name), 1)
+
+    def test_provider_contribution_excludes_duplicate_polypizza(self):
+        catalog = json.loads((PLUGIN_ROOT / "config/providers.json").read_text(encoding="utf-8"))
+        ids = [provider["providerId"] for provider in catalog["providers"]]
+        self.assertEqual(ids, ["polyhaven", "sketchfab", "hyper3d", "hunyuan3d"])
+        self.assertNotIn("polypizza", ids)
+
 
 class DualInstallTests(unittest.TestCase):
     def test_happy_path_installs_both_addons(self):
@@ -125,6 +163,7 @@ class DualInstallTests(unittest.TestCase):
             self.assertTrue(steps["install-community"]["ok"], steps.get("install-community"))
             addons = script_root / "addons"
             self.assertTrue((addons / "partme_blender_mcp").is_dir())
+            self.assertTrue((addons / "partme_blender_mcp" / "providers.json").is_file())
             self.assertTrue((addons / "blender_mcp_community").is_dir())
             self.assertTrue((addons / "blender_mcp_community" / "__init__.py").is_file())
 

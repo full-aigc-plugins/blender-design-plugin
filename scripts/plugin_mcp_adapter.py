@@ -10,7 +10,9 @@ import time
 from pathlib import Path
 
 from scripts.auto_setup import run_auto_setup, wait_for_connection
-from scripts.community_bridge import COMMUNITY_COMMANDS, PROVIDERS, CommunityBridgeError, community_status
+from scripts.community_bridge import (
+    COMMUNITY_COMMANDS, PROVIDERS, CommunityBridgeError, command_risk, community_status,
+)
 
 
 def _mcp_error(code: str, message: str):
@@ -62,7 +64,7 @@ COMMUNITY_STATUS_TOOL = {
     "description": (
         "List every 3D-asset provider this plugin can drive: the vendored community Add-on "
         f"({_PROVIDER_LIST}) inside Blender on port 9876, plus the plugin's own guarded native "
-        "asset commands (asset.library, asset.polypizza_*, asset.fetch_url, asset.import_file, "
+        "asset commands (asset.library, asset.polypizza_*, asset.fetch_url, asset.fetch_generated, asset.import_file, "
         "asset.pack_resources). The community "
         "Add-on listens on 127.0.0.1:9876 and is installed/enabled automatically by blender_auto_setup."
     ),
@@ -77,16 +79,19 @@ COMMUNITY_CALL_TOOL = {
     "description": (
         "Run one allowlisted command on the vendored community Add-on (127.0.0.1:9876). Providers: "
         f"{_PROVIDER_LIST}. Allowed commands: {_COMMUNITY_COMMAND_LIST}. Provider API keys "
-        "(Sketchfab / Poly Pizza / Hyper3D / Hunyuan3D) are user-supplied in the community Add-on's "
-        "Blender preferences; PolyHaven needs no key. Typical flows: search_polyhaven_assets then "
-        "download_polyhaven_asset; create_rodin_job then poll_rodin_job_status then "
-        "import_generated_asset."
+        "(Sketchfab / Hyper3D / Hunyuan3D) are user-supplied in the community Add-on's Blender "
+        "preferences; PolyHaven needs no key. Paid generation and external export require local "
+        "approval. Community download/import commands are intentionally excluded: stage files "
+        "through PartMe asset commands and import in a separate transaction."
     ),
     "inputSchema": {
         "type": "object",
         "properties": {
             "command": {"type": "string", "enum": sorted(COMMUNITY_COMMANDS), "description": "Community command name"},
             "params": {"type": "object", "description": "Command parameters as defined by the community Add-on"},
+            "_requestId": {"type": "string", "minLength": 1},
+            "_transactionId": {"type": "string", "minLength": 1},
+            "_expectedSceneRevision": {"type": "integer", "minimum": 0},
         },
         "required": ["command"],
         "additionalProperties": False,
@@ -105,12 +110,24 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
         _plugin_root = plugin_root
 
         def list_tools(self, *, cursor: str | None = None, limit: int = 50) -> dict:
-            result = super().list_tools(cursor=cursor, limit=limit)
-            tools = result.get("tools", [])
-            for extra in (AUTO_SETUP_TOOL, COMMUNITY_STATUS_TOOL, COMMUNITY_CALL_TOOL):
-                if not any(tool.get("name") == extra["name"] for tool in tools):
-                    tools.append(dict(extra))
-            return {**result, "tools": tools}
+            catalog = list(self.tools)
+            known = {tool.get("name") for tool in catalog}
+            catalog.extend(dict(extra) for extra in (AUTO_SETUP_TOOL, COMMUNITY_STATUS_TOOL, COMMUNITY_CALL_TOOL)
+                           if extra["name"] not in known)
+            if cursor is None:
+                offset = 0
+            elif isinstance(cursor, str) and cursor.startswith("offset:") and cursor[7:].isdigit():
+                offset = int(cursor[7:])
+            else:
+                raise _mcp_error("INVALID_CURSOR", "tools/list cursor is invalid")
+            if offset < 0 or offset > len(catalog):
+                raise _mcp_error("INVALID_CURSOR", "tools/list cursor is out of range")
+            if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100:
+                raise _mcp_error("INVALID_ARGUMENT", "tools/list limit must be an integer from 1 to 100")
+            result = {"tools": catalog[offset:offset + limit]}
+            if offset + limit < len(catalog):
+                result["nextCursor"] = f"offset:{offset + limit}"
+            return result
 
         def call_tool(self, name: str, arguments: dict | None):
             if name == AUTO_SETUP_TOOL["name"]:
@@ -147,11 +164,30 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                     return self._error(_mcp_error("INVALID_ARGUMENT", "community status accepts no arguments"))
                 return self._result(community_status())
             if name == COMMUNITY_CALL_TOOL["name"]:
+                arguments = dict(arguments or {})
                 command = arguments.get("command")
                 params = arguments.get("params") or {}
                 from scripts.community_bridge import call_community
 
                 try:
+                    risk = command_risk(command)
+                    if risk != "read":
+                        request_id = arguments.get("_requestId")
+                        transaction_id = arguments.get("_transactionId")
+                        if not request_id or not transaction_id:
+                            return self._error(_mcp_error(
+                                "INVALID_ARGUMENT",
+                                "gated community actions require _requestId and _transactionId",
+                            ))
+                        gate = self._active_bridge().call(
+                            "provider.external_action",
+                            {"providerId": COMMUNITY_COMMANDS[command], "action": command, "risk": risk},
+                            request_id=request_id,
+                            transaction_id=transaction_id,
+                            expected_scene_revision=arguments.get("_expectedSceneRevision"),
+                        )
+                        if isinstance(gate, dict) and (gate.get("status") == "failed" or "error" in gate):
+                            return self._result(gate, is_error=True)
                     return self._result(call_community(command, params))
                 except CommunityBridgeError as error:
                     return self._error(_mcp_error(error.code, str(error)))

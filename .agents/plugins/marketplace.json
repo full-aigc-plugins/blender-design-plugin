@@ -8,7 +8,7 @@
       "name": "blender-design",
       "source": {
         "source": "url",
-        "url": "https://github.com/partme-ai/partme-blender-plugin.git",
+        "url": "https://github.com/full-aigc-plugins/blender-design-plugin.git",
         "ref": "main"
       },
       "policy": {
@@ -16,13 +16,13 @@
         "authentication": "ON_USE"
       },
       "category": "Creativity",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
-      "icon": "https://github.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png",
+      "icon": "https://github.com/full-aigc-plugins/blender-design-plugin/main/assets/official-logo.png",
       "interface": {
         "displayName": "Blender Design",
         "shortDescription": "Design, review, and export Blender projects",
-        "logo": "https://github.com/partme-ai/partme-blender-plugin/main/assets/official-logo.png"
+        "logo": "https://github.com/full-aigc-plugins/blender-design-plugin/main/assets/official-logo.png"
       }
     }
   ]

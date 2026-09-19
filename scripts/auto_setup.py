@@ -330,11 +330,16 @@ def run_auto_setup(
         addons_dir = resolve_scripts_root(blender_bin)
         installed = install_addon(addons_dir, zip_path)
         steps.append({"step": "install", "ok": True, "detail": str(installed)})
+        provider_catalog = plugin_root / "config" / "providers.json"
+        if provider_catalog.is_file():
+            shutil.copy2(provider_catalog, installed / "providers.json")
+            steps.append({"step": "install-provider-catalog", "ok": True,
+                          "detail": str(installed / "providers.json")})
     except AutoSetupError as error:
         steps.append({"step": "install", "ok": False, "detail": str(error)})
         return {"ok": False, "stage": "install", "steps": steps, "connected": False, "manualHint": str(error)}
 
-    # 社区资产 Add-on（PolyHaven/Sketchfab/PolyPizza/Hyper3D/混元3D，MIT verbatim）：
+    # 社区资产 Add-on（PolyHaven/Sketchfab/Hyper3D/混元3D，MIT verbatim）：
     # 同机双装，服务自起于 9876；失败不阻塞主连接（资产能力降级可用）。
     try:
         from scripts.partme_runtime import locked_artifact
@@ -374,7 +379,7 @@ def run_auto_setup(
     steps.append({"step": "enable", "ok": enabled, "detail": "已持久启用" if enabled else "启用结果未知（将尝试继续）"})
     community_enabled = enable_addon_persistently(blender_bin, module=COMMUNITY_MODULE)
     steps.append({"step": "enable-community", "ok": community_enabled,
-                  "detail": "社区资产 Add-on 已持久启用（PolyHaven/Sketchfab/PolyPizza/Hyper3D/混元3D，服务在 9876 自起）" if community_enabled else "社区 Add-on 启用结果未知（资产能力可能需要在偏好设置中手动启用）"})
+                  "detail": "社区资产 Add-on 已持久启用（PolyHaven/Sketchfab/Hyper3D/混元3D，服务在 9876 自起）" if community_enabled else "社区 Add-on 启用结果未知（资产能力可能需要在偏好设置中手动启用）"})
 
     launched = None
     if launch_blender:
