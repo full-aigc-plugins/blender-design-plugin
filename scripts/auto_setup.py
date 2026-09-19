@@ -23,6 +23,7 @@ from urllib import request as _urlrequest
 
 DEFAULT_OUTPUT_ROOT = Path.home() / "partme" / "blender" / "design-outputs"
 ADDON_MODULE = "partme_blender_mcp"
+COMMUNITY_MODULE = "blender_mcp_community"
 BLENDER_DOWNLOAD_URL = "https://www.blender.org/download/"
 LATEST_RELEASE_API = (
     "https://api.github.com/repos/full-aigc-plugins/blender-mcp/releases/latest"
@@ -217,13 +218,13 @@ def resolve_addon_zip(plugin_root: Path) -> tuple[Path, str]:
 # Install / enable / auto-start
 # ---------------------------------------------------------------------------
 
-def install_addon(addons_dir: Path, zip_path: Path) -> Path:
-    target = addons_dir / ADDON_MODULE
+def install_addon(addons_dir: Path, zip_path: Path, module: str = ADDON_MODULE) -> Path:
+    target = addons_dir / module
     staging = Path(tempfile.mkdtemp(prefix="partme-addon-install-"))
     try:
         with zipfile.ZipFile(zip_path) as archive:
             archive.extractall(staging)
-        packages = [p for p in staging.iterdir() if p.is_dir() and p.name == ADDON_MODULE]
+        packages = [p for p in staging.iterdir() if p.is_dir() and p.name == module]
         if not packages:
             raise AutoSetupError("addon 包中未找到 partme_blender_mcp 模块，文件可能已损坏")
         if target.exists():
@@ -318,6 +319,17 @@ def run_auto_setup(
         steps.append({"step": "install", "ok": False, "detail": str(error)})
         return {"ok": False, "stage": "install", "steps": steps, "connected": False, "manualHint": str(error)}
 
+    # 社区资产 Add-on（PolyHaven/Sketchfab/PolyPizza/Hyper3D/混元3D，MIT verbatim）：
+    # 同机双装，服务自起于 9876；失败不阻塞主连接（资产能力降级可用）。
+    try:
+        from scripts.partme_runtime import locked_artifact
+
+        community_zip, _lock = locked_artifact(plugin_root, "community")
+        community_installed = install_addon(addons_dir, community_zip, module=COMMUNITY_MODULE)
+        steps.append({"step": "install-community", "ok": True, "detail": str(community_installed)})
+    except Exception as error:  # noqa: BLE001 - community add-on is best-effort
+        steps.append({"step": "install-community", "ok": False, "detail": str(error)})
+
     if running:
         return {
             "ok": False,
@@ -334,6 +346,9 @@ def run_auto_setup(
 
     enabled = enable_addon_persistently(blender_bin)
     steps.append({"step": "enable", "ok": enabled, "detail": "已持久启用" if enabled else "启用结果未知（将尝试继续）"})
+    community_enabled = enable_addon_persistently(blender_bin, module=COMMUNITY_MODULE)
+    steps.append({"step": "enable-community", "ok": community_enabled,
+                  "detail": "社区资产 Add-on 已持久启用（PolyHaven/Sketchfab/PolyPizza/Hyper3D/混元3D，服务在 9876 自起）" if community_enabled else "社区 Add-on 启用结果未知（资产能力可能需要在偏好设置中手动启用）"})
 
     launched = None
     if launch_blender:

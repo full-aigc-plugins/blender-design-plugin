@@ -303,7 +303,7 @@ class McpAdapter:
             "addonName": "PartMe Blender MCP",
             "steps": [
                 "Download Blender from the official Blender website and launch it once.",
-                "Install partme-blender-mcp-addon-0.1.2.zip from Edit > Preferences > Add-ons > Install from Disk.",
+                "Install partme-blender-mcp-addon-0.2.0.zip from Edit > Preferences > Add-ons > Install from Disk.",
                 "Enable PartMe Blender MCP.",
                 "In the 3D View press N, open Codex, choose approved output/assets, and click Start MCP Server.",
             ],

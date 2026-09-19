@@ -1,0 +1,133 @@
+"""Bridge from the plugin MCP adapter to the vendored community Add-on (localhost:9876).
+
+社区 Add-on（blender_mcp_community，MIT，ahujasid/blender-mcp v2.0.0 verbatim）在
+Blender 内监听 TCP 9876，收发 JSON：{"type": <command>, "params": {...}} ->
+{"status": "success", "result": ...}。本模块是该协议的宿主侧客户端 + 命令白名单。
+
+白名单按供应商分组（注册表结构）：新增 3D 平台 = 社区 addon 升级 + 在此登记命令，
+MCP 工具面（blender_community_call）无需改动。
+"""
+
+from __future__ import annotations
+
+import json
+import socket
+
+COMMUNITY_HOST = "127.0.0.1"
+COMMUNITY_PORT = 9876
+RECV_TIMEOUT = 120.0
+
+# 命令白名单：基础面 + 各资产供应商面（与社区 addon 的 handlers 分发表一一对应）。
+COMMUNITY_COMMANDS: dict[str, str] = {
+    # base
+    "ping": "base",
+    "get_scene_info": "base",
+    "get_world_state_snapshot": "base",
+    "get_addon_info": "base",
+    "get_object_info": "base",
+    "get_viewport_screenshot": "base",
+    "describe_node_type": "base",
+    "bpy_api_lookup": "base",
+    "export_scene": "base",
+    # polyhaven
+    "get_polyhaven_status": "polyhaven",
+    "get_polyhaven_categories": "polyhaven",
+    "search_polyhaven_assets": "polyhaven",
+    "download_polyhaven_asset": "polyhaven",
+    "set_texture": "polyhaven",
+    # sketchfab
+    "get_sketchfab_status": "sketchfab",
+    "search_sketchfab_models": "sketchfab",
+    "get_sketchfab_model_preview": "sketchfab",
+    "download_sketchfab_model": "sketchfab",
+    # polypizza
+    "get_polypizza_status": "polypizza",
+    "search_polypizza_models": "polypizza",
+    "download_polypizza_model": "polypizza",
+    # hyper3d rodin
+    "get_hyper3d_status": "hyper3d",
+    "create_rodin_job": "hyper3d",
+    "poll_rodin_job_status": "hyper3d",
+    "import_generated_asset": "hyper3d",
+    # hunyuan3d
+    "get_hunyuan3d_status": "hunyuan3d",
+    "create_hunyuan_job": "hunyuan3d",
+    "poll_hunyuan_job_status": "hunyuan3d",
+    "import_generated_asset_hunyuan": "hunyuan3d",
+}
+
+PROVIDERS = ["base", "polyhaven", "sketchfab", "polypizza", "hyper3d", "hunyuan3d"]
+
+
+class CommunityBridgeError(RuntimeError):
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+def call_community(command: str, params: dict | None = None, *, host: str | None = None,
+                   port: int | None = None, timeout: float | None = None) -> dict:
+    """Send one JSON command to the community Add-on and return its result payload."""
+    host = host or COMMUNITY_HOST
+    port = COMMUNITY_PORT if port is None else port
+    timeout = RECV_TIMEOUT if timeout is None else timeout
+    if command not in COMMUNITY_COMMANDS:
+        raise CommunityBridgeError(
+            "UNKNOWN_COMMAND",
+            f"community command not in allowlist: {command}",
+        )
+    if params is None:
+        params = {}
+    if not isinstance(params, dict):
+        raise CommunityBridgeError("INVALID_ARGUMENT", "params must be an object")
+    payload = json.dumps({"type": command, "params": params})
+    try:
+        with socket.create_connection((host, port), timeout=min(timeout, 20.0)) as sock:
+            sock.settimeout(timeout)
+            sock.sendall((payload + "\n").encode("utf-8"))
+            chunks = bytearray()
+            while not chunks.endswith(b"\n"):
+                block = sock.recv(65536)
+                if not block:
+                    break
+                chunks.extend(block)
+    except OSError as error:
+        raise CommunityBridgeError(
+            "COMMUNITY_ADDON_UNREACHABLE",
+            f"community Add-on unreachable on {host}:{port} — is Blender running with "
+            "blender_mcp_community enabled (auto_setup installs and enables it): {error}",
+        ) from error
+    text = chunks.decode("utf-8", "replace").strip()
+    if not text:
+        raise CommunityBridgeError("EMPTY_RESPONSE", "community Add-on returned no data")
+    try:
+        envelope = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise CommunityBridgeError("BAD_RESPONSE", f"community Add-on returned invalid JSON: {text[:200]}") from error
+    if envelope.get("status") != "success":
+        raise CommunityBridgeError(
+            "COMMUNITY_COMMAND_FAILED",
+            str(envelope.get("message") or envelope),
+        )
+    result = envelope.get("result")
+    return result if isinstance(result, dict) else {"result": result}
+
+
+def community_status() -> dict:
+    """Ping + capability handshake; degrades to a structured error when unreachable."""
+    try:
+        pong = call_community("ping", {}, timeout=5.0)
+    except CommunityBridgeError as error:
+        return {"connected": False, "error": error.code, "message": str(error)}
+    info = call_community("get_addon_info", {}, timeout=10.0)
+    return {
+        "connected": bool(pong.get("pong")),
+        "addon": info.get("name"),
+        "addonVersion": ".".join(str(part) for part in info.get("addon_version", [])),
+        "protocolVersion": info.get("protocol_version"),
+        "providers": {
+            provider: sorted(cmd for cmd, group in COMMUNITY_COMMANDS.items() if group == provider)
+            for provider in PROVIDERS if provider != "base"
+        },
+        "port": COMMUNITY_PORT,
+    }

@@ -1,19 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "product": "PartMe Blender MCP",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "repository": "https://github.com/full-aigc-plugins/blender-mcp",
-  "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.1.2",
+  "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.2.0",
   "artifacts": {
-    "runtime": {
-      "path": "vendor/partme-blender-mcp-runtime-0.1.2.zip",
-      "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.1.2/partme-blender-mcp-runtime-0.1.2.zip",
-      "sha256": "7af289aec820188ee9a601773d68c6f0e8324b5339b77446149bea8b6b9a765d"
-    },
     "addon": {
-      "path": "vendor/partme-blender-mcp-addon-0.1.2.zip",
-      "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.1.2/partme-blender-mcp-addon-0.1.2.zip",
-      "sha256": "387dcd91ef67c0ba1ad2f80827faf533e69f2d0ca469042472b1f116e1ac7e37"
+      "path": "vendor/partme-blender-mcp-addon-0.2.0.zip",
+      "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.2.0/partme-blender-mcp-addon-0.2.0.zip",
+      "sha256": "7dc2f675dad6291063e258cc43e80d125a5c47ddf9a6e5a44bc0d84c23b7f65d"
+    },
+    "runtime": {
+      "path": "vendor/partme-blender-mcp-runtime-0.2.0.zip",
+      "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.2.0/partme-blender-mcp-runtime-0.2.0.zip",
+      "sha256": "3ad2a5223b0e2b880907980c1edb06a2275c22b5d9d8d2f732c92a0641674794"
+    },
+    "community": {
+      "path": "vendor/partme-community-addon-2.0.0.zip",
+      "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.2.0/partme-community-addon-2.0.0.zip",
+      "sha256": "440db5bb3613d6b67e42772cb7294c99ec5c34aac8deb96ce8217c81c1ec0b33"
     }
   }
 }

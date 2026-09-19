@@ -59,7 +59,7 @@ Codex 会启动 Blender、临时加载 Harness，并保持 Blender 会话运行�
 
 适合继续编辑已经打开的场景：
 
-1. 获取 `partme-blender-mcp-addon-0.1.2.zip`。
+1. 获取 `partme-blender-mcp-addon-0.2.0.zip`。
 2. Blender 中打开 `Edit → Preferences → Add-ons`。
 3. 选择 `Install from Disk` 并安装 zip。
 4. 回到 3D View，按 `N` 打开 Sidebar。
@@ -103,7 +103,7 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 
 ### 2. 安装并启用插件
 
-选择 **Add-ons → Install from Disk**，安装发行包中的 `partme-blender-mcp-addon-0.1.2.zip`，然后
+选择 **Add-ons → Install from Disk**，安装发行包中的 `partme-blender-mcp-addon-0.2.0.zip`，然后
 启用 **PartMe Blender MCP**。下图展示 Add-on 的启用位置；截图里的社区插件名称仅用于
 说明界面位置，不代表应当启用它作为 Blender Design 连接器。
 

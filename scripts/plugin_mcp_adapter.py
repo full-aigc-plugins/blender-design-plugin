@@ -10,6 +10,13 @@ import time
 from pathlib import Path
 
 from scripts.auto_setup import run_auto_setup, wait_for_connection
+from scripts.community_bridge import COMMUNITY_COMMANDS, PROVIDERS, CommunityBridgeError, community_status
+
+
+def _mcp_error(code: str, message: str):
+    from partme_blender_mcp.harness.mcp_adapter import McpAdapterError
+
+    return McpAdapterError(code, message)
 
 AUTO_SETUP_TOOL = {
     "name": "blender_auto_setup",
@@ -46,6 +53,47 @@ AUTO_SETUP_TOOL = {
 }
 
 
+_COMMUNITY_COMMAND_LIST = ", ".join(sorted(COMMUNITY_COMMANDS))
+_PROVIDER_LIST = ", ".join(p for p in PROVIDERS if p != "base")
+
+COMMUNITY_STATUS_TOOL = {
+    "name": "blender_community_status",
+    "title": "Community asset providers status",
+    "description": (
+        "Check the vendored community Add-on (blender_mcp_community, MIT) inside Blender and list "
+        f"its asset providers ({_PROVIDER_LIST}) with per-provider command surfaces. The community "
+        "Add-on listens on 127.0.0.1:9876 and is installed/enabled automatically by blender_auto_setup."
+    ),
+    "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
+    "outputSchema": {"type": "object"},
+    "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
+}
+
+COMMUNITY_CALL_TOOL = {
+    "name": "blender_community_call",
+    "title": "Call a community asset provider command",
+    "description": (
+        "Run one allowlisted command on the vendored community Add-on (127.0.0.1:9876). Providers: "
+        f"{_PROVIDER_LIST}. Allowed commands: {_COMMUNITY_COMMAND_LIST}. Provider API keys "
+        "(Sketchfab / Poly Pizza / Hyper3D / Hunyuan3D) are user-supplied in the community Add-on's "
+        "Blender preferences; PolyHaven needs no key. Typical flows: search_polyhaven_assets then "
+        "download_polyhaven_asset; create_rodin_job then poll_rodin_job_status then "
+        "import_generated_asset."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "command": {"type": "string", "enum": sorted(COMMUNITY_COMMANDS), "description": "Community command name"},
+            "params": {"type": "object", "description": "Command parameters as defined by the community Add-on"},
+        },
+        "required": ["command"],
+        "additionalProperties": False,
+    },
+    "outputSchema": {"type": "object"},
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True},
+}
+
+
 def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, **kwargs):
     """Return a subclass instance of the vendored McpAdapter with blender_auto_setup added."""
 
@@ -57,8 +105,9 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
         def list_tools(self, *, cursor: str | None = None, limit: int = 50) -> dict:
             result = super().list_tools(cursor=cursor, limit=limit)
             tools = result.get("tools", [])
-            if not any(tool.get("name") == AUTO_SETUP_TOOL["name"] for tool in tools):
-                tools.append(dict(AUTO_SETUP_TOOL))
+            for extra in (AUTO_SETUP_TOOL, COMMUNITY_STATUS_TOOL, COMMUNITY_CALL_TOOL):
+                if not any(tool.get("name") == extra["name"] for tool in tools):
+                    tools.append(dict(extra))
             return {**result, "tools": tools}
 
         def call_tool(self, name: str, arguments: dict | None):
@@ -91,6 +140,19 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                     except Exception:  # noqa: BLE001 - keep partial result with manual hint
                         pass
                 return self._result(result)
+            if name == COMMUNITY_STATUS_TOOL["name"]:
+                if arguments:
+                    return self._error(_mcp_error("INVALID_ARGUMENT", "community status accepts no arguments"))
+                return self._result(community_status())
+            if name == COMMUNITY_CALL_TOOL["name"]:
+                command = arguments.get("command")
+                params = arguments.get("params") or {}
+                from scripts.community_bridge import call_community
+
+                try:
+                    return self._result(call_community(command, params))
+                except CommunityBridgeError as error:
+                    return self._error(_mcp_error(error.code, str(error)))
             return super().call_tool(name, arguments)
 
     return PluginMcpAdapter(**kwargs)
