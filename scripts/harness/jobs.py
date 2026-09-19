@@ -148,9 +148,17 @@ class JobManager:
         result = json.loads(path.read_text(encoding="utf-8"))
         process = self.processes.get(job_id)
         if process and process.poll() is not None and result.get("state") in {"queued", "running"}:
-            result["state"] = "failed"
-            result["error"] = {"message": f"worker exited {process.returncode} without a terminal receipt"}
-            self._write(path, result)
+            # The worker can publish its terminal receipt after our first file
+            # read but immediately before ``poll()`` observes process exit.
+            # Re-read after exit: OS process termination guarantees the child
+            # has closed its status file, so this is the authoritative view.
+            refreshed = json.loads(path.read_text(encoding="utf-8"))
+            if refreshed.get("state") in {"completed", "failed", "cancelled", "interrupted"}:
+                result = refreshed
+            else:
+                result["state"] = "failed"
+                result["error"] = {"message": f"worker exited {process.returncode} without a terminal receipt"}
+                self._write(path, result)
         return {"changedObjects": [], "result": result}
 
     def cancel(self, arguments):

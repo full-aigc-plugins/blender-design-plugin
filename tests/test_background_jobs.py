@@ -96,3 +96,25 @@ class BackgroundJobRecoveryTests(unittest.TestCase):
               'snapshot':spec['snapshot']}))
             resumed=manager.resume({'jobId':'job_frames'})['result']
             self.assertEqual(resumed['state'],'running');self.assertEqual(resumed['attempt'],2)
+
+    def test_status_rereads_terminal_receipt_after_worker_exit_race(self):
+        """Do not overwrite a receipt written between the first read and poll()."""
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);task=root/'jobs'/'job_frames';task.mkdir(parents=True)
+            status_path=task/'status.json'
+            running={'receiptVersion':'3.0.0','jobId':'job_frames','kind':'RENDER_ANIMATION_FRAMES',
+                     'state':'running','attempt':2}
+            completed=running|{'state':'completed','artifact':{'path':'frames'}}
+            status_path.write_text(json.dumps(running))
+
+            class ExitAfterReceipt:
+                returncode=0
+                def poll(self):
+                    status_path.write_text(json.dumps(completed))
+                    return 0
+
+            manager=JobManager(self._JobBpy(),root)
+            manager.processes['job_frames']=ExitAfterReceipt()
+            result=manager.status({'jobId':'job_frames'})['result']
+            self.assertEqual(result,completed)
+            self.assertEqual(json.loads(status_path.read_text()),completed)
