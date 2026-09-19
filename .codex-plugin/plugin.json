@@ -1,6 +1,6 @@
 {
   "name": "blender-design",
-  "version": "0.3.1+codex.20260919",
+  "version": "0.3.2+codex.20260919",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "author": {
     "name": "Full Stack Skills / PartMe.AI",
