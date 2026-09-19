@@ -58,6 +58,17 @@ COMMUNITY_COMMANDS: dict[str, str] = {
 
 PROVIDERS = ["base", "polyhaven", "sketchfab", "polypizza", "hyper3d", "hunyuan3d"]
 
+# 插件自有 Harness 的资产命令面（不经 9876，走受控 MCP 工具，密钥用环境变量）。
+NATIVE_ASSET_COMMANDS = {
+    "asset.library": "manage the approved asset library",
+    "asset.polypizza_search": "search Poly Pizza (POLYPIZZA_API_KEY env)",
+    "asset.polypizza_download": "download a Poly Pizza model (POLYPIZZA_API_KEY env)",
+    "asset.fetch_url": "fetch an asset from any approved URL into the scene",
+    "asset.import_file": "import a local file under approved asset roots",
+    "asset.pack_resources": "pack external resources into the .blend",
+    "asset.make_paths_relative": "make asset paths relative for portable scenes",
+}
+
 
 class CommunityBridgeError(RuntimeError):
     def __init__(self, code: str, message: str):
@@ -130,4 +141,9 @@ def community_status() -> dict:
             for provider in PROVIDERS if provider != "base"
         },
         "port": COMMUNITY_PORT,
+        "native": {
+            "description": "PartMe guarded asset commands served by this plugin's own MCP tools "
+                           "(no community Add-on needed; keys via environment variables)",
+            "tools": {f"blender_{cmd.replace('.', '_')}": desc for cmd, desc in NATIVE_ASSET_COMMANDS.items()},
+        },
     }

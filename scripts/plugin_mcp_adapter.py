@@ -60,8 +60,10 @@ COMMUNITY_STATUS_TOOL = {
     "name": "blender_community_status",
     "title": "Community asset providers status",
     "description": (
-        "Check the vendored community Add-on (blender_mcp_community, MIT) inside Blender and list "
-        f"its asset providers ({_PROVIDER_LIST}) with per-provider command surfaces. The community "
+        "List every 3D-asset provider this plugin can drive: the vendored community Add-on "
+        f"({_PROVIDER_LIST}) inside Blender on port 9876, plus the plugin's own guarded native "
+        "asset commands (asset.library, asset.polypizza_*, asset.fetch_url, asset.import_file, "
+        "asset.pack_resources). The community "
         "Add-on listens on 127.0.0.1:9876 and is installed/enabled automatically by blender_auto_setup."
     ),
     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
