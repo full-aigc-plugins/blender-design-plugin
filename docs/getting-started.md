@@ -1,9 +1,19 @@
 # Install and connect Blender Design
 
-## No Blender yet? [Download the installer](https://www.blender.org/download/)
+## Automatic connection (recommended)
 
-Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` in the 3D View and
-click **Start MCP Server**.
+After installing Blender and this plugin, just tell your AI agent: **"connect Blender"**. It calls
+`blender_auto_setup`, which discovers your Blender installation, installs the **PartMe Blender MCP**
+Add-on (pulling the latest package from GitHub Releases with a bundled offline fallback), enables it
+persistently, launches Blender, and auto-starts the connector. The default approved output directory
+is `~/partme/blender/design-outputs` (override with the `outputRoot` argument).
+
+## Manual steps
+
+> ### No Blender yet? [Download the installer](https://www.blender.org/download/)
+>
+> Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` in the 3D View and
+> click **Start MCP Server**.
 
 The trusted Add-on for this plugin is **PartMe Blender MCP**. A separately installed community
 Add-on named **MCP for Blender** is not evidence that the guarded Blender Design Harness is connected.

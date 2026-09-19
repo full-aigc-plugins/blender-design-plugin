@@ -69,10 +69,25 @@ Codex 会启动 Blender、临时加载 Harness，并保持 Blender 会话运行�
 
 Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑。
 
-## 首次使用 MCP
+## 首次使用 MCP（自动连接，推荐）
 
-> ### 还没有 Blender？[下载安装包](https://www.blender.org/download/)
+装好 Blender 和插件后，直接对 AI 说一句"**连接 Blender**"即可。AI 会调用
+`blender_auto_setup` 自动完成：
+
+1. 发现本机 Blender 安装；
+2. 安装 **PartMe Blender MCP** 插件（优先拉取 GitHub Releases 最新包，网络不可用时
+   自动回退到插件内置离线包）；
+3. 持久启用插件并自动启动 Blender，连接在数秒内自动建立。
+
+默认授权输出目录为 `~/partme/blender/design-outputs`（AI 导出的文件只能写在该目录下），
+可在调用 `blender_auto_setup` 时用 `outputRoot` 参数覆盖。
+
+> ### 自动连接失败？[还没有 Blender？下载安装包](https://www.blender.org/download/)
 >
+> 若检测到 Blender 正在运行，请完全退出 Blender 后重试自动连接；或按下面的手动步骤操作。
+
+## 首次使用 MCP（手动步骤）
+
 > 打开 Blender，在 **偏好设置 > 插件** 中启用 MCP 插件，然后在 N 面板中点击
 > **Start MCP Server**。
 
