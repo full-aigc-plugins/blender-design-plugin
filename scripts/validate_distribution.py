@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.3\.1(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.7\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
