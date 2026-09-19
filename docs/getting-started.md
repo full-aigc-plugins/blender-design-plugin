@@ -8,6 +8,21 @@ Add-on (pulling the latest package from GitHub Releases with a bundled offline f
 persistently, launches Blender, and auto-starts the connector. The default approved output directory
 is `~/partme/blender/design-outputs` (override with the `outputRoot` argument).
 
+## Community asset platforms (installed automatically)
+
+`blender_auto_setup` also installs the community asset Add-on (MIT, from ahujasid/blender-mcp),
+serving **PolyHaven / Sketchfab / Poly Pizza / Hyper3D Rodin / Hunyuan3D** search and download on
+127.0.0.1:9876 inside Blender. Hosts use it through the `blender_community_status` and
+`blender_community_call` MCP tools. PolyHaven needs no key; Sketchfab / Poly Pizza / Hyper3D /
+Hunyuan3D API keys go into the community Add-on's Blender preferences (community-native UX).
+
+## HTTP transport (optional)
+
+The MCP server defaults to stdio. Desktop or remote clients may start it in HTTP mode with Bearer
+auth: `python3 scripts/blender_mcp_server.py --http 8901 --token <token>` — endpoint
+`http://127.0.0.1:8901/mcp`. Without `--token` one is generated and printed; the
+`PARTME_BLENDER_HTTP_TOKEN` environment variable is also honored.
+
 ## Manual steps
 
 > ### No Blender yet? [Download the installer](https://www.blender.org/download/)

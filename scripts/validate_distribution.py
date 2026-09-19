@@ -57,7 +57,7 @@ REQUIRED_FILES = (
 )
 REQUIRED_DIRECTORIES = ("assets", "bin", "skills", "schemas", "scripts", "tests", "vendor")
 EXPECTED_ASSETS = {
-    "assets/official-logo.png": (2049, 550, 6),
+    "assets/official-logo.png": (1024, 1024, 6),
     "assets/composer-icon.png": (256, 256, 6),
 }
 REQUIRED_INTERFACE_FIELDS = (

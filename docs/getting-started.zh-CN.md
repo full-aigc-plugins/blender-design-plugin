@@ -201,6 +201,24 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 
 每个文件都返回路径、大小、SHA-256、场景 revision、snapshot 和验证状态。
 
+## 社区资产平台（自动安装）
+
+`blender_auto_setup` 会同时安装社区资产 Add-on（MIT，来自 ahujasid/blender-mcp），在 Blender
+内监听 127.0.0.1:9876，提供 **PolyHaven / Sketchfab / Poly Pizza / Hyper3D Rodin / 混元3D**
+五家 3D 资产平台的搜索与下载。宿主侧通过 `blender_community_status` / `blender_community_call`
+两个 MCP 工具使用；PolyHaven 免费无需密钥，Sketchfab / Poly Pizza / Hyper3D / 混元3D 的 API
+密钥请在 Blender 偏好设置 → 社区 Add-on（MCP for Blender）里填写，沿用社区原版交互。
+
+## HTTP 传输（可选）
+
+MCP 服务默认走 stdio。桌面端或远程客户端可用 HTTP 模式启动（Bearer 鉴权）：
+
+```bash
+python3 scripts/blender_mcp_server.py --http 8901 --token <你的token>
+# 端点 http://127.0.0.1:8901/mcp，Authorization: Bearer <token>
+# token 缺省自动生成并打印；也可用环境变量 PARTME_BLENDER_HTTP_TOKEN
+```
+
 ## 常见问题
 
 ### 必须安装 Blender Add-on 吗？
