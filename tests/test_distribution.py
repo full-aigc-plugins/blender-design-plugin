@@ -71,7 +71,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
     def test_manifest_identity(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], PLUGIN_ID)
-        self.assertRegex(manifest["version"], r"^0\.11\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
+        self.assertRegex(manifest["version"], r"^0\.11\.1(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["repository"], REPOSITORY)
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
@@ -91,6 +91,28 @@ class TestManifestAndMarketplace(unittest.TestCase):
         bootstrap = ROOT / "scripts" / "mcp_bootstrap.py"
         self.assertTrue(bootstrap.is_file())
         self.assertIn("os.execv", bootstrap.read_text(encoding="utf-8"))
+
+    def test_zcode_mcp_bootstrap_is_zero_configuration(self) -> None:
+        """Optional ZCode values must not become required template variables.
+
+        ZCode resolves every ``${user_config.*}`` placeholder before launching
+        the MCP process, even when the corresponding schema entry says
+        ``required: false``.  Session descriptors and ffprobe already have
+        runtime auto-discovery, so the portable manifest must launch the same
+        bootstrap without unresolved user configuration.
+        """
+        manifest_path = ROOT / ".zcode-plugin" / "plugin.json"
+        manifest_text = manifest_path.read_text(encoding="utf-8")
+        manifest = json.loads(manifest_text)
+        server = manifest["mcpServers"]["partme_blender"]
+        self.assertEqual(server["command"], "python3")
+        self.assertEqual(
+            server["args"],
+            ["${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.py"],
+        )
+        self.assertNotIn("env", server)
+        self.assertNotIn("userConfig", manifest)
+        self.assertNotIn("${user_config.", manifest_text)
 
     def test_receipt_contracts_are_packaged_without_unsupported_manifest_fields(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
@@ -334,14 +356,14 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_accepts_cachebuster_build_suffix(self):
-        """Local iteration requires 0.11.0+codex.<cachebuster>.
+        """Local iteration requires 0.11.1+codex.<cachebuster>.
 
         Hard-pinning the version would reject the documented form, so this
         guards against reintroducing that pin.
         """
         self._mutate(
             self.manifest,
-            lambda d: d.update(version="0.11.0+codex.local-20260920-120000"),
+            lambda d: d.update(version="0.11.1+codex.local-20260920-120000"),
         )
         self.assertEqual(validate_main(str(self.repo)), 0)
 

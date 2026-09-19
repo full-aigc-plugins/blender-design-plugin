@@ -5,7 +5,7 @@
     "en": "Blender Design",
     "zh-CN": "Blender 三维设计"
   },
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "description_i18n": {
     "en": "Design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
@@ -13,10 +13,10 @@
   },
   "author": {
     "name": "Full Stack Skills / PartMe.AI",
-    "url": "https://atomgit.com/partme-ai"
+    "url": "https://github.com/full-aigc-plugins"
   },
-  "homepage": "https://atomgit.com/partme-ai/partme-blender-plugin",
-  "repository": "https://atomgit.com/partme-ai/partme-blender-plugin",
+  "homepage": "https://github.com/full-aigc-plugins/blender-design-plugin",
+  "repository": "https://github.com/full-aigc-plugins/blender-design-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "blender",
@@ -33,25 +33,7 @@
       "command": "python3",
       "args": [
         "${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.py"
-      ],
-      "env": {
-        "CODEX_BLENDER_DESCRIPTOR": "${user_config.blender_session_descriptor}",
-        "CODEX_BLENDER_FFPROBE": "${user_config.ffprobe_path}"
-      }
-    }
-  },
-  "userConfig": {
-    "blender_session_descriptor": {
-      "type": "string",
-      "title": "Blender 会话描述符",
-      "description": "多个 Blender 会话同时活跃时用于消歧；单会话留空即可（对应 CODEX_BLENDER_DESCRIPTOR）。",
-      "required": false
-    },
-    "ffprobe_path": {
-      "type": "string",
-      "title": "ffprobe 路径",
-      "description": "导出校验用的 ffprobe 可执行文件路径；留空则自动在 PATH 中查找（对应 CODEX_BLENDER_FFPROBE）。",
-      "required": false
+      ]
     }
   }
 }

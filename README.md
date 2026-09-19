@@ -61,7 +61,7 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.11.0` |
+| Current version | `0.11.1` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
 | MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.5.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
@@ -90,7 +90,7 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 167 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 10 at L1, and 0 at L2, across 35 domains, routed through 23 of the 32 bundled Skills.
+- **Managed** registers 167 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 10 at L1, and 0 at L2, across 35 domains, routed through 23 of the 33 bundled Skills.
 - **Connector** adds the 5 optional `official_uploader.*` commands: 172 commands, 154 at L3, 3 at L4, 15 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
@@ -100,7 +100,7 @@ The two modes are never merged into a single count, and no combined coverage per
 - Cloud login, pricing, submission, polling, and paid actions. Those stay outside this plugin.
 - Bundling or installing the official jimeng uploader. It is user-enabled and, on the current macOS verification host, absent — so the Jimeng Web runtime gate is recorded as blocked even though its command and Skill contracts pass offline.
 - Autodesk Maya. Maya is out of scope for this plugin.
-- Claims of Windows runtime parity. Windows x64 managed mode and the Windows Connector are both `NOT_RUN`; see [Runtime evidence](docs/verification/harness-runtime.md).
+- Foreground Windows UI takeover. Windows Server 2025 x64 / Blender 5.2.1 background recovery, Rigify, Named Pipe, and packaging passed the current L4 workflow; an interactive Windows desktop session remains unverified.
 
 ### Maturity
 
@@ -140,15 +140,15 @@ flowchart TB
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
 | `vendor/partme-blender-mcp-addon-0.5.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
 | `vendor/partme-blender-mcp-runtime-0.5.1.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
-| `skills/` (30) | Routing and domain instructions for Codex | Runtime enforcement |
+| `skills/` (33) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
 | Plugin version | Host | Blender | Platform | Status |
 |---|---|---|---|---|
-| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 baseline in CI, release matrix in `config/blender-release-matrix.json` | macOS Apple Silicon (UDS transport) | Current acceptance in progress |
-| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Windows x64 (Named Pipe transport) | `NOT_RUN` — requires a Windows host |
-| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
+| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
+| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
+| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 
@@ -170,7 +170,7 @@ does not replace the PartMe guarded Harness connection.
 ### 2. Install the plugin
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -235,19 +235,19 @@ Local marketplace (fastest):
 
 2. ZCode → 设置 → 插件 → 创建 → 添加插件市场，填该 marketplace 文件夹路径。
 3. 在「个人」分段安装 `blender`，新开会话。
-4. Optional userConfig: `blender_session_descriptor`（多 Blender 会话消歧）与 `ffprobe_path`（导出校验），缺省均可留空。
+4. The MCP bootstrap is zero-configuration: it discovers the active Blender session descriptor and `ffprobe` automatically. Advanced overrides remain available through the runtime environment when needed, but are not unresolved ZCode install-time variables.
 
-Expected after install: `/blender` command group (9 slash commands), 32 skills, `plugin:blender:partme_blender` MCP server, and a SessionStart environment check.
+Expected after install: `/blender` command group (9 slash commands), 33 skills, `plugin:blender:partme_blender` MCP server, and a SessionStart environment check.
 
 ### Installing on Kimi Code CLI
 
 The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blender`).
 
 1. In Kimi Code CLI run `/plugins` and add this repository by local path or GitHub URL
-   (`https://atomgit.com/partme-ai/partme-blender-plugin`).
+   (`https://github.com/full-aigc-plugins/blender-design-plugin`).
 2. Run `/reload` or start a new session.
 
-Expected after install: 32 skills (`/skill:blender-use` as the router), `blender:*` slash
+Expected after install: 33 skills (`/skill:blender-use` as the router), `blender:*` slash
 commands, the `partme_blender` MCP server, and bundled hooks (SessionStart / UserPromptSubmit /
 Stop).
 
@@ -263,14 +263,14 @@ If GitHub is slow or unreachable, install from the AtomGit mirror instead. The
 commands are identical apart from the marketplace URL:
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
 To install the whole partme-ai plugin catalog from the mirror in one step:
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git
+codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -278,7 +278,7 @@ Notes:
 
 - The AtomGit source and the GitHub source share marketplace names, so adding
   one replaces the other. Switch back with
-  `codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git`.
+  `codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git`.
 - For ZCode or Kimi, clone the mirror repository and register the local
   directory in the respective marketplace configuration.
 
@@ -398,7 +398,8 @@ python3 scripts/validate_model_in_blender.py
 
 Recorded evidence:
 
-- [Runtime evidence](docs/verification/harness-runtime.md) — the L3/L4/L1 breakdown, plus the `NOT_RUN` Windows lines.
+- [Runtime evidence](docs/verification/harness-runtime.md) — the L3/L4/L1 breakdown for the local macOS baseline.
+- [Windows L4 and Rigify evidence](docs/verification/windows-l4-rigify.md) — Windows Server 2025 x64 / Blender 5.2.1 background acceptance; it does not claim foreground UI takeover.
 - [Official uploader runtime](docs/verification/official-uploader-runtime.md) — records `BLOCKED_MISSING_OFFICIAL_ADDON`.
 - [Capability counts](docs/verification/capability-counts.json) — machine-checkable command inventory.
 - `docs/verification/` also holds the domain coverage matrix, foreground lifecycle and policy records, and the acceptance test records.
@@ -413,7 +414,7 @@ Recorded evidence:
 | Command returns `SESSION_REVOKED` | Authorization TTL | Re-authorize the action |
 | Resume behaves unexpectedly | Manual edits since pause | Resume forces a fresh inspection by design; re-issue the intent |
 | Jimeng Web route is unavailable | Official uploader presence | The uploader is user-installed; the gate stays blocked without it |
-| Windows parity is expected | Platform evidence | Windows managed mode and Connector are `NOT_RUN`; do not assume parity |
+| Windows parity is expected | Platform evidence | Background recovery, Rigify, Named Pipe, and packaging are verified; foreground UI takeover still requires an interactive Windows acceptance run |
 
 ## Project structure
 
@@ -442,7 +443,7 @@ partme-blender-plugin/
 
 ## Contributing and support
 
-Open functional issues at <https://atomgit.com/partme-ai/partme-blender-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
+Open functional issues at <https://github.com/full-aigc-plugins/blender-design-plugin/issues>. Before proposing a change, state the Blender version and platform you verified on, whether it alters the command registry or the authorization policy, and include the affected tests. New commands must be registered in the registry rather than added as free-form Python.
 
 ## License
 

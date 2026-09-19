@@ -61,7 +61,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 |---|---|
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
-| 当前版本 | `0.11.0` |
+| 当前版本 | `0.11.1` |
 | 插件清单 | `.codex-plugin/plugin.json` |
 | MCP 配置 | `.mcp.json` 在隔离用户 venv 中引导 SHA 锁定的 PartMe Blender MCP `v0.5.1` 与官方 MCP SDK，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
@@ -90,7 +90,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 
 运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，由命令注册表生成，并可由 `docs/verification/capability-counts.json` 复现。
 
-- **非侵入模式（Managed）** 注册 167 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、10 条 L1、0 条 L2，横跨 35 个域，路由到 32 个内置 Skill 中的 23 个。
+- **非侵入模式（Managed）** 注册 167 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、10 条 L1、0 条 L2，横跨 35 个域，路由到 33 个内置 Skill 中的 23 个。
 - **Connector 模式** 额外加入 5 条可选 `official_uploader.*` 命令：合计 172 条命令，154 条 L3、3 条 L4、15 条 L1、0 条 L2，横跨 36 个域，路由到 24 个 Skill。
 
 两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。Windows 前台 UI 接管未达到 L4 验证，详见[运行证据](docs/verification/harness-runtime.md)。
@@ -100,7 +100,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 - 云端登录、报价、提交、轮询和付费操作——这些都在本插件之外。
 - 捆绑或安装官方即梦上传器。它由用户自行启用；当前 macOS 验证环境未安装，因此即梦网页运行门禁记为阻塞，尽管其命令与 Skill 契约已通过离线验证。
 - Autodesk Maya。Maya 不在本插件范围内。
-- 声称 Windows 运行对齐。Windows x64 非侵入模式与 Windows Connector 均为 `NOT_RUN`，详见[运行证据](docs/verification/harness-runtime.md)。
+- Windows 前台 UI 接管。当前 Windows Server 2025 x64 / Blender 5.2.1 后台恢复、Rigify、Named Pipe 与打包已通过 L4 工作流；交互式 Windows 桌面仍未验收。
 
 ### 成熟度
 
@@ -140,15 +140,15 @@ flowchart TB
 | `scripts/harness/exporter.py` | 可信导出与媒体探测 | 艺术决策 |
 | `vendor/partme-blender-mcp-addon-0.5.1.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
 | `vendor/partme-blender-mcp-runtime-0.5.1.zip` | 通用 MCP 协议与官方 SDK 工具暴露 | Codex 专属 Skills |
-| `skills/`（30 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
+| `skills/`（33 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
 
 ## 兼容性
 
 | 插件版本 | 宿主 | Blender | 平台 | 状态 |
 |---|---|---|---|---|
-| `0.11.0` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | CI 基线为 Blender 4.2.23，发布矩阵见 `config/blender-release-matrix.json` | macOS Apple Silicon（UDS 传输） | 当前验收进行中 |
-| `0.11.0` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Windows x64（Named Pipe 传输） | `NOT_RUN`——需要 Windows 主机 |
-| `0.11.0` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
+| `0.11.1` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
+| `0.11.1` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
+| `0.11.1` + runtime `0.5.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
 
 Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-runtime.md` 中列出的组合可以声称支持。
 
@@ -170,7 +170,7 @@ Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-run
 ### 2. 安装插件
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -216,21 +216,21 @@ capability.describe
 如果 GitHub 访问缓慢或不可达，可改用 AtomGit 镜像安装。命令完全一致，只把市场地址换成镜像：
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/partme-blender-plugin.git --ref main
+codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
 codex plugin add blender-design@partme-ai-blender
 ```
 
 如需一步安装 partme-ai 全部插件目录：
 
 ```bash
-codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git
+codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git
 codex plugin add blender-design@partme-ai-blender
 ```
 
 注意事项：
 
 - AtomGit 源与 GitHub 源共用市场名，后添加的会覆盖先添加的。切回官方源执行
-  `codex plugin marketplace add https://atomgit.com/partme-ai/plugins.git`。
+  `codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git`。
 - ZCode 与 Kimi 用户可先将镜像仓库克隆到本地，再在各平台的 marketplace 配置中登记本地目录。
 
 ## 快速开始
@@ -349,7 +349,8 @@ python3 scripts/validate_model_in_blender.py
 
 仓库中已记录的证据：
 
-- [运行证据](docs/verification/harness-runtime.md)——L3/L4/L1 明细，以及 `NOT_RUN` 的 Windows 条目。
+- [运行证据](docs/verification/harness-runtime.md)——本机 macOS 基线的 L3/L4/L1 明细。
+- [Windows L4 与 Rigify 证据](docs/verification/windows-l4-rigify.md)——Windows Server 2025 x64 / Blender 5.2.1 后台验收；不声称前台 UI 接管。
 - [官方上传器运行记录](docs/verification/official-uploader-runtime.md)——记录 `BLOCKED_MISSING_OFFICIAL_ADDON`。
 - [能力计数](docs/verification/capability-counts.json)——机器可校验的命令清单。
 - `docs/verification/` 还包含领域覆盖矩阵、前台生命周期与策略记录，以及验收测试记录。
@@ -364,7 +365,7 @@ python3 scripts/validate_model_in_blender.py
 | 命令返回 `SESSION_REVOKED` | 授权 TTL | 重新授权该动作 |
 | 恢复行为不符合预期 | 暂停后是否有手工修改 | 恢复时强制重新检查现场是设计行为，请重新表达意图 |
 | 即梦网页路径不可用 | 是否存在官方上传器 | 上传器需用户自行安装；未安装时门禁保持阻塞 |
-| 期望 Windows 对齐 | 平台证据 | Windows 非侵入模式与 Connector 均为 `NOT_RUN`，不要假设对齐 |
+| 期望 Windows 对齐 | 平台证据 | 后台恢复、Rigify、Named Pipe 与打包已验证；前台 UI 接管仍需交互式 Windows 验收 |
 
 ## 项目结构
 
@@ -376,7 +377,7 @@ partme-blender-plugin/
 ├── connector/                  # 可选 Blender Add-on
 ├── scripts/                    # Harness、启动器、导出器、校验器
 │   └── harness/                # 传输、服务、策略、授权、快照
-├── skills/                     # 30 个领域与工作流 Skill
+├── skills/                     # 33 个领域与工作流 Skill
 ├── config/                     # 版本矩阵与生产档位
 ├── tests/                      # 单元、契约与分发测试
 └── docs/                       # 架构、技术方案、验证记录
@@ -393,7 +394,7 @@ partme-blender-plugin/
 
 ## 贡献与支持
 
-功能问题请提交到 <https://atomgit.com/partme-ai/partme-blender-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
+功能问题请提交到 <https://github.com/full-aigc-plugins/blender-design-plugin/issues>。提交变更前，请说明你验证所用的 Blender 版本与平台、是否改动命令注册表或授权策略，并附上受影响的测试。新增命令必须注册进注册表，不得以自由 Python 形式加入。
 
 ## 许可证
 
