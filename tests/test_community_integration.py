@@ -110,12 +110,13 @@ class CommunityBridgeTests(unittest.TestCase):
 
 class CommunityToolsRegistrationTests(unittest.TestCase):
     def test_tool_definitions_reference_real_commands(self):
-        from scripts.plugin_mcp_adapter import COMMUNITY_CALL_TOOL, COMMUNITY_STATUS_TOOL
+        from scripts.plugin_mcp_adapter import COMMUNITY_CALL_TOOL, COMMUNITY_STATUS_TOOL, PROVIDER_TASKS_TOOL
 
         self.assertEqual(COMMUNITY_STATUS_TOOL["name"], "blender_community_status")
         enum = COMMUNITY_CALL_TOOL["inputSchema"]["properties"]["command"]["enum"]
         self.assertEqual(set(enum), set(community_bridge.COMMUNITY_COMMANDS))
         self.assertEqual(COMMUNITY_CALL_TOOL["name"], "blender_community_call")
+        self.assertEqual(PROVIDER_TASKS_TOOL["name"], "blender_provider_tasks")
 
     def test_real_plugin_adapter_paginates_the_combined_catalog_once(self):
         from scripts.partme_runtime import activate_runtime
@@ -135,7 +136,8 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
             if cursor is None:
                 break
         self.assertEqual(len(names), len(set(names)))
-        for name in ("blender_auto_setup", "blender_community_status", "blender_community_call"):
+        for name in ("blender_auto_setup", "blender_community_status", "blender_community_call",
+                     "blender_provider_tasks"):
             self.assertEqual(names.count(name), 1)
 
     def test_provider_contribution_excludes_duplicate_polypizza(self):
@@ -143,6 +145,98 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         ids = [provider["providerId"] for provider in catalog["providers"]]
         self.assertEqual(ids, ["polyhaven", "sketchfab", "hyper3d", "hunyuan3d"])
         self.assertNotIn("polypizza", ids)
+        for provider in catalog["providers"]:
+            self.assertRegex(provider.get("metadata", {}).get("statusCommand", ""), r"^get_[a-z0-9_]+_status$")
+
+    def test_generation_create_reports_provider_neutral_task_to_blender(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        bridge = mock.Mock()
+        bridge.call.return_value = {"status": "succeeded", "result": {}}
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch("scripts.community_bridge.call_community", return_value={"subscription_key": "sub-42"}):
+            result = adapter.call_tool("blender_community_call", {
+                "command": "create_rodin_job",
+                "params": {"text_prompt": "chair"},
+                "_requestId": "request-1",
+                "_transactionId": "transaction-1",
+                "_expectedSceneRevision": 0,
+            })
+
+        self.assertFalse(result["isError"])
+        updates = [call for call in bridge.call.call_args_list if call.args[0] == "provider.task_control"]
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0].args[1]["providerId"], "hyper3d")
+        self.assertEqual(updates[0].args[1]["taskId"], "sub-42")
+        self.assertEqual(updates[0].args[1]["state"], "generating")
+
+    def test_local_cancel_stops_future_poll_without_calling_provider(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        bridge = mock.Mock()
+
+        def bridge_call(command, arguments, **_kwargs):
+            if command == "provider.task_control" and arguments["operation"] == "status":
+                return {"status": "succeeded", "result": {
+                    "providerId": "hunyuan3d", "taskId": "job-42", "state": "cancelled",
+                    "cancelRequested": True, "remoteMayContinue": True,
+                    "message": "已停止等待，远端任务可能仍在运行",
+                }}
+            return {"status": "succeeded", "result": {}}
+
+        bridge.call.side_effect = bridge_call
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch("scripts.community_bridge.call_community") as community_call:
+            result = adapter.call_tool("blender_community_call", {
+                "command": "poll_hunyuan_job_status",
+                "params": {"job_id": "job-42"},
+            })
+
+        community_call.assert_not_called()
+        self.assertEqual(result["structuredContent"]["status"], "cancelled")
+        self.assertTrue(result["structuredContent"]["remoteMayContinue"])
+
+    def test_poll_recreates_missing_runtime_task_before_updating_it(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        bridge = mock.Mock()
+
+        def bridge_call(command, arguments, **_kwargs):
+            if command != "provider.task_control":
+                return {"status": "succeeded", "result": {}}
+            if arguments["operation"] in {"status", "update"}:
+                return {"status": "failed", "error": {"code": "PROVIDER_TASK_NOT_FOUND"}}
+            return {"status": "succeeded", "result": dict(arguments)}
+
+        bridge.call.side_effect = bridge_call
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch("scripts.community_bridge.call_community", return_value={
+            "job_id": "job-recovered", "status": "PROCESSING", "progress": 35,
+        }):
+            result = adapter.call_tool("blender_community_call", {
+                "command": "poll_hunyuan_job_status",
+                "params": {"job_id": "job-recovered"},
+            })
+
+        self.assertFalse(result["isError"])
+        operations = [
+            call.args[1]["operation"] for call in bridge.call.call_args_list
+            if call.args[0] == "provider.task_control"
+        ]
+        self.assertEqual(operations, ["status", "update", "start"])
+        self.assertEqual(result["structuredContent"]["_partmeTask"]["operation"], "start")
 
 
 class DualInstallTests(unittest.TestCase):

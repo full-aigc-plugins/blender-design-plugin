@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.9\.0(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.10\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -109,31 +109,36 @@ SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 PARTME_RUNTIME = {
     "schemaVersion": "1.0.0",
     "product": "PartMe Blender MCP",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "repository": "https://github.com/full-aigc-plugins/blender-mcp",
-    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.3.0",
+    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.4.0",
 }
 PARTME_ARTIFACTS = {
     "runtime": {
-        "path": "vendor/partme-blender-mcp-runtime-0.3.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.3.0/partme-blender-mcp-runtime-0.3.0.zip",
-        "sha256": "47376ff235f8d3cfab3c7d82b378315ed94383990dab23952b25d936201d508e",
-        "members": ("pyproject.toml", "src/partme_blender_mcp/__init__.py"),
+        "path": "vendor/partme-blender-mcp-runtime-0.4.0.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-blender-mcp-runtime-0.4.0.zip",
+        "sha256": "e20bac24f48544bc69511a4df0cd07a04f189eb49628b6708979ce9c0f3debb4",
+        "members": (
+            "pyproject.toml",
+            "src/partme_blender_mcp/__init__.py",
+            "src/partme_blender_mcp/harness/provider_tasks.py",
+        ),
     },
     "community": {
         "path": "vendor/partme-community-addon-2.0.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.3.0/partme-community-addon-2.0.0.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-community-addon-2.0.0.zip",
         "sha256": "440db5bb3613d6b67e42772cb7294c99ec5c34aac8deb96ce8217c81c1ec0b33",
         "members": ("blender_mcp_community/__init__.py",),
     },
     "addon": {
-        "path": "vendor/partme-blender-mcp-addon-0.3.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.3.0/partme-blender-mcp-addon-0.3.0.zip",
-        "sha256": "0889e3a7150852561fdb8b54fab829e4549068206acd4787a3cfc7b3aede8b37",
+        "path": "vendor/partme-blender-mcp-addon-0.4.0.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-blender-mcp-addon-0.4.0.zip",
+        "sha256": "a6794ff8e0487d342e743b6b06f631053ed555cf388d8ae9152c707151157d86",
         "members": (
             "partme_blender_mcp/__init__.py",
             "partme_blender_mcp/panel.py",
             "partme_blender_mcp/harness/server.py",
+            "partme_blender_mcp/harness/provider_tasks.py",
         ),
     },
 }
@@ -426,7 +431,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.9.0, optionally with a +build cachebuster"
+            "release version must be 0.10.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):

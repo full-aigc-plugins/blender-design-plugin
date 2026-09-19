@@ -61,9 +61,9 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 |---|---|
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
-| 当前版本 | `0.3.0` |
+| 当前版本 | `0.10.0` |
 | 插件清单 | `.codex-plugin/plugin.json` |
-| MCP 配置 | `.mcp.json` 启动 SHA 锁定的 PartMe Blender MCP `v0.1.1`，不维护第二套 MCP 实现 |
+| MCP 配置 | `.mcp.json` 启动 SHA 锁定的 PartMe Blender MCP `v0.4.0`，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
 | 许可证 | Apache-2.0 |
 
@@ -138,17 +138,17 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | 判定哪些动作不可逆、需要授权 | 解读用户意图 |
 | `scripts/harness/authorization.py` | 临时 HMAC 令牌、TTL、动作绑定 | 长期凭据 |
 | `scripts/harness/exporter.py` | 可信导出与媒体探测 | 艺术决策 |
-| `vendor/partme-blender-mcp-addon-0.1.1.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
-| `vendor/partme-blender-mcp-runtime-0.1.1.zip` | 通用 MCP 协议与工具暴露 | Codex 专属 Skills |
+| `vendor/partme-blender-mcp-addon-0.4.0.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
+| `vendor/partme-blender-mcp-runtime-0.4.0.zip` | 通用 MCP 协议与工具暴露 | Codex 专属 Skills |
 | `skills/`（30 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
 
 ## 兼容性
 
 | 插件版本 | 宿主 | Blender | 平台 | 状态 |
 |---|---|---|---|---|
-| `0.3.0` | Codex CLI 或 ChatGPT 桌面应用 | CI 基线为 Blender 4.2.23，发布矩阵见 `config/blender-release-matrix.json` | macOS Apple Silicon（UDS 传输） | 已验证 |
-| `0.3.0` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Windows x64（Named Pipe 传输） | `NOT_RUN`——需要 Windows 主机 |
-| `0.3.0` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
+| `0.10.0` + runtime `0.4.0` | Codex CLI 或 ChatGPT 桌面应用 | CI 基线为 Blender 4.2.23，发布矩阵见 `config/blender-release-matrix.json` | macOS Apple Silicon（UDS 传输） | 已验证 |
+| `0.10.0` + runtime `0.4.0` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Windows x64（Named Pipe 传输） | `NOT_RUN`——需要 Windows 主机 |
+| `0.10.0` + runtime `0.4.0` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
 
 Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-runtime.md` 中列出的组合可以声称支持。
 
