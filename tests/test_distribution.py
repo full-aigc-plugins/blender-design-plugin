@@ -271,7 +271,7 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_rejects_corrupt_pinned_partme_runtime(self):
-        target = self.repo / "vendor/partme-blender-mcp-runtime-0.1.1.zip"
+        target = self.repo / "vendor/partme-blender-mcp-runtime-0.1.2.zip"
         target.write_bytes(target.read_bytes() + b"corrupt")
         self._rejects()
 

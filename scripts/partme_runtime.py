@@ -23,7 +23,7 @@ def _load_lock(plugin_root: Path) -> dict:
     required = {"schemaVersion", "product", "version", "repository", "release", "artifacts"}
     if set(data) != required or data["schemaVersion"] != "1.0.0":
         raise RuntimeIntegrationError("runtime lock has an unsupported schema")
-    if data["product"] != "PartMe Blender MCP" or data["repository"] != "https://github.com/partme-ai/blender-mcp":
+    if data["product"] != "PartMe Blender MCP" or data["repository"] != "https://github.com/full-aigc-plugins/blender-mcp":
         raise RuntimeIntegrationError("runtime lock points to an unexpected product")
     return data
 

@@ -254,6 +254,7 @@ def autostart_expression(output_root: Path) -> str:
     return (
         "import bpy\n"
         "def _partme_autostart():\n"
+        "    bpy.context.scene.partme_blender_execution_mode = 'auto_with_budget'\n"
         f"    bpy.context.scene.partme_blender_output_root = '{root}'\n"
         "    try:\n"
         "        bpy.ops.partme_blender.start_connector()\n"

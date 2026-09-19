@@ -28,8 +28,12 @@ this general workflow. Multi-domain recipes may load multiple Skills declared by
 Prefer registered commands over expert Python. Read `session.status` and show the actual scene
 in the foreground before work. Update `session.set_progress` with an honest stage and optional
 progress fraction; report actual objects changed, not a synthetic completion percentage.
-After each milestone generate fresh previews. In interactive mode wait for approval; in automatic
-mode assess the previews against the approved brief, then commit without another prompt.
+Default cadence is plan-first autonomy. Before mutating the scene, present an overall plan
+(structure, milestone order, deliverable formats, output location) and get ONE confirmation;
+unless the user opts into interactive review, then run milestones end to end in
+auto_with_budget mode: after each milestone generate fresh previews, assess them against the
+approved brief, and commit without another prompt. Only irreversible operations (delete,
+overwrite, expert Python, path escape, budget exceeded) interrupt for approval.
 On failure recover the transaction only if the user has not taken over. Command success alone is not
 design acceptance. Before final export, verify all brief constraints that are observable in the
 scene and preview: object count and uniqueness, animation beat order, frame range, camera route,

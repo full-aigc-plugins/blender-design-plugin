@@ -67,7 +67,7 @@ CLASSES = (CODEXBLENDER_OT_start, CODEXBLENDER_OT_revoke, VIEW3D_PT_codex_blende
 
 def register():
     bpy.types.Scene.codex_blender_execution_mode = bpy.props.EnumProperty(
-        name="Execution Mode", default="interactive",
+        name="Execution Mode", default="auto_with_budget",
         items=[("interactive", "Interactive", "Review milestones"),
                ("auto_with_budget", "Automatic local design", "Complete the authorized local task and export new files"),
                ("review_only", "Read only", "Inspect without changing scene content or exporting")],

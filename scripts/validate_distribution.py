@@ -109,20 +109,20 @@ SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 PARTME_RUNTIME = {
     "schemaVersion": "1.0.0",
     "product": "PartMe Blender MCP",
-    "version": "0.1.1",
-    "repository": "https://github.com/partme-ai/blender-mcp",
-    "release": "https://github.com/partme-ai/blender-mcp/releases/tag/v0.1.1",
+    "version": "0.1.2",
+    "repository": "https://github.com/full-aigc-plugins/blender-mcp",
+    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.1.2",
 }
 PARTME_ARTIFACTS = {
     "runtime": {
-        "path": "vendor/partme-blender-mcp-runtime-0.1.1.zip",
-        "url": "https://github.com/partme-ai/blender-mcp/releases/download/v0.1.1/partme-blender-mcp-runtime-0.1.1.zip",
+        "path": "vendor/partme-blender-mcp-runtime-0.1.2.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.1.2/partme-blender-mcp-runtime-0.1.2.zip",
         "sha256": "4adb0f7c765a483b155f8d96a0ba2070a81f783528ff3ab60faa47f051b676af",
         "members": ("pyproject.toml", "src/partme_blender_mcp/__init__.py"),
     },
     "addon": {
-        "path": "vendor/partme-blender-mcp-addon-0.1.1.zip",
-        "url": "https://github.com/partme-ai/blender-mcp/releases/download/v0.1.1/partme-blender-mcp-addon-0.1.1.zip",
+        "path": "vendor/partme-blender-mcp-addon-0.1.2.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.1.2/partme-blender-mcp-addon-0.1.2.zip",
         "sha256": "0247bd29ab6e71912c8036b1d9aff071d883fbc9053a6357f46a99da81583dd2",
         "members": (
             "partme_blender_mcp/__init__.py",
