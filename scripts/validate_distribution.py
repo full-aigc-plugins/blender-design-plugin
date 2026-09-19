@@ -426,7 +426,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.3.1, optionally with a +build cachebuster"
+            "release version must be 0.7.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):
