@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "runtime.lock.json"
 
@@ -16,23 +15,24 @@ class PartMeRuntimeIntegrationTests(unittest.TestCase):
     def test_lock_pins_release_artifacts_and_hashes(self):
         data = json.loads(LOCK.read_text(encoding="utf-8"))
         self.assertEqual(data["product"], "PartMe Blender MCP")
-        self.assertEqual(data["version"], "0.4.0")
+        self.assertEqual(data["version"], "0.5.1")
         self.assertEqual(data["repository"], "https://github.com/full-aigc-plugins/blender-mcp")
         for key in ("runtime", "addon"):
             artifact = data["artifacts"][key]
             path = ROOT / artifact["path"]
             self.assertTrue(path.is_file(), path)
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), artifact["sha256"])
-            self.assertIn("/releases/download/v0.4.0/", artifact["url"])
+            self.assertIn("/releases/download/v0.5.1/", artifact["url"])
 
     def test_mcp_server_imports_the_pinned_runtime(self):
         from scripts.partme_runtime import activate_runtime
 
         runtime = activate_runtime(ROOT)
-        self.assertEqual(runtime["version"], "0.4.0")
+        self.assertEqual(runtime["version"], "0.5.1")
         module = importlib.import_module("partme_blender_mcp.harness.mcp_adapter")
-        self.assertIn("partme-blender-mcp-runtime-0.4.0.zip", str(module.__file__))
-        self.assertEqual(module.MCP_PROTOCOL_VERSION, "2025-06-18")
+        self.assertIn("partme-blender-mcp-runtime-0.5.1.zip", str(module.__file__))
+        version = importlib.import_module("partme_blender_mcp.harness.version")
+        self.assertEqual(version.MCP_PROTOCOL_VERSION, "2025-06-18")
         self.assertEqual(module.McpAdapter(plugin_root=ROOT).tools[0]["name"], "blender_getting_started")
 
         local = importlib.import_module("scripts.harness.mcp_adapter")
@@ -41,19 +41,19 @@ class PartMeRuntimeIntegrationTests(unittest.TestCase):
     def test_connector_package_is_the_upstream_release_artifact(self):
         from scripts.package_connector import package_connector
 
-        upstream = ROOT / "vendor/partme-blender-mcp-addon-0.4.0.zip"
+        upstream = ROOT / "vendor/partme-blender-mcp-addon-0.5.1.zip"
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "connector.zip"
             package_connector(target)
             self.assertEqual(target.read_bytes(), upstream.read_bytes())
 
     def test_connector_package_cli_uses_the_upstream_release_artifact(self):
-        upstream = ROOT / "vendor/partme-blender-mcp-addon-0.4.0.zip"
+        upstream = ROOT / "vendor/partme-blender-mcp-addon-0.5.1.zip"
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "connector.zip"
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/package_connector.py"), str(target)],
-                cwd=ROOT, capture_output=True, text=True,
+                cwd=ROOT, capture_output=True, text=True, check=False,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(target.read_bytes(), upstream.read_bytes())

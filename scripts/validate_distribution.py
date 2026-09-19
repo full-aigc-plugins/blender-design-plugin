@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.10\.0(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.11\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -72,7 +72,7 @@ EXPECTED_MCP = {
         "partme_blender": {
             "type": "stdio",
             "command": "python",
-            "args": ["scripts/blender_mcp_server.py"],
+            "args": ["scripts/mcp_bootstrap.py"],
             "cwd": ".",
         }
     }
@@ -109,15 +109,15 @@ SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 PARTME_RUNTIME = {
     "schemaVersion": "1.0.0",
     "product": "PartMe Blender MCP",
-    "version": "0.4.0",
+    "version": "0.5.1",
     "repository": "https://github.com/full-aigc-plugins/blender-mcp",
-    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.4.0",
+    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.5.1",
 }
 PARTME_ARTIFACTS = {
     "runtime": {
-        "path": "vendor/partme-blender-mcp-runtime-0.4.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-blender-mcp-runtime-0.4.0.zip",
-        "sha256": "e20bac24f48544bc69511a4df0cd07a04f189eb49628b6708979ce9c0f3debb4",
+        "path": "vendor/partme-blender-mcp-runtime-0.5.1.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.5.1/partme-blender-mcp-runtime-0.5.1.zip",
+        "sha256": "cbe23dca2f7cae1c02a576ec2c2518cd914072773c42c0244c9aa0e8939f8604",
         "members": (
             "pyproject.toml",
             "src/partme_blender_mcp/__init__.py",
@@ -126,14 +126,14 @@ PARTME_ARTIFACTS = {
     },
     "community": {
         "path": "vendor/partme-community-addon-2.0.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-community-addon-2.0.0.zip",
-        "sha256": "440db5bb3613d6b67e42772cb7294c99ec5c34aac8deb96ce8217c81c1ec0b33",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.5.1/partme-community-addon-2.0.0.zip",
+        "sha256": "1c880fac7b85ac98607802f111dde595cb62672f54274a1a36b6e0a44590d2cb",
         "members": ("blender_mcp_community/__init__.py",),
     },
     "addon": {
-        "path": "vendor/partme-blender-mcp-addon-0.4.0.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.4.0/partme-blender-mcp-addon-0.4.0.zip",
-        "sha256": "a6794ff8e0487d342e743b6b06f631053ed555cf388d8ae9152c707151157d86",
+        "path": "vendor/partme-blender-mcp-addon-0.5.1.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.5.1/partme-blender-mcp-addon-0.5.1.zip",
+        "sha256": "69db709877c8b4fd5329fcf4532f37da0ab39cb180e3cfc461fd7b3d1a99f91e",
         "members": (
             "partme_blender_mcp/__init__.py",
             "partme_blender_mcp/panel.py",
@@ -431,7 +431,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.10.0, optionally with a +build cachebuster"
+            "release version must be 0.11.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):
@@ -453,6 +453,8 @@ def validate(root: Path) -> list[str]:
                 errors.append("Blender Design must launch the pinned PartMe Blender MCP stdio adapter")
     if not (root / "scripts" / "blender_mcp_server.py").is_file():
         errors.append("plugin-owned MCP stdio entrypoint is missing")
+    if not (root / "scripts" / "mcp_bootstrap.py").is_file():
+        errors.append("plugin-owned official-SDK bootstrap is missing")
     _validate_partme_runtime(root, errors)
 
     # -- Codex rule: the name must also be a valid identifier segment --

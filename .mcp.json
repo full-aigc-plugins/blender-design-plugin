@@ -3,7 +3,7 @@
     "partme_blender": {
       "type": "stdio",
       "command": "python",
-      "args": ["scripts/blender_mcp_server.py"],
+      "args": ["scripts/mcp_bootstrap.py"],
       "cwd": "."
     }
   }

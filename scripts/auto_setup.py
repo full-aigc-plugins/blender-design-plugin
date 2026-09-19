@@ -265,6 +265,29 @@ def enable_addon_persistently(blender_bin: Path, module: str = ADDON_MODULE,
     return "PARTME_ENABLED=True" in (out.stdout or "")
 
 
+def configure_partme_runtime(blender_bin: Path, python: Path, entrypoint: Path,
+                             module: str = ADDON_MODULE) -> bool:
+    """Persist the external SDK runtime used by Blender's remote-listener controls."""
+    expression = "\n".join((
+        "import bpy, traceback",
+        "try:",
+        f"    addon = bpy.context.preferences.addons.get({module!r})",
+        "    prefs = addon.preferences if addon else None",
+        f"    prefs.mcp_python = {str(python)!r}",
+        f"    prefs.mcp_entrypoint = {str(entrypoint)!r}",
+        "    bpy.ops.wm.save_userpref()",
+        "    print('PARTME_RUNTIME_CONFIGURED=True')",
+        "except Exception:",
+        "    traceback.print_exc()",
+        "    print('PARTME_RUNTIME_CONFIGURED=False')",
+    )) + "\n"
+    out = subprocess.run(
+        [str(blender_bin), "--background", "--python-expr", expression],
+        capture_output=True, text=True, timeout=CLI_QUERY_TIMEOUT, check=False,
+    )
+    return "PARTME_RUNTIME_CONFIGURED=True" in (out.stdout or "")
+
+
 def autostart_expression(output_root: Path) -> str:
     root = str(output_root).replace("\\", "\\\\").replace("'", "\\'")
     return (
@@ -282,12 +305,17 @@ def autostart_expression(output_root: Path) -> str:
     )
 
 
-def launch_connected(blender_bin: Path, output_root: Path) -> subprocess.Popen:
+def launch_connected(blender_bin: Path, output_root: Path, *, plugin_root: Path | None = None) -> subprocess.Popen:
+    env = dict(os.environ)
+    if plugin_root is not None:
+        env["PARTME_BLENDER_MCP_PYTHON"] = sys.executable
+        env["PARTME_BLENDER_MCP_ENTRYPOINT"] = str(plugin_root / "scripts/blender_mcp_server.py")
     return subprocess.Popen(
         [str(blender_bin), "--python-expr", autostart_expression(output_root)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         stdin=subprocess.DEVNULL,
+        env=env,
         start_new_session=True,
     )
 
@@ -377,13 +405,20 @@ def run_auto_setup(
         steps.append({"step": "disable-legacy-community", "ok": True,
                       "detail": f"已禁用旧版社区 addon（{legacy}.py 文件保留，可手动删除）"})
     steps.append({"step": "enable", "ok": enabled, "detail": "已持久启用" if enabled else "启用结果未知（将尝试继续）"})
+    runtime_configured = configure_partme_runtime(
+        # Preserve the venv entry point. ``resolve()`` follows the venv's Python
+        # symlink to the base interpreter and silently drops the installed MCP SDK.
+        blender_bin, Path(os.path.abspath(sys.executable)), plugin_root / "scripts/blender_mcp_server.py",
+    )
+    steps.append({"step": "configure-mcp-runtime", "ok": runtime_configured,
+                  "detail": "已配置官方 SDK 外部运行时" if runtime_configured else "请在 Add-on 偏好设置中选择 MCP Python"})
     community_enabled = enable_addon_persistently(blender_bin, module=COMMUNITY_MODULE)
     steps.append({"step": "enable-community", "ok": community_enabled,
                   "detail": "社区资产 Add-on 已持久启用（PolyHaven/Sketchfab/Hyper3D/混元3D，服务在 9876 自起）" if community_enabled else "社区 Add-on 启用结果未知（资产能力可能需要在偏好设置中手动启用）"})
 
     launched = None
     if launch_blender:
-        launched = launch_connected(blender_bin, output_root)
+        launched = launch_connected(blender_bin, output_root, plugin_root=plugin_root)
         steps.append({"step": "launch", "ok": launched.pid > 0, "detail": f"pid={launched.pid}"})
 
     return {

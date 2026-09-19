@@ -163,9 +163,12 @@ class RunAutoSetupTests(unittest.TestCase):
             script_root = Path(tmp) / "4.5" / "scripts"
             blender_bin = _fake_blender(script_root)
             launched = mock.Mock(pid=4321)
+            venv_python = Path(tmp) / "runtime" / "venv" / "bin" / "python"
             with mock.patch.object(auto_setup, "discover_blender", return_value=blender_bin), \
                  mock.patch.object(auto_setup, "blender_running", return_value=False), \
                  mock.patch.object(auto_setup, "launch_connected", return_value=launched) as launch, \
+                 mock.patch.object(auto_setup, "configure_partme_runtime", return_value=True) as configure, \
+                 mock.patch.object(auto_setup.sys, "executable", str(venv_python)), \
                  mock.patch.dict(__import__("os").environ, {"PARTME_BLENDER_OUTPUT_ROOT": str(Path(tmp) / "out")}):
                 result = auto_setup.run_auto_setup(PLUGIN_ROOT)
             self.assertTrue(result["ok"])
@@ -173,6 +176,7 @@ class RunAutoSetupTests(unittest.TestCase):
             self.assertEqual(result["launchedPid"], 4321)
             launch.assert_called_once()
             self.assertEqual(launch.call_args[0][1], Path(tmp) / "out")
+            self.assertEqual(configure.call_args.args[1], venv_python.absolute())
 
 
 if __name__ == "__main__":

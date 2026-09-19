@@ -6,40 +6,72 @@
       "label": "Poly Haven",
       "category": "asset_library",
       "source": "community",
+      "enabled": true,
+      "mutable": true,
+      "configurable": false,
       "risks": ["read", "network_download", "scene_import"],
       "status": {"state": "ready", "statusText": "可用"},
       "actions": ["browse"],
-      "metadata": {"statusCommand": "get_polyhaven_status"}
+      "metadata": {
+        "uiOrder": 20,
+        "statusCommand": "get_polyhaven_status",
+        "enableProperty": "blendermcp_use_polyhaven",
+        "preferencesModule": "blender_mcp_community"
+      }
     },
     {
       "providerId": "sketchfab",
       "label": "Sketchfab",
       "category": "asset_library",
       "source": "community",
+      "enabled": false,
+      "mutable": true,
+      "configurable": true,
       "risks": ["read", "network_download", "scene_import"],
       "status": {"state": "configuration_required", "statusText": "需要配置密钥"},
       "actions": ["configure", "browse"],
-      "metadata": {"statusCommand": "get_sketchfab_status"}
+      "metadata": {
+        "uiOrder": 30,
+        "statusCommand": "get_sketchfab_status",
+        "enableProperty": "blendermcp_use_sketchfab",
+        "preferencesModule": "blender_mcp_community"
+      }
     },
     {
       "providerId": "hyper3d",
       "label": "Hyper3D Rodin",
       "category": "ai_model",
       "source": "community",
+      "enabled": false,
+      "mutable": true,
+      "configurable": true,
       "risks": ["read", "paid_generation", "network_download", "scene_import"],
       "status": {"state": "configuration_required", "statusText": "未配置 · 生成可能计费"},
       "actions": ["configure", "generate"],
-      "metadata": {"statusCommand": "get_hyper3d_status"}
+      "metadata": {
+        "uiOrder": 10,
+        "statusCommand": "get_hyper3d_status",
+        "enableProperty": "blendermcp_use_hyper3d",
+        "preferencesModule": "blender_mcp_community"
+      }
     },
     {
       "providerId": "hunyuan3d",
-      "label": "Tencent Hunyuan 3D",
+      "label": "腾讯混元 3D",
       "category": "ai_model",
       "source": "community",
+      "enabled": false,
+      "mutable": true,
+      "configurable": true,
       "risks": ["read", "paid_generation", "network_download", "scene_import"],
       "status": {"state": "configuration_required", "statusText": "未配置 · 生成可能计费"},
       "actions": ["configure", "generate"],
-      "metadata": {"statusCommand": "get_hunyuan3d_status"}
+      "metadata": {
+        "uiOrder": 20,
+        "statusCommand": "get_hunyuan3d_status",
+        "enableProperty": "blendermcp_use_hunyuan3d",
+        "preferencesModule": "blender_mcp_community"
+      }
     }
   ]
 }

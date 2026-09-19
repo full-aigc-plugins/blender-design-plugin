@@ -59,7 +59,7 @@ Codex 会启动 Blender、临时加载 Harness，并保持 Blender 会话运行�
 
 适合继续编辑已经打开的场景：
 
-1. 获取 `partme-blender-mcp-addon-0.4.0.zip`。
+1. 获取 `partme-blender-mcp-addon-0.5.1.zip`。
 2. Blender 中打开 `Edit → Preferences → Add-ons`。
 3. 选择 `Install from Disk` 并安装 zip。
 4. 回到 3D View，按 `N` 打开 Sidebar。
@@ -103,7 +103,7 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 
 ### 2. 安装并启用插件
 
-选择 **Add-ons → Install from Disk**，安装发行包中的 `partme-blender-mcp-addon-0.4.0.zip`，然后
+选择 **Add-ons → Install from Disk**，安装发行包中的 `partme-blender-mcp-addon-0.5.1.zip`，然后
 启用 **PartMe Blender MCP**。下图展示 Add-on 的启用位置；截图里的社区插件名称仅用于
 说明界面位置，不代表应当启用它作为 Blender Design 连接器。
 
@@ -209,15 +209,18 @@ Connector 只负责本地控制，不包含其他云端或 AI 渲染平台逻辑
 两个 MCP 工具使用；PolyHaven 免费无需密钥，Sketchfab / Poly Pizza / Hyper3D / 混元3D 的 API
 密钥请在 Blender 偏好设置 → 社区 Add-on（MCP for Blender）里填写，沿用社区原版交互。
 
-## HTTP 传输（可选）
+## 远程传输（可选）
 
-MCP 服务默认走 stdio。桌面端或远程客户端可用 HTTP 模式启动（Bearer 鉴权）：
+MCP 服务默认使用官方 SDK 的 stdio。远程接入优先使用 Streamable HTTP，SSE 仅作为兼容入口；
+凭证只从环境变量读取：
 
 ```bash
-python3 scripts/blender_mcp_server.py --http 8901 --token <你的token>
-# 端点 http://127.0.0.1:8901/mcp，Authorization: Bearer <token>
-# token 缺省自动生成并打印；也可用环境变量 PARTME_BLENDER_HTTP_TOKEN
+PARTME_BLENDER_REMOTE_TOKEN='<token>' python3 scripts/mcp_bootstrap.py \
+  serve-remote streamable-http --host 127.0.0.1 --port 8901
 ```
+
+非 loopback 监听还必须在 PartMe Blender Add-on 的“接入”设置中配置 HTTPS 对外地址、OAuth
+Issuer URL 与 TLS 证书。HTTP 和 SSE 可以独立启停。
 
 ## 常见问题
 

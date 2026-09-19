@@ -61,9 +61,9 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.10.0` |
+| Current version | `0.11.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
-| MCP configuration | `.mcp.json` launches SHA-pinned PartMe Blender MCP `v0.4.0`; no second MCP implementation |
+| MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.5.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
 | License | Apache-2.0 |
 
@@ -138,17 +138,17 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | Which actions are irreversible and need authorization | User intent interpretation |
 | `scripts/harness/authorization.py` | Ephemeral HMAC tokens, TTL, action binding | Long-lived credentials |
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
-| `vendor/partme-blender-mcp-addon-0.4.0.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
-| `vendor/partme-blender-mcp-runtime-0.4.0.zip` | Generic MCP protocol and tool exposure | Codex-specific Skills |
+| `vendor/partme-blender-mcp-addon-0.5.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
+| `vendor/partme-blender-mcp-runtime-0.5.1.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
 | `skills/` (30) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
 | Plugin version | Host | Blender | Platform | Status |
 |---|---|---|---|---|
-| `0.10.0` + runtime `0.4.0` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 baseline in CI, release matrix in `config/blender-release-matrix.json` | macOS Apple Silicon (UDS transport) | Verified |
-| `0.10.0` + runtime `0.4.0` | Codex CLI or ChatGPT desktop app | same | Windows x64 (Named Pipe transport) | `NOT_RUN` — requires a Windows host |
-| `0.10.0` + runtime `0.4.0` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
+| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 baseline in CI, release matrix in `config/blender-release-matrix.json` | macOS Apple Silicon (UDS transport) | Current acceptance in progress |
+| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Windows x64 (Named Pipe transport) | `NOT_RUN` — requires a Windows host |
+| `0.11.0` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 

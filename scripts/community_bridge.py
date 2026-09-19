@@ -47,6 +47,14 @@ COMMUNITY_COMMANDS: dict[str, str] = {
     "poll_hunyuan_job_status": "hunyuan3d",
 }
 
+# These resolver calls may contain short-lived signed download URLs. They are
+# available only to plugin-side orchestration and are never exposed through
+# blender_community_call or its public enum.
+INTERNAL_COMMUNITY_COMMANDS: dict[str, str] = {
+    "resolve_sketchfab_download": "sketchfab",
+    "resolve_rodin_asset": "hyper3d",
+}
+
 PROVIDERS = ["base", "polyhaven", "sketchfab", "hyper3d", "hunyuan3d"]
 
 # 社区实现中会直接下载或改写场景的命令不再公开。下载结果先由 PartMe
@@ -88,12 +96,14 @@ class CommunityBridgeError(RuntimeError):
 
 
 def call_community(command: str, params: dict | None = None, *, host: str | None = None,
-                   port: int | None = None, timeout: float | None = None) -> dict:
+                   port: int | None = None, timeout: float | None = None,
+                   allow_internal: bool = False) -> dict:
     """Send one JSON command to the community Add-on and return its result payload."""
     host = host or COMMUNITY_HOST
     port = COMMUNITY_PORT if port is None else port
     timeout = RECV_TIMEOUT if timeout is None else timeout
-    if command not in COMMUNITY_COMMANDS:
+    allowed = command in COMMUNITY_COMMANDS or (allow_internal and command in INTERNAL_COMMUNITY_COMMANDS)
+    if not allowed:
         if command in BLOCKED_COMMUNITY_COMMANDS:
             raise CommunityBridgeError(
                 "COMMUNITY_COMMAND_REQUIRES_PARTME_FLOW",

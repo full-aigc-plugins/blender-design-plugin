@@ -16,12 +16,18 @@ serving **PolyHaven / Sketchfab / Poly Pizza / Hyper3D Rodin / Hunyuan3D** searc
 `blender_community_call` MCP tools. PolyHaven needs no key; Sketchfab / Poly Pizza / Hyper3D /
 Hunyuan3D API keys go into the community Add-on's Blender preferences (community-native UX).
 
-## HTTP transport (optional)
+## Remote transports (optional)
 
-The MCP server defaults to stdio. Desktop or remote clients may start it in HTTP mode with Bearer
-auth: `python3 scripts/blender_mcp_server.py --http 8901 --token <token>` — endpoint
-`http://127.0.0.1:8901/mcp`. Without `--token` one is generated and printed; the
-`PARTME_BLENDER_HTTP_TOKEN` environment variable is also honored.
+The MCP server defaults to official-SDK stdio. Streamable HTTP is the preferred remote transport;
+SSE remains a compatibility option. Credentials are read only from the environment:
+
+```bash
+PARTME_BLENDER_REMOTE_TOKEN='<token>' python3 scripts/mcp_bootstrap.py \
+  serve-remote streamable-http --host 127.0.0.1 --port 8901
+```
+
+For a non-loopback listener, also configure an HTTPS public URL, OAuth issuer URL and TLS certificate
+in the PartMe Blender Add-on's **Access** tab settings. HTTP and SSE have independent lifecycles.
 
 ## Manual steps
 
@@ -41,7 +47,7 @@ Choose **Edit > Preferences**.
 
 ## 2. Install and enable the Add-on
 
-Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.4.0.zip`, and enable
+Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.5.1.zip`, and enable
 **PartMe Blender MCP**. The screenshot demonstrates the Add-ons location; its community Add-on
 name is illustrative and is not the trusted Blender Design endpoint.
 

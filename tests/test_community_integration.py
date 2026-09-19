@@ -5,7 +5,6 @@ import socket
 import tempfile
 import threading
 import unittest
-import urllib.request
 from pathlib import Path
 from unittest import mock
 
@@ -110,19 +109,28 @@ class CommunityBridgeTests(unittest.TestCase):
 
 class CommunityToolsRegistrationTests(unittest.TestCase):
     def test_tool_definitions_reference_real_commands(self):
-        from scripts.plugin_mcp_adapter import COMMUNITY_CALL_TOOL, COMMUNITY_STATUS_TOOL, PROVIDER_TASKS_TOOL
+        from scripts.plugin_mcp_adapter import (
+            COMMUNITY_CALL_TOOL,
+            COMMUNITY_STATUS_TOOL,
+            PROVIDER_STAGE_TOOL,
+            PROVIDER_TASKS_TOOL,
+        )
 
         self.assertEqual(COMMUNITY_STATUS_TOOL["name"], "blender_community_status")
         enum = COMMUNITY_CALL_TOOL["inputSchema"]["properties"]["command"]["enum"]
         self.assertEqual(set(enum), set(community_bridge.COMMUNITY_COMMANDS))
         self.assertEqual(COMMUNITY_CALL_TOOL["name"], "blender_community_call")
+        self.assertIn("_estimatedCost", COMMUNITY_CALL_TOOL["inputSchema"]["properties"])
         self.assertEqual(PROVIDER_TASKS_TOOL["name"], "blender_provider_tasks")
+        self.assertEqual(PROVIDER_STAGE_TOOL["name"], "blender_provider_stage_asset")
+        self.assertNotIn("resolve_sketchfab_download", enum)
 
     def test_real_plugin_adapter_paginates_the_combined_catalog_once(self):
         from scripts.partme_runtime import activate_runtime
 
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
         adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=mock.Mock())
@@ -137,7 +145,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
                 break
         self.assertEqual(len(names), len(set(names)))
         for name in ("blender_auto_setup", "blender_community_status", "blender_community_call",
-                     "blender_provider_tasks"):
+                     "blender_provider_tasks", "blender_provider_stage_asset"):
             self.assertEqual(names.count(name), 1)
 
     def test_provider_contribution_excludes_duplicate_polypizza(self):
@@ -145,31 +153,116 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         ids = [provider["providerId"] for provider in catalog["providers"]]
         self.assertEqual(ids, ["polyhaven", "sketchfab", "hyper3d", "hunyuan3d"])
         self.assertNotIn("polypizza", ids)
+        orders = {provider["providerId"]: provider["metadata"]["uiOrder"] for provider in catalog["providers"]}
+        self.assertEqual(orders, {"polyhaven": 20, "sketchfab": 30, "hyper3d": 10, "hunyuan3d": 20})
         for provider in catalog["providers"]:
-            self.assertRegex(provider.get("metadata", {}).get("statusCommand", ""), r"^get_[a-z0-9_]+_status$")
+            metadata = provider.get("metadata", {})
+            self.assertRegex(metadata.get("statusCommand", ""), r"^get_[a-z0-9_]+_status$")
+            self.assertRegex(metadata.get("enableProperty", ""), r"^blendermcp_use_[a-z0-9_]+$")
+            self.assertEqual(metadata.get("preferencesModule"), "blender_mcp_community")
+            self.assertIs(type(provider.get("enabled")), bool)
+            self.assertIs(type(provider.get("configurable")), bool)
+
+    def test_disabled_community_provider_is_rejected_before_real_command(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=mock.Mock())
+
+        def community_call(command, _params):
+            if command == "get_sketchfab_status":
+                return {"enabled": False, "message": "Sketchfab is disabled"}
+            self.fail(f"disabled provider command reached community add-on: {command}")
+
+        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
+            result = adapter.call_tool("blender_community_call", {
+                "command": "search_sketchfab_models",
+                "params": {"query": "chair"},
+            })
+
+        self.assertTrue(result["isError"])
+        self.assertEqual(result["structuredContent"]["error"]["code"], "PROVIDER_DISABLED")
+
+    def test_provider_stage_keeps_signed_url_out_of_mcp_result(self):
+        from scripts.partme_runtime import activate_runtime
+
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+
+        bridge = mock.Mock()
+        bridge.call.return_value = {
+            "status": "succeeded",
+            "sceneRevision": 1,
+            "result": {
+                "path": "/approved/generated/sketchfab/chair/model.gltf",
+                "sourceHost": "download.sketchfab.com",
+            },
+        }
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        signed_url = "https://download.sketchfab.com/model.zip?signature=secret"
+
+        def community_call(command, _params, **kwargs):
+            if command == "get_sketchfab_status":
+                return {"enabled": True, "message": "Sketchfab is enabled"}
+            self.assertEqual(command, "resolve_sketchfab_download")
+            self.assertTrue(kwargs.get("allow_internal"))
+            return {"providerId": "sketchfab", "url": signed_url, "filename": "chair.zip"}
+
+        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
+            result = adapter.call_tool("blender_provider_stage_asset", {
+                "providerId": "sketchfab",
+                "params": {"uid": "chair"},
+                "_requestId": "stage-1",
+                "_transactionId": "tx-1",
+                "_expectedSceneRevision": 0,
+                "_authorization": "one-time-claim",
+            })
+
+        self.assertFalse(result["isError"])
+        self.assertNotIn(signed_url, json.dumps(result))
+        stage_call = bridge.call.call_args
+        self.assertEqual(stage_call.args[0], "asset.fetch_generated")
+        self.assertEqual(stage_call.args[1]["url"], signed_url)
+        self.assertEqual(stage_call.kwargs["authorization"], "one-time-claim")
 
     def test_generation_create_reports_provider_neutral_task_to_blender(self):
         from scripts.partme_runtime import activate_runtime
 
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
         bridge = mock.Mock()
         bridge.call.return_value = {"status": "succeeded", "result": {}}
         adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
-        with mock.patch("scripts.community_bridge.call_community", return_value={"subscription_key": "sub-42"}):
+
+        def community_call(command, _params):
+            if command == "get_hyper3d_status":
+                return {"enabled": True, "message": "Hyper3D is enabled"}
+            return {"subscription_key": "sub-42"}
+
+        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
             result = adapter.call_tool("blender_community_call", {
                 "command": "create_rodin_job",
                 "params": {"text_prompt": "chair"},
                 "_requestId": "request-1",
                 "_transactionId": "transaction-1",
                 "_expectedSceneRevision": 0,
+                "_estimatedCost": "0.75",
             })
 
         self.assertFalse(result["isError"])
         updates = [call for call in bridge.call.call_args_list if call.args[0] == "provider.task_control"]
         self.assertEqual(len(updates), 1)
+        gate = next(call for call in bridge.call.call_args_list if call.args[0] == "provider.external_action")
+        self.assertEqual(gate.args[1]["estimatedCost"], "0.75")
         self.assertEqual(updates[0].args[1]["providerId"], "hyper3d")
         self.assertEqual(updates[0].args[1]["taskId"], "sub-42")
         self.assertEqual(updates[0].args[1]["state"], "generating")
@@ -179,6 +272,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
 
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
         bridge = mock.Mock()
@@ -209,6 +303,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
 
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
         bridge = mock.Mock()
@@ -222,9 +317,13 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
 
         bridge.call.side_effect = bridge_call
         adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
-        with mock.patch("scripts.community_bridge.call_community", return_value={
-            "job_id": "job-recovered", "status": "PROCESSING", "progress": 35,
-        }):
+
+        def community_call(command, _params):
+            if command == "get_hunyuan3d_status":
+                return {"enabled": True, "message": "Hunyuan3D is enabled"}
+            return {"job_id": "job-recovered", "status": "PROCESSING", "progress": 35}
+
+        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
             result = adapter.call_tool("blender_community_call", {
                 "command": "poll_hunyuan_job_status",
                 "params": {"job_id": "job-recovered"},
@@ -243,7 +342,7 @@ class DualInstallTests(unittest.TestCase):
     def test_happy_path_installs_both_addons(self):
         with tempfile.TemporaryDirectory() as tmp:
             script_root = Path(tmp) / "4.5" / "scripts"
-            from tests.test_auto_setup import _fake_blender, _make_addon_zip
+            from tests.test_auto_setup import _fake_blender
 
             blender_bin = _fake_blender(script_root)
             launched = mock.Mock(pid=9999)
@@ -260,80 +359,6 @@ class DualInstallTests(unittest.TestCase):
             self.assertTrue((addons / "partme_blender_mcp" / "providers.json").is_file())
             self.assertTrue((addons / "blender_mcp_community").is_dir())
             self.assertTrue((addons / "blender_mcp_community" / "__init__.py").is_file())
-
-
-class HttpTransportTests(unittest.TestCase):
-    def test_http_serves_tools_list_with_bearer(self):
-        import time
-
-        from scripts import http_transport
-
-        class FakeAdapter:
-            def record_client(self, info):
-                pass
-
-            def list_tools(self):
-                return {"tools": [
-                    {"name": "blender_auto_setup"},
-                    {"name": "blender_community_status"},
-                    {"name": "blender_community_call"},
-                ], "nextCursor": None}
-
-            def call_tool(self, name, arguments):
-                return {"content": [{"type": "text", "text": "{}"}], "isError": False}
-
-        adapter = FakeAdapter()
-        bearer = "test" + "-token-123"
-        captured = {}
-
-        class CaptureServer(http_transport.ThreadingHTTPServer):
-            def __init__(self, addr, handler):
-                super().__init__(addr, handler)
-                captured["server"] = self
-
-        real_ths = http_transport.ThreadingHTTPServer
-        http_transport.ThreadingHTTPServer = CaptureServer
-        try:
-            threading.Thread(
-                target=lambda: http_transport.serve_http(adapter, host="127.0.0.1", port=0, token=bearer),
-                daemon=True,
-            ).start()
-            for _ in range(100):
-                if "server" in captured:
-                    break
-                time.sleep(0.05)
-            server = captured.get("server")
-            self.assertIsNotNone(server)
-            port = server.server_address[1]
-
-            def post(body: dict, headers: dict):
-                req = urllib.request.Request(
-                    f"http://127.0.0.1:{port}/mcp",
-                    data=json.dumps(body).encode(),
-                    headers={"Content-Type": "application/json", **headers},
-                    method="POST",
-                )
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    return response.status, json.loads(response.read().decode())
-
-            status, payload = post(
-                {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
-                {"Authorization": "Bearer " + bearer},
-            )
-            self.assertEqual(status, 200)
-            names = [t["name"] for t in payload["result"]["tools"]]
-            self.assertIn("blender_auto_setup", names)
-            self.assertIn("blender_community_call", names)
-
-            with self.assertRaises(urllib.error.HTTPError) as denied:
-                post({"jsonrpc": "2.0", "id": 2, "method": "tools/list"}, {"Authorization": "Bearer wrong"})
-            self.assertEqual(denied.exception.code, 401)
-        finally:
-            http_transport.ThreadingHTTPServer = real_ths
-            server = captured.get("server")
-            if server:
-                server.shutdown()
-                server.server_close()
 
 
 if __name__ == "__main__":

@@ -6,12 +6,15 @@
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 from scripts.auto_setup import run_auto_setup, wait_for_connection
 from scripts.community_bridge import (
-    COMMUNITY_COMMANDS, PROVIDERS, CommunityBridgeError, command_risk, community_status,
+    COMMUNITY_COMMANDS,
+    PROVIDERS,
+    CommunityBridgeError,
+    command_risk,
+    community_status,
 )
 
 
@@ -92,6 +95,13 @@ COMMUNITY_CALL_TOOL = {
             "_requestId": {"type": "string", "minLength": 1},
             "_transactionId": {"type": "string", "minLength": 1},
             "_expectedSceneRevision": {"type": "integer", "minimum": 0},
+            "_estimatedCost": {
+                "description": "Optional provider cost estimate used only by the PartMe budget gate",
+                "oneOf": [
+                    {"type": "number", "minimum": 0},
+                    {"type": "string", "pattern": r"^[0-9]+(?:\.[0-9]+)?$"},
+                ],
+            },
         },
         "required": ["command"],
         "additionalProperties": False,
@@ -120,6 +130,40 @@ PROVIDER_TASKS_TOOL = {
     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
 }
 
+PROVIDER_STAGE_TOOL = {
+    "name": "blender_provider_stage_asset",
+    "title": "Stage a provider result in the authorized asset directory",
+    "description": (
+        "Resolve a Sketchfab or Hyper3D result through the local community Add-on, keep any "
+        "short-lived signed URL inside the plugin process, and download the file through "
+        "PartMe asset.fetch_generated. This writes only under the authorized asset directory; "
+        "import remains a separate Blender transaction."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "providerId": {"type": "string", "enum": ["sketchfab", "hyper3d"]},
+            "params": {"type": "object"},
+            "_requestId": {"type": "string", "minLength": 1},
+            "_transactionId": {"type": "string", "minLength": 1},
+            "_expectedSceneRevision": {"type": "integer", "minimum": 0},
+            "_authorization": {"type": "string", "minLength": 1},
+        },
+        "required": [
+            "providerId", "params", "_requestId", "_transactionId",
+            "_expectedSceneRevision", "_authorization",
+        ],
+        "additionalProperties": False,
+    },
+    "outputSchema": {"type": "object"},
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True},
+}
+
+_STAGE_RESOLVERS = {
+    "sketchfab": "resolve_sketchfab_download",
+    "hyper3d": "resolve_rodin_asset",
+}
+
 _CREATE_GENERATION_COMMANDS = {
     "create_rodin_job": "hyper3d",
     "create_hunyuan_job": "hunyuan3d",
@@ -127,6 +171,12 @@ _CREATE_GENERATION_COMMANDS = {
 _POLL_GENERATION_COMMANDS = {
     "poll_rodin_job_status": "hyper3d",
     "poll_hunyuan_job_status": "hunyuan3d",
+}
+_PROVIDER_STATUS_COMMANDS = {
+    "polyhaven": "get_polyhaven_status",
+    "sketchfab": "get_sketchfab_status",
+    "hyper3d": "get_hyper3d_status",
+    "hunyuan3d": "get_hunyuan3d_status",
 }
 _TASK_ID_KEYS = ("subscription_key", "request_id", "job_id", "JobId", "uuid", "id")
 
@@ -273,6 +323,7 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
             known = {tool.get("name") for tool in catalog}
             catalog.extend(dict(extra) for extra in (
                 AUTO_SETUP_TOOL, COMMUNITY_STATUS_TOOL, COMMUNITY_CALL_TOOL, PROVIDER_TASKS_TOOL,
+                PROVIDER_STAGE_TOOL,
             )
                            if extra["name"] not in known)
             if cursor is None:
@@ -315,9 +366,9 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                         result["connected"] = True
                         try:
                             result["connectionStatus"] = self._active_bridge().status()
-                        except Exception:  # noqa: BLE001 - status is best-effort
+                        except Exception:  # noqa: BLE001, S110 - status is best-effort
                             pass
-                    except Exception:  # noqa: BLE001 - keep partial result with manual hint
+                    except Exception:  # noqa: BLE001, S110 - keep partial result with manual hint
                         pass
                 return self._result(result)
             if name == COMMUNITY_STATUS_TOOL["name"]:
@@ -342,6 +393,47 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                 if result is None:
                     return self._error(_mcp_error("PROVIDER_TASKS_UNAVAILABLE", "provider task state is unavailable"))
                 return self._result(result)
+            if name == PROVIDER_STAGE_TOOL["name"]:
+                arguments = dict(arguments or {})
+                unknown = sorted(set(arguments) - set(PROVIDER_STAGE_TOOL["inputSchema"]["properties"]))
+                missing = sorted(set(PROVIDER_STAGE_TOOL["inputSchema"]["required"]) - set(arguments))
+                if unknown or missing or not isinstance(arguments.get("params"), dict):
+                    detail = f"unknown fields: {unknown}" if unknown else f"missing or invalid fields: {missing or ['params']}"
+                    return self._error(_mcp_error("INVALID_ARGUMENT", detail))
+                provider_id = arguments["providerId"]
+                resolver = _STAGE_RESOLVERS.get(provider_id)
+                if resolver is None:
+                    return self._error(_mcp_error("INVALID_ARGUMENT", "provider does not support guarded staging"))
+                from scripts.community_bridge import call_community
+
+                try:
+                    status = call_community(_PROVIDER_STATUS_COMMANDS[provider_id], {})
+                    if status.get("enabled") is not True:
+                        return self._error(_mcp_error(
+                            "PROVIDER_CONFIGURATION_REQUIRED",
+                            str(status.get("message") or f"{provider_id} is not configured"),
+                        ))
+                    resolved = call_community(resolver, arguments["params"], allow_internal=True)
+                    if resolved.get("error"):
+                        return self._error(_mcp_error("PROVIDER_RESULT_UNAVAILABLE", str(resolved["error"])))
+                    url = resolved.get("url")
+                    if not isinstance(url, str) or not url.startswith("https://"):
+                        return self._error(_mcp_error("PROVIDER_BAD_RESULT", "provider returned no HTTPS result URL"))
+                    response = self._active_bridge().call(
+                        "asset.fetch_generated",
+                        {
+                            "providerId": provider_id,
+                            "url": url,
+                            "filename": resolved.get("filename"),
+                        },
+                        request_id=arguments["_requestId"],
+                        transaction_id=arguments["_transactionId"],
+                        expected_scene_revision=arguments["_expectedSceneRevision"],
+                        authorization=arguments["_authorization"],
+                    )
+                    return self._result(response, is_error=response.get("status") == "failed")
+                except CommunityBridgeError as error:
+                    return self._error(_mcp_error(error.code, str(error)))
             if name == COMMUNITY_CALL_TOOL["name"]:
                 arguments = dict(arguments or {})
                 command = arguments.get("command")
@@ -360,6 +452,17 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                             "remoteMayContinue": bool(cancelled.get("remoteMayContinue")),
                             "message": cancelled.get("message") or "生成任务已由用户终止",
                         })
+                    provider_id = COMMUNITY_COMMANDS.get(command)
+                    status_command = _PROVIDER_STATUS_COMMANDS.get(provider_id)
+                    if status_command and command != status_command:
+                        provider_status = call_community(status_command, {})
+                        if provider_status.get("enabled") is not True:
+                            message = str(provider_status.get("message") or f"{provider_id} is disabled")
+                            normalized = message.lower()
+                            code = ("PROVIDER_CONFIGURATION_REQUIRED"
+                                    if any(token in normalized for token in ("api key", "secretid", "secretkey", "not given"))
+                                    else "PROVIDER_DISABLED")
+                            return self._error(_mcp_error(code, message))
                     risk = command_risk(command)
                     if risk != "read":
                         request_id = arguments.get("_requestId")
@@ -369,9 +472,14 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                                 "INVALID_ARGUMENT",
                                 "gated community actions require _requestId and _transactionId",
                             ))
+                        gate_arguments = {
+                            "providerId": COMMUNITY_COMMANDS[command], "action": command, "risk": risk,
+                        }
+                        if arguments.get("_estimatedCost") is not None:
+                            gate_arguments["estimatedCost"] = arguments["_estimatedCost"]
                         gate = self._active_bridge().call(
                             "provider.external_action",
-                            {"providerId": COMMUNITY_COMMANDS[command], "action": command, "risk": risk},
+                            gate_arguments,
                             request_id=request_id,
                             transaction_id=transaction_id,
                             expected_scene_revision=arguments.get("_expectedSceneRevision"),
