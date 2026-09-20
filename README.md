@@ -61,9 +61,9 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.11.1` |
+| Current version | `0.11.2` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
-| MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.5.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
+| MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.5.2` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
 | License | Apache-2.0 |
 
@@ -138,17 +138,17 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | Which actions are irreversible and need authorization | User intent interpretation |
 | `scripts/harness/authorization.py` | Ephemeral HMAC tokens, TTL, action binding | Long-lived credentials |
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
-| `vendor/partme-blender-mcp-addon-0.5.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
-| `vendor/partme-blender-mcp-runtime-0.5.1.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
+| `vendor/partme-blender-mcp-addon-0.5.2.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
+| `vendor/partme-blender-mcp-runtime-0.5.2.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
 | `skills/` (33) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
 | Plugin version | Host | Blender | Platform | Status |
 |---|---|---|---|---|
-| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
-| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
-| `0.11.1` + runtime `0.5.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
+| `0.11.2` + runtime `0.5.2` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
+| `0.11.2` + runtime `0.5.2` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
+| `0.11.2` + runtime `0.5.2` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 
@@ -163,14 +163,15 @@ Download and install Blender from <https://www.blender.org/download/>, launch it
 > Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` and click
 > **Start MCP Server**.
 
-The trusted Add-on is **PartMe Blender MCP** from the pinned upstream Release. See the
-[illustrated first-use guide](docs/getting-started.md); a community Add-on named **MCP for Blender**
-does not replace the PartMe guarded Harness connection.
+The trusted and only required Add-on is **PartMe Blender MCP** from the pinned upstream Release.
+See the [illustrated first-use guide](docs/getting-started.md). Its integrated provider layer covers
+the supported community asset/model services; do not install the separate **MCP for Blender**
+Add-on alongside it.
 
 ### 2. Install the plugin
 
 ```bash
-codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
+codex plugin marketplace add partme-ai/full-aigc-plugins
 codex plugin add blender-design@partme-ai-blender
 ```
 
@@ -257,30 +258,21 @@ The bundled `hooks/hooks.json` is a non-managed hook set. On first enable, Codex
 review and trust it; the hooks are advisory-only (environment check, intent routing hint,
 closeout reminder), always exit 0, and never block a turn.
 
-### China mirror (AtomGit)
+### Install from the complete PartMe catalog
 
-If GitHub is slow or unreachable, install from the AtomGit mirror instead. The
-commands are identical apart from the marketplace URL:
-
-```bash
-codex plugin marketplace add https://github.com/full-aigc-plugins/blender-design-plugin.git --ref main
-codex plugin add blender-design@partme-ai-blender
-```
-
-To install the whole partme-ai plugin catalog from the mirror in one step:
+The supported catalog entry is the `partme-ai/full-aigc-plugins` marketplace:
 
 ```bash
-codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git
+codex plugin marketplace add partme-ai/full-aigc-plugins
 codex plugin add blender-design@partme-ai-blender
 ```
 
 Notes:
 
-- The AtomGit source and the GitHub source share marketplace names, so adding
-  one replaces the other. Switch back with
-  `codex plugin marketplace add https://github.com/partme-ai/full-aigc-plugins.git`.
-- For ZCode or Kimi, clone the mirror repository and register the local
-  directory in the respective marketplace configuration.
+- The plugin repository remains `full-aigc-plugins/blender-design-plugin`; the
+  marketplace repository is `partme-ai/full-aigc-plugins`. They have different roles.
+- For ZCode or Kimi, follow the manifests published by that marketplace instead of
+  reusing a stale standalone-plugin URL.
 
 ## Quick start
 

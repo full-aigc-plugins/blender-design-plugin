@@ -58,6 +58,16 @@ def activate_runtime(plugin_root: Path | None = None) -> dict:
             if path.is_absolute() or ".." in path.parts:
                 raise RuntimeIntegrationError("pinned runtime archive contains an unsafe path")
     import_root = str(archive) + "/src"
+    # 同版本不代表同一份产物；拒绝混入源码目录或其他插件缓存的模块。
+    # 不清空 sys.modules，避免破坏正在使用旧类实例的调用方。
+    expected_package = Path(import_root) / 'partme_blender_mcp'
+    for name, loaded in tuple(sys.modules.items()):
+        if name != 'partme_blender_mcp' and not name.startswith('partme_blender_mcp.'):
+            continue
+        origin = getattr(loaded, '__file__', None)
+        if not origin or not Path(origin).resolve().is_relative_to(expected_package):
+            raise RuntimeIntegrationError(
+                f'{name} was loaded outside the pinned runtime; restart with the plugin entrypoint')
     if import_root not in sys.path:
         sys.path.insert(0, import_root)
     module = importlib.import_module("partme_blender_mcp")

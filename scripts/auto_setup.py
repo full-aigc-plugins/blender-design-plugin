@@ -367,16 +367,8 @@ def run_auto_setup(
         steps.append({"step": "install", "ok": False, "detail": str(error)})
         return {"ok": False, "stage": "install", "steps": steps, "connected": False, "manualHint": str(error)}
 
-    # 社区资产 Add-on（PolyHaven/Sketchfab/Hyper3D/混元3D，MIT verbatim）：
-    # 同机双装，服务自起于 9876；失败不阻塞主连接（资产能力降级可用）。
-    try:
-        from scripts.partme_runtime import locked_artifact
-
-        community_zip, _lock = locked_artifact(plugin_root, "community")
-        community_installed = install_addon(addons_dir, community_zip, module=COMMUNITY_MODULE)
-        steps.append({"step": "install-community", "ok": True, "detail": str(community_installed)})
-    except Exception as error:  # noqa: BLE001 - community add-on is best-effort
-        steps.append({"step": "install-community", "ok": False, "detail": str(error)})
+    # PartMe 是独立替代品；供应商客户端随主 Add-on 内置。
+    # 不再安装、启用独立社区插件，也不启动旧的 9876 服务。
 
     if running:
         return {
@@ -412,9 +404,6 @@ def run_auto_setup(
     )
     steps.append({"step": "configure-mcp-runtime", "ok": runtime_configured,
                   "detail": "已配置官方 SDK 外部运行时" if runtime_configured else "请在 Add-on 偏好设置中选择 MCP Python"})
-    community_enabled = enable_addon_persistently(blender_bin, module=COMMUNITY_MODULE)
-    steps.append({"step": "enable-community", "ok": community_enabled,
-                  "detail": "社区资产 Add-on 已持久启用（PolyHaven/Sketchfab/Hyper3D/混元3D，服务在 9876 自起）" if community_enabled else "社区 Add-on 启用结果未知（资产能力可能需要在偏好设置中手动启用）"})
 
     launched = None
     if launch_blender:

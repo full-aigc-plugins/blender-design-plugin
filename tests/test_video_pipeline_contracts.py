@@ -20,6 +20,10 @@ class VideoPipelineContractTests(unittest.TestCase):
           'bytes':10,'sha256':HASH}],'fps':24.0,'reusedFrames':[],'renderedFrames':[1],
           'validation':{'status':'passed','checks':['sha256']}}
         self.assertEqual(validate_document('frame_sequence_receipt',receipt),[])
+        receipt['producer']['name']='partme-blender-mcp'
+        self.assertEqual(validate_document('frame_sequence_receipt',receipt),[])
+        receipt['producer']['name']='unknown-runtime'
+        self.assertTrue(validate_document('frame_sequence_receipt',receipt))
 
     def test_video_artifact_receipt_matches_compose_output(self):
         receipt={'receiptVersion':'3.0.0','protocolVersion':'codex-blender/v1','producer':{'name':'codex-blender','version':'0.3.0'},
@@ -28,6 +32,10 @@ class VideoPipelineContractTests(unittest.TestCase):
           'media':{'codec':'h264','width':1280,'height':720,'fps':24.0,'duration_seconds':1.0},
           'validation':{'status':'passed','checks':['ffprobe']}}
         self.assertEqual(validate_document('video_artifact_receipt',receipt),[])
+        receipt['producer']['name']='partme-blender-mcp'
+        self.assertEqual(validate_document('video_artifact_receipt',receipt),[])
+        receipt['producer']['name']='unknown-runtime'
+        self.assertTrue(validate_document('video_artifact_receipt',receipt))
 
 
 if __name__=='__main__':unittest.main()

@@ -15,8 +15,9 @@
       "metadata": {
         "uiOrder": 20,
         "statusCommand": "get_polyhaven_status",
-        "enableProperty": "blendermcp_use_polyhaven",
-        "preferencesModule": "blender_mcp_community"
+        "preferenceStore": "provider_enabled_json",
+        "preferencesModule": "partme_blender_mcp",
+        "integration": "partme_native"
       }
     },
     {
@@ -33,8 +34,9 @@
       "metadata": {
         "uiOrder": 30,
         "statusCommand": "get_sketchfab_status",
-        "enableProperty": "blendermcp_use_sketchfab",
-        "preferencesModule": "blender_mcp_community"
+        "preferenceStore": "provider_enabled_json",
+        "preferencesModule": "partme_blender_mcp",
+        "integration": "partme_native"
       }
     },
     {
@@ -46,13 +48,16 @@
       "mutable": true,
       "configurable": true,
       "risks": ["read", "paid_generation", "network_download", "scene_import"],
-      "status": {"state": "configuration_required", "statusText": "未配置 · 生成可能计费"},
+      "status": {"state": "configuration_required", "statusText": "需要 OAuth 或 API Key · 生成可能计费"},
       "actions": ["configure", "generate"],
       "metadata": {
         "uiOrder": 10,
         "statusCommand": "get_hyper3d_status",
-        "enableProperty": "blendermcp_use_hyper3d",
-        "preferencesModule": "blender_mcp_community"
+        "preferenceStore": "provider_enabled_json",
+        "preferencesModule": "partme_blender_mcp",
+        "integration": "partme_native",
+        "authenticationModes": ["mcp_oauth", "api_key"],
+        "mcpUrl": "https://api.hyper3d.com/api/mcp"
       }
     },
     {
@@ -69,8 +74,9 @@
       "metadata": {
         "uiOrder": 20,
         "statusCommand": "get_hunyuan3d_status",
-        "enableProperty": "blendermcp_use_hunyuan3d",
-        "preferencesModule": "blender_mcp_community"
+        "preferenceStore": "provider_enabled_json",
+        "preferencesModule": "partme_blender_mcp",
+        "integration": "partme_native"
       }
     }
   ]

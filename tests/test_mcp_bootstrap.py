@@ -15,15 +15,15 @@ class McpBootstrapTests(unittest.TestCase):
     def test_load_lock_verifies_the_published_runtime_archive(self):
         lock, archive, digest = mcp_bootstrap._load_lock(ROOT)
 
-        self.assertEqual(lock["version"], "0.5.1")
-        self.assertEqual(archive.name, "partme-blender-mcp-runtime-0.5.1.zip")
+        self.assertEqual(lock["version"], "0.5.2")
+        self.assertEqual(archive.name, "partme-blender-mcp-runtime-0.5.2.zip")
         self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), digest)
 
     def test_explicit_cache_is_version_scoped(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
             os.environ, {"PARTME_BLENDER_MCP_CACHE": directory}, clear=False,
         ):
-            self.assertEqual(mcp_bootstrap._cache_root("0.5.1"), Path(directory) / "runtime/0.5.1")
+            self.assertEqual(mcp_bootstrap._cache_root("0.5.2"), Path(directory) / "runtime/0.5.2")
 
     def test_compatible_python_honors_explicit_supported_interpreter(self):
         with mock.patch.dict(

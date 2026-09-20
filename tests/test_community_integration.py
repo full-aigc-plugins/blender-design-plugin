@@ -108,6 +108,100 @@ class CommunityBridgeTests(unittest.TestCase):
 
 
 class CommunityToolsRegistrationTests(unittest.TestCase):
+    def test_base_inspection_uses_partme_without_community_fallback(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+        for command in ('ping', 'get_addon_info', 'get_scene_info', 'get_world_state_snapshot',
+                        'get_object_info', 'describe_node_type', 'bpy_api_lookup'):
+            bridge = mock.Mock()
+            bridge.call.return_value = {'status': 'succeeded', 'result': {'fixture': command}}
+            adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+            with mock.patch('scripts.community_bridge.call_community', side_effect=AssertionError('no 9876')):
+                result = adapter.call_tool('blender_community_call', {'command': command, 'params': {}})
+            self.assertFalse(result.get('isError', False))
+            bridge.call.assert_called_once_with('provider.query',
+                {'providerId': 'base', 'action': command, 'params': {}})
+
+    def test_native_preview_returns_mcp_image_not_base64_text(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+        bridge = mock.Mock()
+        bridge.call.side_effect = [
+            {'status': 'succeeded', 'result': {'enabled': True, 'state': 'ready'}},
+            {'status': 'succeeded', 'result': {'image_data': 'ZmFrZQ==', 'format': 'png', 'uid': 'chair'}},
+        ]
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch('scripts.community_bridge.call_community', side_effect=AssertionError('no 9876')):
+            result = adapter.call_tool('blender_community_call', {
+                'command': 'get_sketchfab_model_preview', 'params': {'uid': 'chair'}})
+        self.assertNotIn('image_data', result['structuredContent'])
+        self.assertEqual(result['content'][-1], {'type': 'image', 'mimeType': 'image/png', 'data': 'ZmFrZQ=='})
+        bridge.call.assert_called_with('provider.query', {'providerId': 'sketchfab',
+            'action': 'get_sketchfab_model_preview', 'params': {'uid': 'chair'}})
+
+    def test_status_reports_partme_registry_without_community_service(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+        bridge = mock.Mock()
+        snapshot = {'providers': [{'providerId': 'polyhaven', 'enabled': True, 'state': 'ready'}],
+                    'summary': {'available': 1, 'total': 1}}
+        bridge.call.return_value = {'status': 'succeeded', 'result': snapshot}
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch('scripts.community_bridge.call_community', side_effect=AssertionError('no 9876')):
+            result = adapter.call_tool('blender_community_status', {})
+        self.assertFalse(result.get('isError', False))
+        self.assertEqual(result['structuredContent']['providers'], snapshot['providers'])
+        bridge.call.assert_called_once_with('provider.status', {})
+
+    def test_asset_search_uses_partme_query_without_community_fallback(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+        for command, provider in [('search_polyhaven_assets', 'polyhaven'),
+                                  ('search_sketchfab_models', 'sketchfab')]:
+            bridge = mock.Mock()
+            bridge.call.side_effect = [
+                {'status': 'succeeded', 'result': {'enabled': True, 'state': 'ready'}},
+                {'status': 'succeeded', 'result': {'assets': []}},
+            ]
+            adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+            with mock.patch('scripts.community_bridge.call_community', side_effect=AssertionError('不得回退社区')):
+                result = adapter.call_tool('blender_community_call', {'command': command, 'params': {}})
+            self.assertFalse(result.get('isError', False))
+            self.assertEqual(bridge.call.call_args.args,
+                ('provider.query', {'providerId': provider, 'action': command, 'params': {}}))
+
+    def test_native_generation_denial_does_not_report_or_retry_provider(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter
+        bridge = mock.Mock()
+        def call(command, payload, **kwargs):
+            if command == 'provider.status':
+                return {'status': 'succeeded', 'result': {'enabled': True, 'state': 'ready'}}
+            if command == 'provider.external_action':
+                return {'status': 'failed', 'error': {'code': 'AUTHORIZATION_REQUIRED'}}
+            raise AssertionError('拒绝后不得调用其他能力')
+        bridge.call.side_effect = call
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        with mock.patch('scripts.community_bridge.call_community', side_effect=AssertionError('不得回退社区')):
+            result = adapter.call_tool('blender_community_call', {
+                'command': 'create_hunyuan_job', 'params': {'text_prompt': 'chair'},
+                '_requestId': 'denied', '_transactionId': 'transaction',
+            })
+        self.assertTrue(result['isError'])
+        self.assertEqual([c.args[0] for c in bridge.call.call_args_list],
+                         ['provider.status', 'provider.external_action'])
+        self.assertEqual(bridge.call.call_args.args[1]['params'], {'text_prompt': 'chair'})
+
     def test_tool_definitions_reference_real_commands(self):
         from scripts.plugin_mcp_adapter import (
             COMMUNITY_CALL_TOOL,
@@ -158,8 +252,9 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         for provider in catalog["providers"]:
             metadata = provider.get("metadata", {})
             self.assertRegex(metadata.get("statusCommand", ""), r"^get_[a-z0-9_]+_status$")
-            self.assertRegex(metadata.get("enableProperty", ""), r"^blendermcp_use_[a-z0-9_]+$")
-            self.assertEqual(metadata.get("preferencesModule"), "blender_mcp_community")
+            self.assertEqual(metadata.get("preferenceStore"), "provider_enabled_json")
+            self.assertEqual(metadata.get("preferencesModule"), "partme_blender_mcp")
+            self.assertEqual(metadata.get("integration"), "partme_native")
             self.assertIs(type(provider.get("enabled")), bool)
             self.assertIs(type(provider.get("configurable")), bool)
 
@@ -171,21 +266,20 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
 
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
-        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=mock.Mock())
+        bridge = mock.Mock()
+        bridge.call.return_value = {'status': 'succeeded', 'result': {
+            'enabled': False, 'state': 'disabled', 'statusText': 'Sketchfab is disabled'}}
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
 
-        def community_call(command, _params):
-            if command == "get_sketchfab_status":
-                return {"enabled": False, "message": "Sketchfab is disabled"}
-            self.fail(f"disabled provider command reached community add-on: {command}")
-
-        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
+        with mock.patch("scripts.community_bridge.call_community", side_effect=AssertionError('不得回退社区')):
             result = adapter.call_tool("blender_community_call", {
                 "command": "search_sketchfab_models",
                 "params": {"query": "chair"},
             })
 
         self.assertTrue(result["isError"])
-        self.assertEqual(result["structuredContent"]["error"]["code"], "PROVIDER_DISABLED")
+        self.assertEqual(result["structuredContent"]["error"]["code"], "PROVIDER_UNAVAILABLE")
+        bridge.call.assert_called_once_with('provider.status', {'providerId': 'sketchfab'})
 
     def test_provider_stage_keeps_signed_url_out_of_mcp_result(self):
         from scripts.partme_runtime import activate_runtime
@@ -200,21 +294,14 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
             "status": "succeeded",
             "sceneRevision": 1,
             "result": {
-                "path": "/approved/generated/sketchfab/chair/model.gltf",
-                "sourceHost": "download.sketchfab.com",
+                "accepted": True,
+                "operationId": "asset-stage-1",
             },
         }
         adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
         signed_url = "https://download.sketchfab.com/model.zip?signature=secret"
 
-        def community_call(command, _params, **kwargs):
-            if command == "get_sketchfab_status":
-                return {"enabled": True, "message": "Sketchfab is enabled"}
-            self.assertEqual(command, "resolve_sketchfab_download")
-            self.assertTrue(kwargs.get("allow_internal"))
-            return {"providerId": "sketchfab", "url": signed_url, "filename": "chair.zip"}
-
-        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
+        with mock.patch("scripts.community_bridge.call_community", side_effect=AssertionError('不得连接社区服务')):
             result = adapter.call_tool("blender_provider_stage_asset", {
                 "providerId": "sketchfab",
                 "params": {"uid": "chair"},
@@ -226,10 +313,38 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
 
         self.assertFalse(result["isError"])
         self.assertNotIn(signed_url, json.dumps(result))
+        self.assertEqual(result["structuredContent"]["result"]["nextTool"],
+                         "blender_asset_operation_result")
+        self.assertEqual(result["structuredContent"]["result"]["nextArguments"], {
+            "providerId": "sketchfab", "taskId": "asset-stage-1",
+        })
         stage_call = bridge.call.call_args
         self.assertEqual(stage_call.args[0], "asset.fetch_generated")
-        self.assertEqual(stage_call.args[1]["url"], signed_url)
+        self.assertEqual(stage_call.args[1], {"providerId": "sketchfab", "params": {"uid": "chair"}})
+        self.assertNotIn(signed_url, str(bridge.call.call_args_list))
         self.assertEqual(stage_call.kwargs["authorization"], "one-time-claim")
+
+    def test_hunyuan_stage_routes_job_reference_through_native_gate(self):
+        from scripts.partme_runtime import activate_runtime
+        activate_runtime(PLUGIN_ROOT)
+        from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+        from scripts.plugin_mcp_adapter import build_plugin_adapter, PROVIDER_STAGE_TOOL
+        bridge = mock.Mock()
+        bridge.call.return_value = {'status': 'succeeded', 'result': {
+            'accepted': True, 'operationId': 'asset-stage-2'}}
+        adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
+        result = adapter.call_tool('blender_provider_stage_asset', {
+            'providerId': 'hunyuan3d', 'params': {'job_id': '123'},
+            '_requestId': 'stage-1', '_transactionId': 'tx-1',
+            '_expectedSceneRevision': 0, '_authorization': 'fixture-claim'})
+        self.assertFalse(result['isError'])
+        self.assertEqual(result['structuredContent']['result']['nextArguments'], {
+            'providerId': 'hunyuan3d', 'taskId': 'asset-stage-2'})
+        self.assertIn('hunyuan3d', PROVIDER_STAGE_TOOL['inputSchema']['properties']['providerId']['enum'])
+        bridge.call.assert_called_once_with('asset.fetch_generated',
+            {'providerId': 'hunyuan3d', 'params': {'job_id': '123'}},
+            request_id='stage-1', transaction_id='tx-1', expected_scene_revision=0,
+            authorization='fixture-claim')
 
     def test_generation_create_reports_provider_neutral_task_to_blender(self):
         from scripts.partme_runtime import activate_runtime
@@ -240,7 +355,13 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.plugin_mcp_adapter import build_plugin_adapter
 
         bridge = mock.Mock()
-        bridge.call.return_value = {"status": "succeeded", "result": {}}
+        def native_call(command, payload, **kwargs):
+            if command == 'provider.status':
+                return {'status': 'succeeded', 'result': {'enabled': True, 'state': 'ready'}}
+            if command == 'provider.external_action':
+                return {'status': 'succeeded', 'result': {'subscription_key': 'sub-42'}}
+            return {'status': 'succeeded', 'result': {}}
+        bridge.call.side_effect = native_call
         adapter = build_plugin_adapter(McpAdapter, plugin_root=PLUGIN_ROOT, bridge=bridge)
 
         def community_call(command, _params):
@@ -248,7 +369,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
                 return {"enabled": True, "message": "Hyper3D is enabled"}
             return {"subscription_key": "sub-42"}
 
-        with mock.patch("scripts.community_bridge.call_community", side_effect=community_call):
+        with mock.patch("scripts.community_bridge.call_community", side_effect=AssertionError('不得连接社区插件')):
             result = adapter.call_tool("blender_community_call", {
                 "command": "create_rodin_job",
                 "params": {"text_prompt": "chair"},
@@ -309,6 +430,10 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         bridge = mock.Mock()
 
         def bridge_call(command, arguments, **_kwargs):
+            if command == 'provider.status':
+                return {'status': 'succeeded', 'result': {'enabled': True, 'state': 'ready'}}
+            if command == 'provider.query':
+                return {'status': 'succeeded', 'result': {'job_id': 'job-recovered', 'status': 'PROCESSING', 'progress': 35}}
             if command != "provider.task_control":
                 return {"status": "succeeded", "result": {}}
             if arguments["operation"] in {"status", "update"}:
@@ -354,12 +479,12 @@ class DualInstallTests(unittest.TestCase):
                 result = auto_setup.run_auto_setup(PLUGIN_ROOT)
             steps = {s["step"]: s for s in result["steps"]}
             self.assertTrue(steps["install"]["ok"])
-            self.assertTrue(steps["install-community"]["ok"], steps.get("install-community"))
+            self.assertNotIn("install-community", steps)
+            self.assertNotIn("enable-community", steps)
             addons = script_root / "addons"
             self.assertTrue((addons / "partme_blender_mcp").is_dir())
             self.assertTrue((addons / "partme_blender_mcp" / "providers.json").is_file())
-            self.assertTrue((addons / "blender_mcp_community").is_dir())
-            self.assertTrue((addons / "blender_mcp_community" / "__init__.py").is_file())
+            self.assertFalse((addons / "blender_mcp_community").exists())
 
 
 if __name__ == "__main__":

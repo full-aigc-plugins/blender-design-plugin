@@ -14,7 +14,6 @@ from scripts.community_bridge import (
     PROVIDERS,
     CommunityBridgeError,
     command_risk,
-    community_status,
 )
 
 
@@ -63,13 +62,11 @@ _PROVIDER_LIST = ", ".join(p for p in PROVIDERS if p != "base")
 
 COMMUNITY_STATUS_TOOL = {
     "name": "blender_community_status",
-    "title": "Community asset providers status",
+    "title": "PartMe asset providers status",
     "description": (
-        "List every 3D-asset provider this plugin can drive: the vendored community Add-on "
-        f"({_PROVIDER_LIST}) inside Blender on port 9876, plus the plugin's own guarded native "
-        "asset commands (asset.library, asset.polypizza_*, asset.fetch_url, asset.fetch_generated, asset.import_file, "
-        "asset.pack_resources). The community "
-        "Add-on listens on 127.0.0.1:9876 and is installed/enabled automatically by blender_auto_setup."
+        "Read the PartMe provider registry, including enabled/configuration/task states and "
+        "availability counts. This compatibility tool needs only the PartMe Add-on, not a "
+        "community Add-on or port 9876. Ready means configured locally, not verified credentials."
     ),
     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
     "outputSchema": {"type": "object"},
@@ -78,11 +75,11 @@ COMMUNITY_STATUS_TOOL = {
 
 COMMUNITY_CALL_TOOL = {
     "name": "blender_community_call",
-    "title": "Call a community asset provider command",
+    "title": "Call a PartMe asset provider command (compatibility name)",
     "description": (
-        "Run one allowlisted command on the vendored community Add-on (127.0.0.1:9876). Providers: "
+        "Run one allowlisted provider command through PartMe. Providers: "
         f"{_PROVIDER_LIST}. Allowed commands: {_COMMUNITY_COMMAND_LIST}. Provider API keys "
-        "(Sketchfab / Hyper3D / Hunyuan3D) are user-supplied in the community Add-on's Blender "
+        "(Sketchfab / Hyper3D / Hunyuan3D) are user-supplied in the PartMe Add-on's Blender "
         "preferences; PolyHaven needs no key. Paid generation and external export require local "
         "approval. Community download/import commands are intentionally excluded: stage files "
         "through PartMe asset commands and import in a separate transaction."
@@ -134,15 +131,16 @@ PROVIDER_STAGE_TOOL = {
     "name": "blender_provider_stage_asset",
     "title": "Stage a provider result in the authorized asset directory",
     "description": (
-        "Resolve a Sketchfab or Hyper3D result through the local community Add-on, keep any "
-        "short-lived signed URL inside the plugin process, and download the file through "
-        "PartMe asset.fetch_generated. This writes only under the authorized asset directory; "
-        "import remains a separate Blender transaction."
+        "Resolve a Sketchfab, Hyper3D, or official Hunyuan result inside the PartMe Add-on, keep any "
+        "short-lived signed URL inside its guarded download operation, and stage through "
+        "PartMe asset.fetch_generated. The call returns an operationId immediately; poll "
+        "blender_asset_operation_result with providerId and that taskId until completed. This writes "
+        "only under the authorized asset directory; import remains a separate Blender transaction."
     ),
     "inputSchema": {
         "type": "object",
         "properties": {
-            "providerId": {"type": "string", "enum": ["sketchfab", "hyper3d"]},
+            "providerId": {"type": "string", "enum": ["sketchfab", "hyper3d", "hunyuan3d"]},
             "params": {"type": "object"},
             "_requestId": {"type": "string", "minLength": 1},
             "_transactionId": {"type": "string", "minLength": 1},
@@ -162,6 +160,7 @@ PROVIDER_STAGE_TOOL = {
 _STAGE_RESOLVERS = {
     "sketchfab": "resolve_sketchfab_download",
     "hyper3d": "resolve_rodin_asset",
+    "hunyuan3d": "resolve_hunyuan_asset",
 }
 
 _CREATE_GENERATION_COMMANDS = {
@@ -178,7 +177,7 @@ _PROVIDER_STATUS_COMMANDS = {
     "hyper3d": "get_hyper3d_status",
     "hunyuan3d": "get_hunyuan3d_status",
 }
-_TASK_ID_KEYS = ("subscription_key", "request_id", "job_id", "JobId", "uuid", "id")
+_TASK_ID_KEYS = ("subscription_key", "request_id", "job_id", "JobId", "task_uuid", "uuid", "id")
 
 
 def _find_task_id(payload) -> str | None:
@@ -209,25 +208,29 @@ def _find_scalar(payload, keys):
 
 
 def _generation_state(payload: dict) -> tuple[str, float | None, str]:
+    import math
+
     if payload.get("error"):
         return "failed", None, "生成失败"
     statuses = payload.get("status_list")
     if isinstance(statuses, list) and statuses:
-        raw_status = " ".join(str(value) for value in statuses)
+        normalized = [str(value).strip().upper() for value in statuses]
     else:
-        raw_status = str(_find_scalar(payload, ("status", "state", "Status", "State")) or "")
-    normalized = raw_status.upper()
-    if any(token in normalized for token in ("FAIL", "ERROR", "REJECT")):
+        normalized = [str(_find_scalar(payload, ("status", "state", "Status", "State")) or "").strip().upper()]
+    successful = {'COMPLETE', 'COMPLETED', 'SUCCEED', 'SUCCEEDED', 'SUCCESS', 'SUCCESSFUL', 'DONE', 'FINISHED'}
+    if any(any(token in status for token in ("FAIL", "ERROR", "REJECT")) for status in normalized):
         state, stage = "failed", "生成失败"
-    elif any(token in normalized for token in ("COMPLETE", "SUCCEED", "SUCCESS", "DONE", "FINISH")):
+    elif any('CANCEL' in status for status in normalized):
+        state, stage = 'cancelled', '供应商已取消'
+    elif all(status in successful for status in normalized):
         state, stage = "completed", "生成完成"
-    elif "QUEUE" in normalized or "SUBMIT" in normalized:
+    elif all('QUEUE' in status or 'SUBMIT' in status for status in normalized):
         state, stage = "submitting", "等待供应商处理"
     else:
         state, stage = "generating", "正在轮询结果"
     raw_progress = _find_scalar(payload, ("progress", "Progress", "percentage", "percent"))
     progress = None
-    if isinstance(raw_progress, (int, float)) and not isinstance(raw_progress, bool):
+    if isinstance(raw_progress, (int, float)) and not isinstance(raw_progress, bool) and math.isfinite(raw_progress):
         progress = float(raw_progress)
         if progress > 1:
             progress /= 100
@@ -267,6 +270,8 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
             return None
 
         def _report_generation(self, command: str, params: dict, result: dict, request_id: str | None = None):
+            if isinstance(result.get('_partmeTask'), dict):
+                return result['_partmeTask']
             provider_id = _CREATE_GENERATION_COMMANDS.get(command) or _POLL_GENERATION_COMMANDS.get(command)
             if provider_id is None:
                 return None
@@ -288,7 +293,7 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                 "taskId": task_id,
                 "state": state,
                 "stage": stage,
-                "statusText": f"生成中 {progress:.0%}" if progress is not None and state not in {"completed", "failed"} else stage,
+                "statusText": f"生成中 {progress:.0%}" if progress is not None and state not in {"completed", "failed", "cancelled"} else stage,
                 "cancelSupported": False,
             }
             if progress is not None:
@@ -374,7 +379,10 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
             if name == COMMUNITY_STATUS_TOOL["name"]:
                 if arguments:
                     return self._error(_mcp_error("INVALID_ARGUMENT", "community status accepts no arguments"))
-                return self._result(community_status())
+                response = self._active_bridge().call('provider.status', {})
+                if response.get('status') == 'failed' or 'error' in response:
+                    return self._result(response, is_error=True)
+                return self._result(response.get('result', {}))
             if name == PROVIDER_TASKS_TOOL["name"]:
                 arguments = dict(arguments or {})
                 unknown = sorted(set(arguments) - set(PROVIDER_TASKS_TOOL["inputSchema"]["properties"]))
@@ -404,43 +412,47 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                 resolver = _STAGE_RESOLVERS.get(provider_id)
                 if resolver is None:
                     return self._error(_mcp_error("INVALID_ARGUMENT", "provider does not support guarded staging"))
-                from scripts.community_bridge import call_community
-
-                try:
-                    status = call_community(_PROVIDER_STATUS_COMMANDS[provider_id], {})
-                    if status.get("enabled") is not True:
-                        return self._error(_mcp_error(
-                            "PROVIDER_CONFIGURATION_REQUIRED",
-                            str(status.get("message") or f"{provider_id} is not configured"),
-                        ))
-                    resolved = call_community(resolver, arguments["params"], allow_internal=True)
-                    if resolved.get("error"):
-                        return self._error(_mcp_error("PROVIDER_RESULT_UNAVAILABLE", str(resolved["error"])))
-                    url = resolved.get("url")
-                    if not isinstance(url, str) or not url.startswith("https://"):
-                        return self._error(_mcp_error("PROVIDER_BAD_RESULT", "provider returned no HTTPS result URL"))
-                    response = self._active_bridge().call(
-                        "asset.fetch_generated",
-                        {
-                            "providerId": provider_id,
-                            "url": url,
-                            "filename": resolved.get("filename"),
-                        },
-                        request_id=arguments["_requestId"],
-                        transaction_id=arguments["_transactionId"],
-                        expected_scene_revision=arguments["_expectedSceneRevision"],
-                        authorization=arguments["_authorization"],
-                    )
-                    return self._result(response, is_error=response.get("status") == "failed")
-                except CommunityBridgeError as error:
-                    return self._error(_mcp_error(error.code, str(error)))
+                response = self._active_bridge().call(
+                    "asset.fetch_generated",
+                    {"providerId": provider_id, "params": arguments["params"]},
+                    request_id=arguments["_requestId"],
+                    transaction_id=arguments["_transactionId"],
+                    expected_scene_revision=arguments["_expectedSceneRevision"],
+                    authorization=arguments["_authorization"],
+                )
+                if response.get("status") != "failed" and isinstance(response.get("result"), dict):
+                    result = dict(response["result"])
+                    if isinstance(result.get("operationId"), str):
+                        result.update({
+                            "nextTool": "blender_asset_operation_result",
+                            "nextArguments": {
+                                "providerId": provider_id,
+                                "taskId": result["operationId"],
+                            },
+                        })
+                        response = {**response, "result": result}
+                return self._result(response, is_error=response.get("status") == "failed")
             if name == COMMUNITY_CALL_TOOL["name"]:
                 arguments = dict(arguments or {})
                 command = arguments.get("command")
                 params = arguments.get("params") or {}
-                from scripts.community_bridge import call_community
 
                 try:
+                    if command in {'ping', 'get_addon_info', 'get_scene_info', 'get_world_state_snapshot',
+                                   'get_object_info', 'describe_node_type', 'bpy_api_lookup', 'get_viewport_screenshot'}:
+                        response = self._active_bridge().call('provider.query', {
+                            'providerId': 'base', 'action': command, 'params': params})
+                        if response.get('status') == 'failed' or 'error' in response:
+                            return self._result(response, is_error=True)
+                        return self._result(response.get('result', {}))
+                    if command == 'export_scene':
+                        if not arguments.get('_requestId') or not arguments.get('_transactionId'):
+                            return self._error(_mcp_error('INVALID_ARGUMENT', '导出需要请求 ID 和事务 ID'))
+                        response = self._active_bridge().call('provider.external_action', {
+                            'providerId': 'base', 'action': command, 'risk': 'external_export', 'params': params},
+                            request_id=arguments['_requestId'], transaction_id=arguments['_transactionId'],
+                            expected_scene_revision=arguments.get('_expectedSceneRevision'))
+                        return self._result(response, is_error=response.get('status') == 'failed')
                     provider_id = _POLL_GENERATION_COMMANDS.get(command)
                     task_id = _find_task_id(params)
                     cancelled = self._cancelled_task(provider_id, task_id) if provider_id else None
@@ -454,44 +466,53 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                         })
                     provider_id = COMMUNITY_COMMANDS.get(command)
                     status_command = _PROVIDER_STATUS_COMMANDS.get(provider_id)
-                    if status_command and command != status_command:
-                        provider_status = call_community(status_command, {})
-                        if provider_status.get("enabled") is not True:
-                            message = str(provider_status.get("message") or f"{provider_id} is disabled")
-                            normalized = message.lower()
-                            code = ("PROVIDER_CONFIGURATION_REQUIRED"
-                                    if any(token in normalized for token in ("api key", "secretid", "secretkey", "not given"))
-                                    else "PROVIDER_DISABLED")
-                            return self._error(_mcp_error(code, message))
-                    risk = command_risk(command)
-                    if risk != "read":
-                        request_id = arguments.get("_requestId")
-                        transaction_id = arguments.get("_transactionId")
-                        if not request_id or not transaction_id:
-                            return self._error(_mcp_error(
-                                "INVALID_ARGUMENT",
-                                "gated community actions require _requestId and _transactionId",
-                            ))
-                        gate_arguments = {
-                            "providerId": COMMUNITY_COMMANDS[command], "action": command, "risk": risk,
-                        }
-                        if arguments.get("_estimatedCost") is not None:
-                            gate_arguments["estimatedCost"] = arguments["_estimatedCost"]
-                        gate = self._active_bridge().call(
-                            "provider.external_action",
-                            gate_arguments,
-                            request_id=request_id,
-                            transaction_id=transaction_id,
-                            expected_scene_revision=arguments.get("_expectedSceneRevision"),
-                        )
-                        if isinstance(gate, dict) and (gate.get("status") == "failed" or "error" in gate):
-                            return self._result(gate, is_error=True)
-                    result = call_community(command, params)
-                    task = self._report_generation(command, params, result, arguments.get("_requestId"))
-                    if task is not None:
-                        result = dict(result)
-                        result["_partmeTask"] = task
-                    return self._result(result, is_error=bool(result.get("error")))
+                    if provider_id in {'hyper3d', 'hunyuan3d'} or command in {
+                        'get_polyhaven_status', 'get_polyhaven_categories', 'search_polyhaven_assets',
+                        'get_sketchfab_status', 'search_sketchfab_models', 'get_sketchfab_model_preview',
+                    }:
+                        # 兼容原工具名，但执行归属 PartMe；不回退到 9876。
+                        status_response = self._active_bridge().call('provider.status', {'providerId': provider_id})
+                        if status_response.get('status') == 'failed' or 'error' in status_response:
+                            return self._result(status_response, is_error=True)
+                        provider_status = status_response.get('result', {})
+                        if command == status_command:
+                            return self._result({
+                                'enabled': bool(provider_status.get('enabled')),
+                                'state': provider_status.get('state'),
+                                'message': provider_status.get('statusText', ''),
+                            })
+                        if not provider_status.get('enabled') or provider_status.get('state') not in {'ready', 'busy'}:
+                            return self._error(_mcp_error('PROVIDER_UNAVAILABLE',
+                                provider_status.get('statusText') or '请在 PartMe 中配置并启用供应商'))
+                        risk = command_risk(command)
+                        payload = {'providerId': provider_id, 'action': command, 'params': params}
+                        options = {}
+                        target = 'provider.query'
+                        if risk != 'read':
+                            if not arguments.get('_requestId') or not arguments.get('_transactionId'):
+                                return self._error(_mcp_error('INVALID_ARGUMENT', '生成需要请求 ID 和事务 ID'))
+                            target = 'provider.external_action'
+                            payload['risk'] = risk
+                            if arguments.get('_estimatedCost') is not None:
+                                payload['estimatedCost'] = arguments['_estimatedCost']
+                            options = {'request_id': arguments['_requestId'],
+                                       'transaction_id': arguments['_transactionId'],
+                                       'expected_scene_revision': arguments.get('_expectedSceneRevision')}
+                        response = self._active_bridge().call(target, payload, **options)
+                        if response.get('status') == 'failed' or 'error' in response:
+                            return self._result(response, is_error=True)
+                        result = response.get('result', {})
+                        if command == 'get_sketchfab_model_preview' and result.get('image_data'):
+                            metadata = {key: value for key, value in result.items() if key != 'image_data'}
+                            preview = self._result(metadata)
+                            preview['content'].append({'type': 'image', 'data': result['image_data'],
+                                                       'mimeType': 'image/' + result['format']})
+                            return preview
+                        task = self._report_generation(command, params, result, arguments.get('_requestId'))
+                        if task is not None:
+                            result = {**result, '_partmeTask': task}
+                        return self._result(result)
+                    return self._error(_mcp_error('INVALID_ARGUMENT', '命令不在 PartMe 兼容白名单中'))
                 except CommunityBridgeError as error:
                     return self._error(_mcp_error(error.code, str(error)))
             return super().call_tool(name, arguments)

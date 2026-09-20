@@ -8,13 +8,18 @@ Add-on (pulling the latest package from GitHub Releases with a bundled offline f
 persistently, launches Blender, and auto-starts the connector. The default approved output directory
 is `~/partme/blender/design-outputs` (override with the `outputRoot` argument).
 
-## Community asset platforms (installed automatically)
+## Integrated asset and model providers
 
-`blender_auto_setup` also installs the community asset Add-on (MIT, from ahujasid/blender-mcp),
-serving **PolyHaven / Sketchfab / Poly Pizza / Hyper3D Rodin / Hunyuan3D** search and download on
-127.0.0.1:9876 inside Blender. Hosts use it through the `blender_community_status` and
-`blender_community_call` MCP tools. PolyHaven needs no key; Sketchfab / Poly Pizza / Hyper3D /
-Hunyuan3D API keys go into the community Add-on's Blender preferences (community-native UX).
+`blender_auto_setup` installs only **PartMe Blender MCP**. Its provider registry integrates
+**Poly Haven / Sketchfab / Poly Pizza / Hyper3D Rodin / Hunyuan3D** without installing or starting
+the separate community Add-on and without depending on port 9876. The compatibility tools
+`blender_community_status` and `blender_community_call` retain their existing names, but they route
+through the PartMe Add-on.
+
+Poly Haven needs no key. Configure Sketchfab, Poly Pizza and Hunyuan credentials in the PartMe
+Add-on preferences. Hyper3D supports two mutually exclusive modes: client-managed MCP OAuth for
+free accounts, or a developer API Key. OAuth tokens remain in Codex or Claude Code and are never
+copied into Blender preferences.
 
 ## Remote transports (optional)
 
@@ -36,8 +41,9 @@ in the PartMe Blender Add-on's **Access** tab settings. HTTP and SSE have indepe
 > Open Blender, enable the MCP Add-on in **Preferences > Add-ons**, then press `N` in the 3D View and
 > click **Start MCP Server**.
 
-The trusted Add-on for this plugin is **PartMe Blender MCP**. A separately installed community
-Add-on named **MCP for Blender** is not evidence that the guarded Blender Design Harness is connected.
+The trusted and only required Add-on for this plugin is **PartMe Blender MCP**. Do not install the
+separate community **MCP for Blender** Add-on; PartMe provides the supported provider integrations
+inside the guarded runtime.
 
 ## 1. Open Preferences
 
@@ -47,9 +53,9 @@ Choose **Edit > Preferences**.
 
 ## 2. Install and enable the Add-on
 
-Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.5.1.zip`, and enable
-**PartMe Blender MCP**. The screenshot demonstrates the Add-ons location; its community Add-on
-name is illustrative and is not the trusted Blender Design endpoint.
+Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.5.2.zip`, and enable
+**PartMe Blender MCP**. The screenshot demonstrates the Add-ons location only; any community
+Add-on name visible in an older screenshot is illustrative and must not be installed for this setup.
 
 ![Enable a Blender Add-on](../assets/getting-started/blender-enable-mcp-addon.png)
 
