@@ -242,11 +242,22 @@ Expected after install: `/blender` command group (9 slash commands), 33 skills, 
 
 ### Installing on Kimi Code CLI
 
-The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blender`).
+The same repository carries a Kimi adapter (`kimi.plugin.json`, plugin id `blender`). Kimi Code CLI
+0.43.1 does not expose a plugin-manager command. Install the tagged repository in a stable local
+directory, add its `skills/` directory to `extra_skill_dirs` in `~/.kimi-code/config.toml`, and merge
+this server into the existing `mcpServers` object in `~/.kimi-code/mcp.json` without replacing other
+servers:
 
-1. In Kimi Code CLI run `/plugins` and add this repository by local path or GitHub URL
-   (`https://github.com/full-aigc-plugins/blender-design-plugin`).
-2. Run `/reload` or start a new session.
+```json
+"partme_blender": {
+  "command": "python3",
+  "args": ["/absolute/path/to/blender-design-plugin/scripts/mcp_bootstrap.py"]
+}
+```
+
+Run `kimi doctor`, then start a new session. Older Kimi builds that provide a supported plugin
+manager may install `kimi.plugin.json` directly; follow the capabilities reported by the installed
+client rather than assuming `/plugins` exists.
 
 Expected after install: 33 skills (`/skill:blender-use` as the router), `blender:*` slash
 commands, the `partme_blender` MCP server, and bundled hooks (SessionStart / UserPromptSubmit /
