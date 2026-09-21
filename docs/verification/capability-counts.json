@@ -3,8 +3,8 @@
   "managed": {
     "runtimeMode": "managed",
     "commands": {
-      "total": 167,
-      "L1": 10,
+      "total": 168,
+      "L1": 11,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -197,6 +197,7 @@
       "rig.rigify_install",
       "rig.rigify_status",
       "scene.inspect",
+      "scene.screenshot",
       "scene.set_units",
       "sculpt.brush_stroke",
       "sculpt.cleanup",
@@ -251,8 +252,8 @@
   "connector": {
     "runtimeMode": "connector",
     "commands": {
-      "total": 172,
-      "L1": 15,
+      "total": 173,
+      "L1": 16,
       "L2": 0,
       "L3": 154,
       "L4": 3
@@ -452,6 +453,7 @@
       "rig.rigify_install",
       "rig.rigify_status",
       "scene.inspect",
+      "scene.screenshot",
       "scene.set_units",
       "sculpt.brush_stroke",
       "sculpt.cleanup",
