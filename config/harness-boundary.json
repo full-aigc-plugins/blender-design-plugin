@@ -1,7 +1,7 @@
 {
   "schemaVersion": "partme-harness-boundary/v1",
   "mode": "continuous-diff",
-  "pinnedRuntimeVersion": "0.5.3",
+  "pinnedRuntimeVersion": "0.6.1",
   "localTreeSha256": "64d24f556788f57aa7a6217581042147acf543e683a2b6dd7ccb7bd8225098cb",
-  "upstreamTreeSha256": "c7d84ca52f0274192e2ef27da7bb8b1ff011b8f029f8d28ada54d405e7350aef"
+  "upstreamTreeSha256": "dbe6394d5a2f85a261d6e96ad4f8840ac1618f3e2924a652b1ca4d83999609cd"
 }

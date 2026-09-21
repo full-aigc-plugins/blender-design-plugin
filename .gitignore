@@ -9,6 +9,7 @@ dist/
 .env
 .env.*
 .superpowers/
+.codegraph/
 
 # Runtime acceptance output (regenerable; never commit evidence dumps)
 artifacts/

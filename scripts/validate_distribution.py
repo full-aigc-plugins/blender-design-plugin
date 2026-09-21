@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.11\.3(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.12\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -65,7 +65,7 @@ REQUIRED_INTERFACE_FIELDS = (
     "category", "brandColor", "composerIcon", "logo", "logoDark",
 )
 REPO_URL = "https://github.com/full-aigc-plugins/blender-design-plugin"
-EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.11.3"}
+EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.12.0"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_MCP = {
     "mcpServers": {
@@ -104,8 +104,8 @@ LARGE_BINARY_ALLOWLIST = {
     # These exact release assets are also checked below against immutable
     # version, URL and SHA-256 constants. The runtime has legitimately grown
     # beyond the generic 1 MiB media limit; no other vendor ZIP is exempt.
-    "vendor/partme-blender-mcp-addon-0.5.3.zip",
-    "vendor/partme-blender-mcp-runtime-0.5.3.zip",
+    "vendor/partme-blender-mcp-addon-0.6.1.zip",
+    "vendor/partme-blender-mcp-runtime-0.6.1.zip",
 }
 SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules", ".worktrees"}
 BINARY_SUFFIXES = {
@@ -116,15 +116,15 @@ SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 PARTME_RUNTIME = {
     "schemaVersion": "1.0.0",
     "product": "PartMe Blender MCP",
-    "version": "0.5.3",
+    "version": "0.6.1",
     "repository": "https://github.com/full-aigc-plugins/blender-mcp",
-    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.5.3",
+    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.6.1",
 }
 PARTME_ARTIFACTS = {
     "runtime": {
-        "path": "vendor/partme-blender-mcp-runtime-0.5.3.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.5.3/partme-blender-mcp-runtime-0.5.3.zip",
-        "sha256": "8d2227bb8f3a49028b2ba638f4d1a4d8ef48ee8ff1c8a5c0b6108c70f43fc168",
+        "path": "vendor/partme-blender-mcp-runtime-0.6.1.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.6.1/partme-blender-mcp-runtime-0.6.1.zip",
+        "sha256": "3fcdce4a685867843410335ec08bdd1ec342f8bfa628898c66cedb1e7fbf2a30",
         "members": (
             "pyproject.toml",
             "src/partme_blender_mcp/__init__.py",
@@ -132,9 +132,9 @@ PARTME_ARTIFACTS = {
         ),
     },
     "addon": {
-        "path": "vendor/partme-blender-mcp-addon-0.5.3.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.5.3/partme-blender-mcp-addon-0.5.3.zip",
-        "sha256": "ad2fd98c77901879f61cbacb5284bb33e7182e3cbe524318dfb45ff111426b31",
+        "path": "vendor/partme-blender-mcp-addon-0.6.1.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.6.1/partme-blender-mcp-addon-0.6.1.zip",
+        "sha256": "a69d32f4d82154783556f55e31e33eb6b2f67c3c0f396eeb27d1139061e657f7",
         "members": (
             "partme_blender_mcp/__init__.py",
             "partme_blender_mcp/panel.py",
@@ -432,7 +432,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.11.3, optionally with a +build cachebuster"
+            "release version must be 0.12.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):
