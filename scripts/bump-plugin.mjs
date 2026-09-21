@@ -117,12 +117,28 @@ catalogText = catalogText.slice(0, segStart) + `"version": "${newVersion}"` + ca
 fs.writeFileSync(catalogPath, catalogText);
 
 // 2) 各仓 manifest
-const bumpPlain = (text) => text.replace(`"version": "${oldVersion}"`, `"version": "${newVersion}"`);
+// 仓库清单可能因旧版发布流程与市场 catalog 暂时漂移。发布时以 catalog
+// 计算的新版本为事实源，规范化每个清单，而不是要求旧值必须恰好一致。
+const bumpPlain = (text) => text.replace(
+  /"version": "\d+\.\d+\.\d+"/,
+  `"version": "${newVersion}"`,
+);
 const bumpCodex = (text) => text.replace(/"version": "\d+\.\d+\.\d+\+codex\.\d+"/, `"version": "${newVersion}+codex.${today}"`);
+const bumpRepositoryMarketplace = (text) => {
+  const data = JSON.parse(text);
+  const entry = data.plugins?.find((candidate) => candidate.name === pluginId);
+  if (!entry) throw new Error(`仓库 marketplace 中找不到 ${pluginId}`);
+  entry.version = newVersion;
+  entry.source.ref = `v${newVersion}`;
+  const releaseRef = (value) => value.replace(/@v\d+\.\d+\.\d+\//, `@v${newVersion}/`);
+  entry.icon = releaseRef(entry.icon);
+  entry.interface.logo = releaseRef(entry.interface.logo);
+  return `${JSON.stringify(data, null, 2)}\n`;
+};
 
 fs.writeFileSync(edits[1].file, bumpPlain(fs.readFileSync(edits[1].file, "utf8")));
 fs.writeFileSync(edits[2].file, bumpPlain(fs.readFileSync(edits[2].file, "utf8")));
-fs.writeFileSync(edits[3].file, bumpPlain(fs.readFileSync(edits[3].file, "utf8")));
+fs.writeFileSync(edits[3].file, bumpRepositoryMarketplace(fs.readFileSync(edits[3].file, "utf8")));
 fs.writeFileSync(edits[4].file, bumpCodex(fs.readFileSync(edits[4].file, "utf8")));
 
 // 3) 重新生成三平台清单 + 全量校验
