@@ -15,8 +15,8 @@ class McpBootstrapTests(unittest.TestCase):
     def test_load_lock_verifies_the_published_runtime_archive(self):
         lock, archive, digest = mcp_bootstrap._load_lock(ROOT)
 
-        self.assertEqual(lock["version"], "0.6.1")
-        self.assertEqual(archive.name, "partme-blender-mcp-runtime-0.6.1.zip")
+        self.assertEqual(lock["version"], "0.7.0-rc.1")
+        self.assertEqual(archive.name, "partme-blender-mcp-runtime-0.7.0-rc.1.zip")
         self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), digest)
 
     def test_explicit_cache_is_version_scoped(self):

@@ -61,9 +61,9 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 |---|---|
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
-| 当前版本 | `0.12.0` |
+| 当前版本 | `0.13.0` |
 | 插件清单 | `.codex-plugin/plugin.json` |
-| MCP 配置 | `.mcp.json` 在隔离用户 venv 中引导 SHA 锁定的 PartMe Blender MCP `v0.6.1` 与官方 MCP SDK，不维护第二套 MCP 实现 |
+| MCP 配置 | `.mcp.json` 在隔离用户 venv 中引导 SHA 锁定的 PartMe Blender MCP `v0.7.0-rc.1` 与官方 MCP SDK，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
 | 许可证 | Apache-2.0 |
 
@@ -90,7 +90,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 
 运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，由命令注册表生成，并可由 `docs/verification/capability-counts.json` 复现。
 
-- **非侵入模式（Managed）** 注册 168 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、11 条 L1、0 条 L2，横跨 35 个域，路由到 33 个内置 Skill 中的 23 个。
+- **非侵入模式（Managed）** 注册 168 条命令：其中 154 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、11 条 L1、0 条 L2，横跨 35 个域，路由到 34 个内置 Skill 中的 23 个。
 - **Connector 模式** 额外加入 5 条可选 `official_uploader.*` 命令：合计 173 条命令，154 条 L3、3 条 L4、16 条 L1、0 条 L2，横跨 36 个域，路由到 24 个 Skill。
 
 两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。Windows 前台 UI 接管未达到 L4 验证，详见[运行证据](docs/verification/harness-runtime.md)。
@@ -138,17 +138,17 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | 判定哪些动作不可逆、需要授权 | 解读用户意图 |
 | `scripts/harness/authorization.py` | 临时 HMAC 令牌、TTL、动作绑定 | 长期凭据 |
 | `scripts/harness/exporter.py` | 可信导出与媒体探测 | 艺术决策 |
-| `vendor/partme-blender-mcp-addon-0.6.1.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
-| `vendor/partme-blender-mcp-runtime-0.6.1.zip` | 通用 MCP 协议与官方 SDK 工具暴露 | Codex 专属 Skills |
-| `skills/`（33 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
+| `vendor/partme-blender-mcp-addon-0.7.0-rc.1.zip` | 已打开会话的 PartMe Add-on 生命周期 | Codex 专属制作流程 |
+| `vendor/partme-blender-mcp-runtime-0.7.0-rc.1.zip` | 通用 MCP 协议与官方 SDK 工具暴露 | Codex 专属 Skills |
+| `skills/`（34 个） | 供 Codex 使用的路由与领域指令 | 运行时约束 |
 
 ## 兼容性
 
 | 插件版本 | 宿主 | Blender | 平台 | 状态 |
 |---|---|---|---|---|
-| `0.12.0` + runtime `0.6.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
-| `0.12.0` + runtime `0.6.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
-| `0.12.0` + runtime `0.6.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
 
 Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-runtime.md` 中列出的组合可以声称支持。
 
@@ -183,7 +183,7 @@ codex plugin add blender-design@partme-ai-blender
 PartMe Add-on。让 Codex 执行“为我准备 Blender MCP 安装包”，或由熟悉命令行的用户运行：
 
 ```bash
-python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.1.1.zip
+python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.7.0-rc.1.zip
 ```
 
 随后在 Blender 中选择 **编辑 → 偏好设置 → 插件 → 从磁盘安装**，选择该 ZIP，启用
@@ -377,7 +377,7 @@ partme-blender-plugin/
 ├── connector/                  # 可选 Blender Add-on
 ├── scripts/                    # Harness、启动器、导出器、校验器
 │   └── harness/                # 传输、服务、策略、授权、快照
-├── skills/                     # 33 个领域与工作流 Skill
+├── skills/                     # 34 个领域与工作流 Skill
 ├── config/                     # 版本矩阵与生产档位
 ├── tests/                      # 单元、契约与分发测试
 └── docs/                       # 架构、技术方案、验证记录
