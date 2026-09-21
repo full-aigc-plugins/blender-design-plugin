@@ -72,7 +72,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
     def test_manifest_identity(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], PLUGIN_ID)
-        self.assertRegex(manifest["version"], r"^0\.13\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
+        self.assertRegex(manifest["version"], r"^0\.13\.1(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["repository"], REPOSITORY)
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
@@ -81,8 +81,8 @@ class TestManifestAndMarketplace(unittest.TestCase):
         config = load_json(".mcp.json")
         self.assertEqual(config, {"mcpServers": {"partme_blender": {
             "type": "stdio",
-            "command": "python",
-            "args": ["scripts/mcp_bootstrap.py"],
+            "command": "node",
+            "args": ["scripts/mcp_bootstrap.mjs"],
             "cwd": ".",
         }}})
         entrypoint = ROOT / "scripts" / "blender_mcp_server.py"
@@ -92,6 +92,22 @@ class TestManifestAndMarketplace(unittest.TestCase):
         bootstrap = ROOT / "scripts" / "mcp_bootstrap.py"
         self.assertTrue(bootstrap.is_file())
         self.assertIn("os.execv", bootstrap.read_text(encoding="utf-8"))
+
+    def test_codex_mcp_launcher_is_cross_platform(self) -> None:
+        launcher = ROOT / "scripts" / "mcp_bootstrap.mjs"
+        self.assertTrue(launcher.is_file())
+        result = subprocess.run(
+            ["node", "--check", str(launcher)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        source = launcher.read_text(encoding="utf-8")
+        self.assertIn("PARTME_BLENDER_MCP_PYTHON", source)
+        self.assertIn('command: "python3"', source)
+        self.assertIn('command: "python"', source)
+        self.assertIn('command: "py"', source)
 
     def test_zcode_mcp_bootstrap_is_zero_configuration(self) -> None:
         """Optional ZCode values must not become required template variables.
@@ -106,10 +122,10 @@ class TestManifestAndMarketplace(unittest.TestCase):
         manifest_text = manifest_path.read_text(encoding="utf-8")
         manifest = json.loads(manifest_text)
         server = manifest["mcpServers"]["partme_blender"]
-        self.assertEqual(server["command"], "python3")
+        self.assertEqual(server["command"], "node")
         self.assertEqual(
             server["args"],
-            ["${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.py"],
+            ["${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.mjs"],
         )
         self.assertNotIn("env", server)
         self.assertNotIn("userConfig", manifest)
@@ -164,7 +180,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(
             entries[0]["source"],
-            {"source": "url", "url": REPOSITORY + ".git", "ref": "v0.13.0"},
+            {"source": "url", "url": REPOSITORY + ".git", "ref": "v0.13.1"},
         )
         self.assertEqual(
             entries[0]["policy"],
@@ -362,14 +378,14 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_accepts_cachebuster_build_suffix(self):
-        """Local iteration requires 0.13.0+codex.<cachebuster>.
+        """Local iteration requires 0.13.1+codex.<cachebuster>.
 
         Hard-pinning the version would reject the documented form, so this
         guards against reintroducing that pin.
         """
         self._mutate(
             self.manifest,
-            lambda d: d.update(version="0.13.0+codex.local-20260921-120000"),
+            lambda d: d.update(version="0.13.1+codex.local-20260921-120000"),
         )
         self.assertEqual(validate_main(str(self.repo)), 0)
 

@@ -5,7 +5,7 @@
     "en": "Blender Design",
     "zh-CN": "Blender 三维设计"
   },
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "description_i18n": {
     "en": "Design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",
@@ -30,9 +30,9 @@
   "commands": "commands",
   "mcpServers": {
     "partme_blender": {
-      "command": "python3",
+      "command": "node",
       "args": [
-        "${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.py"
+        "${ZCODE_PLUGIN_ROOT}/scripts/mcp_bootstrap.mjs"
       ]
     }
   }

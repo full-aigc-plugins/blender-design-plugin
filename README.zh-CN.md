@@ -61,7 +61,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 |---|---|
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
-| 当前版本 | `0.13.0` |
+| 当前版本 | `0.13.1` |
 | 插件清单 | `.codex-plugin/plugin.json` |
 | MCP 配置 | `.mcp.json` 在隔离用户 venv 中引导 SHA 锁定的 PartMe Blender MCP `v0.7.0-rc.1` 与官方 MCP SDK，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
@@ -146,9 +146,9 @@ flowchart TB
 
 | 插件版本 | 宿主 | Blender | 平台 | 状态 |
 |---|---|---|---|---|
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
 
 Windows 前台 UI 接管未达到 L4 验证。仅 `docs/verification/harness-runtime.md` 中列出的组合可以声称支持。
 

@@ -61,7 +61,7 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.13.0` |
+| Current version | `0.13.1` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
 | MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.7.0-rc.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
@@ -146,9 +146,9 @@ flowchart TB
 
 | Plugin version | Host | Blender | Platform | Status |
 |---|---|---|---|---|
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
-| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
+| `0.13.1` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 

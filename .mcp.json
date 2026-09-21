@@ -2,8 +2,8 @@
   "mcpServers": {
     "partme_blender": {
       "type": "stdio",
-      "command": "python",
-      "args": ["scripts/mcp_bootstrap.py"],
+      "command": "node",
+      "args": ["scripts/mcp_bootstrap.mjs"],
       "cwd": "."
     }
   }
