@@ -51,7 +51,6 @@ from .execution_policy import ExecutionMode, ExecutionPolicy
 
 
 def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output_root: Path | None = None, approved_asset_roots=(), revision_provider=lambda: 0) -> CommandRegistry:
-    scene = SceneCommands(bpy_module)
     objects = ObjectCommands(bpy_module)
     materials = MaterialCommands(bpy_module, asset_policy=PathPolicy(approved_asset_roots) if approved_asset_roots else None,
                                  output_root=approved_output_root)
@@ -59,6 +58,7 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
     lights = LightCommands(bpy_module)
     animation = AnimationCommands(bpy_module)
     view = ViewCommands(bpy_module)
+    scene = SceneCommands(bpy_module, approved_output_root=approved_output_root)
     if runtime_mode not in {"managed", "connector"}:
         raise ValueError("runtime_mode must be managed or connector")
     # Select version adapter once; pass to commands that need it.
@@ -147,6 +147,11 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       metadata={'effects': {'sceneMutation': False, 'longRunning': False, 'cancellable': False},
                                 'tests': ['tests/test_production_profile.py']})
     registry.register("scene.inspect", scene.inspect, validate=closed_arguments(), risk="read")
+    registry.register("scene.screenshot", scene.screenshot,
+                      validate=closed_arguments(required=("path",),
+                                               optional=("width", "height", "format",
+                                                         "frame", "camera", "overwrite")),
+                      risk="read")
     registry.register('scene.set_units', organization.set_units,
                       validate=closed_arguments(required=('system',), optional=('scaleLength',)))
     registry.register('collection.create', organization.create_collection,

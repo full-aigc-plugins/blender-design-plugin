@@ -61,9 +61,9 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.12.0` |
+| Current version | `0.13.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
-| MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.6.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
+| MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.7.0-rc.1` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
 | License | Apache-2.0 |
 
@@ -90,8 +90,8 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 167 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 10 at L1, and 0 at L2, across 35 domains, routed through 23 of the 33 bundled Skills.
-- **Connector** adds the 5 optional `official_uploader.*` commands: 172 commands, 154 at L3, 3 at L4, 15 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
+- **Managed** registers 168 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 11 at L1, and 0 at L2, across 35 domains, routed through 23 of the 34 bundled Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 173 commands, 154 at L3, 3 at L4, 16 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
 
@@ -138,17 +138,17 @@ flowchart TB
 | `scripts/harness/execution_policy.py` | Which actions are irreversible and need authorization | User intent interpretation |
 | `scripts/harness/authorization.py` | Ephemeral HMAC tokens, TTL, action binding | Long-lived credentials |
 | `scripts/harness/exporter.py` | Verified export and media probing | Artistic decisions |
-| `vendor/partme-blender-mcp-addon-0.6.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
-| `vendor/partme-blender-mcp-runtime-0.6.1.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
-| `skills/` (33) | Routing and domain instructions for Codex | Runtime enforcement |
+| `vendor/partme-blender-mcp-addon-0.7.0-rc.1.zip` | PartMe Add-on lifecycle for an open session | Codex-specific production workflow |
+| `vendor/partme-blender-mcp-runtime-0.7.0-rc.1.zip` | Generic MCP protocol and official-SDK tool exposure | Codex-specific Skills |
+| `skills/` (34) | Routing and domain instructions for Codex | Runtime enforcement |
 
 ## Compatibility
 
 | Plugin version | Host | Blender | Platform | Status |
 |---|---|---|---|---|
-| `0.12.0` + runtime `0.6.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
-| `0.12.0` + runtime `0.6.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
-| `0.12.0` + runtime `0.6.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
+| `0.13.0` + runtime `0.7.0-rc.1` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 
@@ -185,7 +185,7 @@ To attach to an open Blender window, install the bundled PartMe Add-on once. Ask
 the Blender MCP installer”, or use this expert command:
 
 ```bash
-python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.1.1.zip
+python3 scripts/package_connector.py dist/partme-blender-mcp-addon-0.7.0-rc.1.zip
 ```
 
 In Blender choose **Edit → Preferences → Add-ons → Install from Disk**, select that ZIP, enable
@@ -429,7 +429,7 @@ partme-blender-plugin/
 ├── connector/                  # optional Blender Add-on
 ├── scripts/                    # Harness, launcher, exporter, validators
 │   └── harness/                # transport, server, policy, authorization, snapshot
-├── skills/                     # 32 domain and workflow Skills
+├── skills/                     # 34 domain and workflow Skills
 ├── config/                     # release matrix and production profile
 ├── tests/                      # unit, contract, and distribution tests
 └── docs/                       # architecture, technical solution, verification records
