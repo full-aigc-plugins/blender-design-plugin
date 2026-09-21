@@ -53,7 +53,7 @@ Choose **Edit > Preferences**.
 
 ## 2. Install and enable the Add-on
 
-Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.7.0-rc.1.zip`, and enable
+Choose **Add-ons > Install from Disk**, select `partme-blender-mcp-addon-0.7.0-rc.2.zip`, and enable
 **PartMe Blender MCP**. The screenshot demonstrates the Add-ons location only; any community
 Add-on name visible in an older screenshot is illustrative and must not be installed for this setup.
 

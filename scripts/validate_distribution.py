@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.13\.0(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.13\.2(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -65,7 +65,7 @@ REQUIRED_INTERFACE_FIELDS = (
     "category", "brandColor", "composerIcon", "logo", "logoDark",
 )
 REPO_URL = "https://github.com/full-aigc-plugins/blender-design-plugin"
-EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.13.0"}
+EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.13.2"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_MCP = {
     "mcpServers": {
@@ -105,8 +105,8 @@ LARGE_BINARY_ALLOWLIST = {
     # These exact release assets are also checked below against immutable
     # version, URL and SHA-256 constants. The runtime has legitimately grown
     # beyond the generic 1 MiB media limit; no other vendor ZIP is exempt.
-    "vendor/partme-blender-mcp-addon-0.7.0-rc.1.zip",
-    "vendor/partme-blender-mcp-runtime-0.7.0-rc.1.zip",
+    "vendor/partme-blender-mcp-addon-0.7.0-rc.2.zip",
+    "vendor/partme-blender-mcp-runtime-0.7.0-rc.2.zip",
 }
 SKIP_DIRS = {".git", ".superpowers", "__pycache__", "node_modules", ".worktrees"}
 BINARY_SUFFIXES = {
@@ -117,32 +117,34 @@ SEGMENT_CHARS = re.compile(r"^[A-Za-z0-9._-]+$")
 PARTME_RUNTIME = {
     "schemaVersion": "1.0.0",
     "product": "PartMe Blender MCP",
-    "version": "0.7.0-rc.1",
+    "version": "0.7.0-rc.2",
     "repository": "https://github.com/full-aigc-plugins/blender-mcp",
-    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.7.0-rc.1",
+    "release": "https://github.com/full-aigc-plugins/blender-mcp/releases/tag/v0.7.0-rc.2",
 }
 PARTME_ARTIFACTS = {
     "runtime": {
-        "path": "vendor/partme-blender-mcp-runtime-0.7.0-rc.1.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.7.0-rc.1/partme-blender-mcp-runtime-0.7.0-rc.1.zip",
-        "sha256": "c85a8e2a8a288350bf8a71b3139ec96497d8b77f4260a62e87fdecb9aa836d01",
+        "path": "vendor/partme-blender-mcp-runtime-0.7.0-rc.2.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.7.0-rc.2/partme-blender-mcp-runtime-0.7.0-rc.2.zip",
+        "sha256": "d4cb3c83fa6971f871f8d901cc4b7dbb575796e301bfa4fe28ebde9fbdde7511",
         "members": (
             "pyproject.toml",
             "src/partme_blender_mcp/__init__.py",
             "src/partme_blender_mcp/harness/provider_tasks.py",
+            "src/partme_blender_mcp/harness/runtime_contract.py",
             "src/partme_blender_mcp/harness/scene_screenshot.py",
             "src/partme_blender_mcp/harness/visual_loop.py",
         ),
     },
     "addon": {
-        "path": "vendor/partme-blender-mcp-addon-0.7.0-rc.1.zip",
-        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.7.0-rc.1/partme-blender-mcp-addon-0.7.0-rc.1.zip",
-        "sha256": "9ffc63ebf4db3771d5a2fd320063b4245a15a614fc296557ba9218ea96b10522",
+        "path": "vendor/partme-blender-mcp-addon-0.7.0-rc.2.zip",
+        "url": "https://github.com/full-aigc-plugins/blender-mcp/releases/download/v0.7.0-rc.2/partme-blender-mcp-addon-0.7.0-rc.2.zip",
+        "sha256": "15a75518547048be21eac3cee3d733c03fee73e6c7f8189f346676b00279dfc7",
         "members": (
             "partme_blender_mcp/__init__.py",
             "partme_blender_mcp/panel.py",
             "partme_blender_mcp/harness/server.py",
             "partme_blender_mcp/harness/provider_tasks.py",
+            "partme_blender_mcp/harness/runtime_contract.py",
             "partme_blender_mcp/harness/scene_screenshot.py",
             "partme_blender_mcp/harness/visual_loop.py",
         ),
@@ -437,7 +439,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.13.0, optionally with a +build cachebuster"
+            "release version must be 0.13.2, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):

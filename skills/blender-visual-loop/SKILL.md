@@ -6,7 +6,7 @@ description: Iterate a Blender scene against a target image with immutable scree
 # Blender visual loop
 
 Use this workflow when the user supplies a target image or asks for repeated visual refinement.
-It coordinates the visual state machine released in PartMe Blender MCP `0.7.0-rc.1`; it does
+It coordinates the visual state machine released in PartMe Blender MCP `0.7.0-rc.2`; it does
 not replace the Blender domain Skills that perform modeling, lighting, materials, or camera work.
 
 ## Preconditions
