@@ -1,7 +1,7 @@
 """Blender 5 layered Action, F-Curve, NLA, shape-key and basic retarget tools."""
 from ..errors import HarnessError
 from ..identity import ObjectResolver
-from .validation import finite_number,require_name
+from .validation import finite_number, require_name
 
 
 def action_fcurves(action):

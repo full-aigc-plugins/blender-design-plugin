@@ -1,7 +1,7 @@
 import unittest
 
 from scripts.harness.errors import HarnessError
-from scripts.harness.identity import ObjectResolver, OBJECT_ID_KEY
+from scripts.harness.identity import OBJECT_ID_KEY, ObjectResolver
 from scripts.harness.runtime import build_registry
 from tests.test_design_commands import FakeBpy, FakeObject
 

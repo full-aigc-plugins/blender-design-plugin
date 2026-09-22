@@ -16,8 +16,8 @@ import unittest
 from pathlib import Path
 
 from scripts.harness.runtime_catalog import (
-    generate_coverage_summary,
     generate_coverage_summaries,
+    generate_coverage_summary,
 )
 
 ROOT = Path(__file__).resolve().parents[1]

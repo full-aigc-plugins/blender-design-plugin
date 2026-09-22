@@ -159,7 +159,6 @@ class TestUpdater(unittest.TestCase):
 
     def _make_updater(self):
         """Import the updater module."""
-        import importlib
         import sys
         # Ensure scripts/ is importable
         scripts_dir = str(ROOT / "scripts")

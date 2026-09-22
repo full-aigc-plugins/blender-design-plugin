@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .validation import require_name, vector3, finite_number
 from ..errors import HarnessError
+from .validation import finite_number, require_name, vector3
 
 
 class CameraCommands:

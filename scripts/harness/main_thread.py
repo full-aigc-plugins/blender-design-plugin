@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import queue
 import threading
-from dataclasses import dataclass, field
 from collections.abc import Callable
+from dataclasses import dataclass, field
 
 from .errors import HarnessError
 

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from .errors import HarnessError
 
-
 RENDER_FIELDS = {
     "frameStart", "frameEnd", "frameStep", "width", "height",
     "imageFormat", "colorMode", "colorDepth", "includeAudio",
@@ -184,7 +183,7 @@ def write_concat_manifest(manifest: dict, approved_root: Path, target: Path) -> 
 
 
 def build_compose_command(ffmpeg: Path, concat_file: Path, target: Path, parameters: dict,
-                          *, audio_path: Path | None = None, fps: int | float | None = None,
+                          *, audio_path: Path | None = None, fps: float | None = None,
                           frame_count: int | None = None) -> list[str]:
     normalized = validate_compose_parameters(parameters)
     command = [str(ffmpeg), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file)]

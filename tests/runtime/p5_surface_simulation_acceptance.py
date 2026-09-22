@@ -1,10 +1,14 @@
 """P5 sculpt, Hair Curves, simulation configuration and cache acceptance."""
-import json,sys,time
+import json
+import sys
+import time
 from pathlib import Path
+
 import bpy
-from mathutils import Vector
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
+
 assert '--' in sys.argv
 output=Path(sys.argv[sys.argv.index('--')+1]).resolve(strict=True)
 registry=build_registry(bpy,approved_output_root=output)

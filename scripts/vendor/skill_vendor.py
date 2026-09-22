@@ -74,9 +74,7 @@ def resolve_ref(repo: str, ref: str) -> str:
     for line in out.splitlines():
         candidate, _, name = line.partition("\t")
         short = name.removeprefix("refs/tags/").removeprefix("refs/heads/")
-        if short == f"{ref}^{{}}":
-            sha = candidate
-        elif short == ref and sha is None:
+        if short == f"{ref}^{{}}" or short == ref and sha is None:
             sha = candidate
     if sha is None:
         raise RuntimeError(f"{repo}: could not resolve ref '{ref}'")

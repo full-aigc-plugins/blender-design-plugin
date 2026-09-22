@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import copy
+import math
 from collections import OrderedDict
 from collections.abc import Callable
 
 from .authorization import AuthorizationManager
-from .execution_policy import ExecutionMode, ExecutionPolicy
-import math
 from .errors import HarnessError
-from .protocol import CommandRequest, PROTOCOL_VERSION
-
+from .execution_policy import ExecutionMode, ExecutionPolicy
+from .protocol import PROTOCOL_VERSION, CommandRequest
 
 READ_ONLY_COMMANDS = {
     "session.capabilities", "session.status", "scene.inspect", "preview.capture", "export.file",

@@ -8,7 +8,6 @@ from pathlib import Path
 
 from .errors import HarnessError
 
-
 VALIDATION_SCRIPT = Path(__file__).resolve().parents[1] / "validate_model_in_blender.py"
 
 

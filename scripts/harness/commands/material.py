@@ -1,12 +1,13 @@
 """PBR material creation and assignment."""
 
 from __future__ import annotations
+
 from pathlib import Path
 
-from .validation import require_name
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
+from .validation import require_name
 
 
 def _unit(value, field):

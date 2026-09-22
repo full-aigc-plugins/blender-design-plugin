@@ -4,12 +4,13 @@ import json
 import sys
 import uuid
 from pathlib import Path
+
 import bpy
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scripts.harness.server import start_harness
 from scripts.harness.execution_policy import ExecutionPolicy
+from scripts.harness.server import start_harness
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--output-root',required=True)
@@ -46,7 +47,6 @@ def verify():
     except Exception as exc:
         (output/'ui-report.json').write_text(json.dumps({'passed':False,'error':str(exc)},indent=2))
         print('FOREGROUND_UI_FAILED '+str(exc),flush=True)
-    return None
 
 bpy.app.timers.register(verify,first_interval=.5)
 bpy.app.handlers.quit_pre.append(lambda _:handle.close())

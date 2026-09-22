@@ -1,5 +1,6 @@
 """Topology-bound UV seams, unwrap, packing and diagnostics."""
 import math
+
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext

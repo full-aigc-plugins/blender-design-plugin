@@ -3,7 +3,7 @@ from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
 from .mesh import TOPOLOGY_VERSION_KEY
-from .validation import finite_number,require_name,vector3
+from .validation import finite_number, require_name, vector3
 
 
 class RigCommands:

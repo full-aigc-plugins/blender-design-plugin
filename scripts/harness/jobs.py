@@ -9,7 +9,11 @@ from pathlib import Path
 from uuid import uuid4
 
 from .errors import HarnessError
-from .frame_pipeline import inspect_frame_sequence, validate_compose_parameters, validate_render_parameters
+from .frame_pipeline import (
+    inspect_frame_sequence,
+    validate_compose_parameters,
+    validate_render_parameters,
+)
 
 
 class JobManager:

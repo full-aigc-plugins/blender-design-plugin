@@ -61,7 +61,7 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.14.0` |
+| Current version | `0.14.1` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
 | MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.7.0-rc.2` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |

@@ -2,7 +2,7 @@
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
-from .validation import finite_number,require_name,vector3
+from .validation import finite_number, require_name, vector3
 
 
 class GreasePencilCommands:

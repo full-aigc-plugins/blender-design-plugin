@@ -7,7 +7,6 @@ Runs inside a real Blender process (headless).  Demonstrates:
   4. UDIM: faces at identical local UVs on different tiles do NOT overlap.
   5. Read-only: pre/post scene comparison holds.
 """
-import json
 import math
 import sys
 from pathlib import Path
@@ -17,7 +16,6 @@ import bpy
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.harness.runtime import build_registry
-from scripts.harness.errors import HarnessError
 
 registry = build_registry(bpy)
 
@@ -94,7 +92,7 @@ res = result_overlap['result']
 snapshot_after = _snapshot_scene()
 assert snapshot_before == snapshot_after, 'detect_overlap modified the scene!'
 
-print(f"=== Overlap Detection ===")
+print("=== Overlap Detection ===")
 print(f"hasUV: {res['hasUV']}")
 print(f"hasOverlaps: {res['hasOverlaps']}")
 print(f"overlap count: {len(res['overlaps'])}")
@@ -132,7 +130,7 @@ degen_id = degen_created['result']['objectId']
 result_degen = registry.dispatch('uv.detect_overlap', {'objectId': degen_id})
 res_d = result_degen['result']
 
-print(f"=== Degenerate UV ===")
+print("=== Degenerate UV ===")
 print(f"degenerateFaces: {res_d['degenerateFaces']}")
 print(f"hasOverlaps: {res_d['hasOverlaps']}")
 print(f"overlaps: {res_d['overlaps']}")
@@ -181,7 +179,7 @@ result_density = registry.dispatch('uv.measure_texel_density', {
 })
 res_td = result_density['result']
 
-print(f"=== Texel Density ===")
+print("=== Texel Density ===")
 print(f"textureWidth: {res_td['textureWidth']}")
 print(f"textureHeight: {res_td['textureHeight']}")
 print(f"face count: {len(res_td['faces'])}")
@@ -239,7 +237,7 @@ udim_id = udim_created['result']['objectId']
 result_udim = registry.dispatch('uv.detect_overlap', {'objectId': udim_id})
 res_u = result_udim['result']
 
-print(f"=== UDIM Tile Isolation ===")
+print("=== UDIM Tile Isolation ===")
 print(f"hasOverlaps: {res_u['hasOverlaps']}")
 print(f"overlaps: {res_u['overlaps']}")
 assert not res_u['hasOverlaps'], 'Faces on different UDIM tiles must not overlap'

@@ -7,14 +7,19 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.managed_launcher import build_managed_argv, launch_managed, load_descriptor, remove_stale_descriptor
+from scripts.managed_launcher import (
+    build_managed_argv,
+    launch_managed,
+    load_descriptor,
+    remove_stale_descriptor,
+)
 
 
 class TestManagedMode(unittest.TestCase):
     def test_policy_reaches_bootstrap_and_actual_runtime_dispatch(self):
         from scripts.harness.execution_policy import ExecutionPolicy
-        from scripts.managed_bootstrap import _arguments
         from scripts.harness.runtime import create_session
+        from scripts.managed_bootstrap import _arguments
         from tests.test_design_commands import FakeBpy
         from tests.test_foreground_policy import call
         policy=ExecutionPolicy.review_only()

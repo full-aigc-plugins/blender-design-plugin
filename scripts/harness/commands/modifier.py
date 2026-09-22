@@ -4,7 +4,6 @@ from ..identity import ObjectResolver
 from ..operation_context import OperationContext
 from .validation import finite_number, require_name, vector3
 
-
 TYPE_ALIASES = {'SUBDIVISION': 'SUBSURF'}
 SCHEMAS = {
     'MIRROR': {'use_axis': 'bool_vector', 'use_clip': 'bool', 'merge_threshold': 'nonnegative'},

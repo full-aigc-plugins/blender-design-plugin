@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import os
 import secrets
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
-from collections.abc import Callable
 
 from .errors import HarnessError
 

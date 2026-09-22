@@ -23,7 +23,6 @@ import bpy
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.harness.runtime import build_registry
-from scripts.harness.errors import HarnessError
 
 # ---------------------------------------------------------------------------
 # Commands that graduate to L3 with runtime evidence from this script.

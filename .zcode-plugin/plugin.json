@@ -5,7 +5,7 @@
     "en": "Blender Design",
     "zh-CN": "Blender 三维设计"
   },
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "description_i18n": {
     "en": "Design Blender scenes through controlled operations, visual milestones, recovery checkpoints, and verified file exports.",

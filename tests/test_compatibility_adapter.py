@@ -175,9 +175,7 @@ class TestCapCapabilityUnavailable(unittest.TestCase):
                         method(None, None, None, None, None)
                     elif method_name == 'create_sequence_effect':
                         method(None, None, None, None, None, None)
-                    elif method_name == 'configure_hair_curves':
-                        method(None, None, None)
-                    elif method_name == 'export_asset':
+                    elif method_name == 'configure_hair_curves' or method_name == 'export_asset':
                         method(None, None, None)
                 self.assertEqual(ctx.exception.code, 'CAPABILITY_UNAVAILABLE')
 

@@ -1,9 +1,17 @@
 """P7 Grease Pencil and VSE local-delivery acceptance."""
-import json,math,struct,subprocess,sys,wave
+import json
+import math
+import struct
+import subprocess
+import sys
+import wave
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
+
 assert '--' in sys.argv
 output=Path(sys.argv[sys.argv.index('--')+1]).resolve(strict=True)
 

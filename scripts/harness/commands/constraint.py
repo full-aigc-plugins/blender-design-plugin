@@ -1,7 +1,7 @@
 """Typed bone and object constraints with influence animation."""
 from ..errors import HarnessError
 from ..identity import ObjectResolver
-from .validation import finite_number,require_name,vector3
+from .validation import finite_number, require_name, vector3
 
 
 class ConstraintCommands:

@@ -3,9 +3,9 @@ import threading
 import time
 import unittest
 
+from scripts.harness.execution_policy import ExecutionPolicy
 from scripts.harness.main_thread import MainThreadExecutor
 from scripts.harness.runtime import create_session
-from scripts.harness.execution_policy import ExecutionPolicy
 from tests.test_design_commands import FakeBpy
 from tests.test_foreground_policy import call
 

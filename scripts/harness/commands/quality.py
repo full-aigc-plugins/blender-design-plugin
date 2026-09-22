@@ -1,8 +1,9 @@
 """Explicit frame/object quality measurements; no inferred performance intent."""
 import math
+
 from ..errors import HarnessError
 from ..identity import ObjectResolver
-from .validation import finite_number,require_name,vector3
+from .validation import finite_number, require_name
 
 
 class QualityCommands:

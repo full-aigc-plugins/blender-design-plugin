@@ -4,7 +4,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -37,9 +36,10 @@ class TestNativeMcpCatalog(unittest.TestCase):
                          "blender_animation_pose_keyframe")
 
     def test_every_registered_harness_command_has_one_mcp_tool(self):
+        from types import SimpleNamespace
+
         from scripts.harness.mcp_adapter import build_tool_catalog, command_tool_name
         from scripts.harness.runtime import build_registry
-        from types import SimpleNamespace
 
         bpy = SimpleNamespace(app=SimpleNamespace(version=(5, 2, 1), background=False,
                                                    version_string="5.2.1"))
@@ -64,9 +64,9 @@ class TestNativeMcpCatalog(unittest.TestCase):
         self.assertTrue(all("__" not in tool["name"] for tool in command_tools))
 
     def test_catalog_rejects_command_name_collisions(self):
+        from scripts.harness.commands.validation import closed_arguments
         from scripts.harness.mcp_adapter import McpAdapterError, build_tool_catalog
         from scripts.harness.registry import CommandRegistry
-        from scripts.harness.commands.validation import closed_arguments
 
         registry = CommandRegistry()
         registry.register("a.b_c", lambda _args: {}, validate=closed_arguments())

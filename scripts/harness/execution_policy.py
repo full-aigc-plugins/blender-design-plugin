@@ -63,7 +63,7 @@ class ExecutionPolicy:
             object.__setattr__(self, "approved_output_root", str(root))
 
     @classmethod
-    def from_dict(cls, payload: dict) -> "ExecutionPolicy":
+    def from_dict(cls, payload: dict) -> ExecutionPolicy:
         if not isinstance(payload, dict) or set(payload) - {
             "mode", "approvedOutputRoot", "allowDesignedProxies", "downstreamBudgetLimit", "exportFormats"
         }:
@@ -73,12 +73,12 @@ class ExecutionPolicy:
                    tuple(payload.get("exportFormats", cls.__dataclass_fields__["export_formats"].default)))
 
     @classmethod
-    def interactive(cls) -> "ExecutionPolicy":
+    def interactive(cls) -> ExecutionPolicy:
         """Create a policy that requests normal milestone review."""
         return cls(ExecutionMode.INTERACTIVE)
 
     @classmethod
-    def review_only(cls) -> "ExecutionPolicy":
+    def review_only(cls) -> ExecutionPolicy:
         """Create a policy that permits no mutation or export."""
         return cls(ExecutionMode.REVIEW_ONLY)
 
@@ -88,7 +88,7 @@ class ExecutionPolicy:
         approved_output_root: str | None,
         allow_designed_proxies: bool,
         downstream_budget_limit: str | Decimal | None,
-    ) -> "ExecutionPolicy":
+    ) -> ExecutionPolicy:
         """Create an automatic policy constrained to one output root and budget."""
         if not isinstance(approved_output_root, str) or not approved_output_root.strip():
             raise ExecutionPolicyError("auto_with_budget requires approved_output_root")

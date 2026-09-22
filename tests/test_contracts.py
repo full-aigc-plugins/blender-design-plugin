@@ -4,7 +4,6 @@ from pathlib import Path
 
 from scripts.validate_document import validate_document
 
-
 ROOT = Path(__file__).resolve().parents[1]
 VALID_ARTIFACT = {
     "protocolVersion": "codex-blender/v1",
@@ -27,7 +26,7 @@ class TestManifest(unittest.TestCase):
     def test_identity_and_skill_path(self):
         manifest = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text())
         self.assertEqual(manifest["name"], "blender-design")
-        self.assertRegex(manifest["version"], r"^0\.14\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
+        self.assertRegex(manifest["version"], r"^0\.14\.1(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["skills"], "./skills/")
 
 

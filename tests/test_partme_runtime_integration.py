@@ -5,9 +5,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
-from types import ModuleType
 from pathlib import Path
+from types import ModuleType
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "runtime.lock.json"
@@ -15,7 +15,7 @@ LOCK = ROOT / "runtime.lock.json"
 
 class PartMeRuntimeIntegrationTests(unittest.TestCase):
     def test_same_version_loaded_from_another_directory_is_rejected(self):
-        from scripts.partme_runtime import activate_runtime, RuntimeIntegrationError
+        from scripts.partme_runtime import RuntimeIntegrationError, activate_runtime
         foreign = ModuleType('partme_blender_mcp')
         foreign.__version__ = json.loads(LOCK.read_text())['version']
         foreign.__file__ = '/tmp/unrelated/partme_blender_mcp/__init__.py'
@@ -24,7 +24,7 @@ class PartMeRuntimeIntegrationTests(unittest.TestCase):
                 activate_runtime(ROOT)
 
     def test_foreign_cached_submodule_is_rejected(self):
-        from scripts.partme_runtime import activate_runtime, RuntimeIntegrationError
+        from scripts.partme_runtime import RuntimeIntegrationError, activate_runtime
         activate_runtime(ROOT)
         foreign = ModuleType('partme_blender_mcp.harness.foreign')
         foreign.__file__ = '/tmp/unrelated/foreign.py'

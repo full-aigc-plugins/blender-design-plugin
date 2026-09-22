@@ -9,12 +9,12 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from .errors import HarnessError
 from .main_thread import MainThreadExecutor
 from .runtime import create_session
 from .snapshot import BlenderCheckpointStore
-from .transport import Endpoint, JsonLineServer, choose_endpoint
 from .transaction import TransactionManager
-from .errors import HarnessError
+from .transport import Endpoint, JsonLineServer, choose_endpoint
 
 
 @dataclass

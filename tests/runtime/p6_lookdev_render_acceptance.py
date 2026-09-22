@@ -1,9 +1,13 @@
 """P6 packed lookdev, Eevee/Cycles, compositor and extended delivery acceptance."""
-import json,sys
+import json
+import sys
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
+
 assert '--' in sys.argv
 output=Path(sys.argv[sys.argv.index('--')+1]).resolve(strict=True)
 registry=build_registry(bpy,approved_output_root=output,approved_asset_roots=(output,))

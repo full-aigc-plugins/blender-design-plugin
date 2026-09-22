@@ -1,6 +1,7 @@
 """Shared validation helpers for Blender commands."""
 
 from __future__ import annotations
+
 import math
 
 from ..errors import HarnessError

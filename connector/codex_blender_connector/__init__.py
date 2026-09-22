@@ -13,6 +13,7 @@ bl_info = {
 
 def register():
     import bpy
+
     from . import runtime
     from .panel import register as register_panel
     register_panel()
@@ -22,6 +23,7 @@ def register():
 
 def unregister():
     import bpy
+
     from . import runtime
     from .panel import unregister as unregister_panel
     from .runtime import stop

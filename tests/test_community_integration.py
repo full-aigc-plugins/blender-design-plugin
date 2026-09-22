@@ -112,6 +112,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
         for command in ('ping', 'get_addon_info', 'get_scene_info', 'get_world_state_snapshot',
                         'get_object_info', 'describe_node_type', 'bpy_api_lookup'):
@@ -128,6 +129,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
         bridge = mock.Mock()
         bridge.call.side_effect = [
@@ -147,6 +149,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
         bridge = mock.Mock()
         snapshot = {'providers': [{'providerId': 'polyhaven', 'enabled': True, 'state': 'ready'}],
@@ -163,6 +166,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
         for command, provider in [('search_polyhaven_assets', 'polyhaven'),
                                   ('search_sketchfab_models', 'sketchfab')]:
@@ -182,6 +186,7 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
+
         from scripts.plugin_mcp_adapter import build_plugin_adapter
         bridge = mock.Mock()
         def call(command, payload, **kwargs):
@@ -328,7 +333,8 @@ class CommunityToolsRegistrationTests(unittest.TestCase):
         from scripts.partme_runtime import activate_runtime
         activate_runtime(PLUGIN_ROOT)
         from partme_blender_mcp.harness.mcp_adapter import McpAdapter
-        from scripts.plugin_mcp_adapter import build_plugin_adapter, PROVIDER_STAGE_TOOL
+
+        from scripts.plugin_mcp_adapter import PROVIDER_STAGE_TOOL, build_plugin_adapter
         bridge = mock.Mock()
         bridge.call.return_value = {'status': 'succeeded', 'result': {
             'accepted': True, 'operationId': 'asset-stage-2'}}

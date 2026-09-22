@@ -16,7 +16,10 @@ if str(ROOT) not in sys.path:
 if (ROOT / "scripts" / "harness" / "frame_worker.py").is_file():
     from scripts.harness.frame_worker import compose_video, render_frame_sequence
 else:
-    from codex_blender_connector.harness.frame_worker import compose_video, render_frame_sequence
+    from codex_blender_connector.harness.frame_worker import (
+        compose_video,
+        render_frame_sequence,
+    )
 
 
 def write_status(path, payload):

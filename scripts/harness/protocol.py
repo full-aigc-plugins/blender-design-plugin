@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from .errors import HarnessError
 
-
 PROTOCOL_VERSION = "codex-blender/v1"
 REQUEST_FIELDS = {
     "protocolVersion",
@@ -32,7 +31,7 @@ class CommandRequest:
     authorization: str | None = None
 
     @classmethod
-    def parse(cls, payload: dict) -> "CommandRequest":
+    def parse(cls, payload: dict) -> CommandRequest:
         if not isinstance(payload, dict):
             raise HarnessError("INVALID_REQUEST", "request must be an object")
         unknown = sorted(set(payload) - REQUEST_FIELDS)

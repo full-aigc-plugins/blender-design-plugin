@@ -261,8 +261,7 @@ class RetopoCommands:
             if dist is not None:
                 total_dist += dist
                 count += 1
-                if dist > max_dist:
-                    max_dist = dist
+                max_dist = max(max_dist, dist)
         avg_dist = total_dist / count if count > 0 else 0.0
 
         # Analyze pole valence (vertices with != 4 edges)

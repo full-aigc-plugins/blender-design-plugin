@@ -1,6 +1,6 @@
 """Movie clip tracking data and foreground camera solve/setup."""
 from ..errors import HarnessError
-from .validation import finite_number,require_name
+from .validation import finite_number, require_name
 
 
 class TrackingCommands:

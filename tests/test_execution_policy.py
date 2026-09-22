@@ -1,7 +1,11 @@
 import unittest
 from pathlib import Path
 
-from scripts.harness.execution_policy import ExecutionMode, ExecutionPolicy, ExecutionPolicyError
+from scripts.harness.execution_policy import (
+    ExecutionMode,
+    ExecutionPolicy,
+    ExecutionPolicyError,
+)
 
 
 class TestExecutionPolicy(unittest.TestCase):

@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from .errors import HarnessError
 
-
 OBJECT_ID_KEY = 'codex_blender_object_id'
 
 

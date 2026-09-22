@@ -1,5 +1,6 @@
 """Import only from caller-approved asset roots."""
 from pathlib import Path
+
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 
@@ -87,7 +88,6 @@ class AssetCommands:
 
     def polypizza_search(self,arguments):
         """Search the Poly Pizza low-poly library (API key via POLYPIZZA_API_KEY env)."""
-        import json as _json
         from urllib.parse import quote
         query=arguments.get('query')
         licence=arguments.get('licence')
@@ -113,7 +113,7 @@ class AssetCommands:
         """Download a Poly Pizza model into the approved roots and record its CC-BY attribution."""
         import json as _json
         import urllib.request
-        from urllib.parse import urlparse,quote
+        from urllib.parse import quote, urlparse
         model_id=arguments.get('modelId')
         if not isinstance(model_id,str) or not model_id.strip():
             raise HarnessError('INVALID_ARGUMENT','modelId is required')

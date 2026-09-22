@@ -2,7 +2,6 @@ import unittest
 
 from scripts.validate_document import validate_document
 
-
 HASH='a'*64
 
 
