@@ -61,7 +61,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 |---|---|
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
-| 当前版本 | `0.14.0` |
+| 当前版本 | `0.14.1` |
 | 插件清单 | `.codex-plugin/plugin.json` |
 | MCP 配置 | `.mcp.json` 在隔离用户 venv 中引导 SHA 锁定的 PartMe Blender MCP `v0.7.0-rc.2` 与官方 MCP SDK，不维护第二套 MCP 实现 |
 | 主要语言 | Python 3.13 Harness + Blender Add-on |
