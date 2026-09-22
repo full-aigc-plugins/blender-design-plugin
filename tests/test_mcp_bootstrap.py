@@ -46,6 +46,17 @@ class McpBootstrapTests(unittest.TestCase):
             with self.assertRaisesRegex(mcp_bootstrap.BootstrapError, "unsafe"):
                 mcp_bootstrap._load_lock(plugin_root)
 
+    def test_acquire_lock_recovers_dead_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lock_path = Path(directory) / "install.lock"
+            lock_path.write_text("99999999", encoding="ascii")
+            with mock.patch.object(mcp_bootstrap.os, "kill", side_effect=ProcessLookupError):
+                descriptor = mcp_bootstrap._acquire_lock(lock_path)
+            try:
+                self.assertEqual(lock_path.read_text(encoding="ascii"), str(os.getpid()))
+            finally:
+                os.close(descriptor)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -61,7 +61,7 @@ Editable Blender scene + verified local exports
 |---|---|
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
-| Current version | `0.13.2` |
+| Current version | `0.14.0` |
 | Plugin manifest | `.codex-plugin/plugin.json` |
 | MCP configuration | `.mcp.json` bootstraps the SHA-pinned PartMe Blender MCP `v0.7.0-rc.2` and official MCP SDK in an isolated user venv; no second MCP implementation |
 | Primary language | Python 3.13 Harness + Blender Add-on |
@@ -90,7 +90,7 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 168 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 11 at L1, and 0 at L2, across 35 domains, routed through 23 of the 34 bundled Skills.
+- **Managed** registers 168 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 11 at L1, and 0 at L2, across 35 domains, routed through 23 of the 36 bundled Skills.
 - **Connector** adds the 5 optional `official_uploader.*` commands: 173 commands, 154 at L3, 3 at L4, 16 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).

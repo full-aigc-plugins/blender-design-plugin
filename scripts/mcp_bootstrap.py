@@ -133,6 +133,28 @@ def _acquire_lock(path: Path):
             os.write(descriptor, str(os.getpid()).encode("ascii"))
             return descriptor
         except FileExistsError:
+            try:
+                owner = int(path.read_text(encoding="ascii").strip())
+                os.kill(owner, 0)
+            except ProcessLookupError:
+                try:
+                    path.unlink()
+                except FileNotFoundError:
+                    pass
+                continue
+            except (OSError, ValueError):
+                # An unreadable/partial lock can still belong to a live writer;
+                # only reclaim it after the normal lock timeout has elapsed.
+                try:
+                    stale = time.time() - path.stat().st_mtime >= LOCK_TIMEOUT_SECONDS
+                except FileNotFoundError:
+                    continue
+                if stale:
+                    try:
+                        path.unlink()
+                    except FileNotFoundError:
+                        pass
+                    continue
             if time.monotonic() >= deadline:
                 raise BootstrapError("timed out waiting for another MCP runtime installation")
             time.sleep(0.25)
