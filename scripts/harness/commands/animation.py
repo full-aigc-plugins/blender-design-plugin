@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .validation import require_name,vector3
 from ..errors import HarnessError
+from .validation import require_name, vector3
 
 
 class AnimationCommands:

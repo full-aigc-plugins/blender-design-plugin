@@ -13,7 +13,6 @@ import os
 import sys
 from pathlib import Path
 
-
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
@@ -50,7 +49,10 @@ def main() -> int:
         parser.add_argument("--tls-keyfile")
         parser.add_argument("--status-file")
         args = parser.parse_args(sys.argv[2:])
-        from partme_blender_mcp.harness.sdk_server import RemoteServerConfig, serve_remote
+        from partme_blender_mcp.harness.sdk_server import (
+            RemoteServerConfig,
+            serve_remote,
+        )
         return serve_remote(adapter, RemoteServerConfig(
             transport=args.transport, host=args.host, port=args.port,
             streamable_http_path=args.streamable_http_path, sse_path=args.sse_path,

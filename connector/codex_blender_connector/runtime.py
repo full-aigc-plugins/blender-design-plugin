@@ -7,7 +7,6 @@ import secrets
 import tempfile
 from pathlib import Path
 
-
 _CURRENT = None
 
 

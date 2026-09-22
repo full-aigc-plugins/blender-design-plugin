@@ -16,8 +16,6 @@ from pathlib import Path
 
 from scripts.harness.production_profile import ProductionProfile, RuntimeIdentity
 from scripts.harness.registry import CommandRegistry
-from scripts.harness.commands.validation import closed_arguments
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -457,9 +455,12 @@ class BackwardCompatibilityTests(unittest.TestCase):
         try:
             profile_path = tmpdir / 'production-profile.json'
             profile_path.write_text(json.dumps({}))
+            from scripts.harness.production_profile import (
+                ProductionProfile,
+                RuntimeIdentity,
+            )
             from scripts.harness.runtime import build_registry
             from tests.test_design_commands import FakeBpy
-            from scripts.harness.production_profile import ProductionProfile, RuntimeIdentity
             reg = build_registry(FakeBpy())
             profile = ProductionProfile.load(profile_path)
             runtime = RuntimeIdentity(
@@ -494,9 +495,9 @@ class BackwardCompatibilityTests(unittest.TestCase):
         try:
             profile_path = tmpdir / 'production-profile.json'
             profile_path.write_text(json.dumps({}))
+            from scripts.harness.production_profile import ProductionProfile
             from scripts.harness.runtime import build_registry
             from tests.test_design_commands import FakeBpy
-            from scripts.harness.production_profile import ProductionProfile
             reg = build_registry(FakeBpy())
             profile = ProductionProfile.load(profile_path)
             # Pass blenderVersion/platform/runtimeMode instead of a runtime object.

@@ -1,7 +1,10 @@
 """Advanced animation APIs and reusable quality checks in Blender 5.2."""
-import json,sys
+import json
+import sys
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
 

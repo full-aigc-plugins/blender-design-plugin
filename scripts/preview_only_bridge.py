@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import shutil
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 def _bootstrap_import_paths() -> None:
@@ -99,6 +100,7 @@ def render_preview_only(
     """Render one local preview without invoking any upload operator."""
     from blender_bridge import snapshot_scene_state, verify_restoration
     from codex_bridge import enable_addon
+
     from vendor.jimeng_blender_uploader import dcc_config, viewport_render
 
     enable_addon(bpy_module)

@@ -6,7 +6,6 @@ from ..identity import ObjectResolver
 from ..operation_context import OperationContext
 from .validation import finite_number, vector3
 
-
 TOPOLOGY_VERSION_KEY = 'codex_blender_topology_version'
 
 

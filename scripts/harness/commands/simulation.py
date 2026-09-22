@@ -1,9 +1,10 @@
 """Typed rigid-body, cloth, soft-body, collision, fluid and cache controls."""
 from pathlib import Path
+
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
-from .validation import finite_number,require_name
+from .validation import finite_number, require_name
 
 
 class SimulationCommands:

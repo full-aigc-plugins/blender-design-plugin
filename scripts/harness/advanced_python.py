@@ -7,7 +7,6 @@ import hashlib
 
 from .errors import HarnessError
 
-
 MAX_SCRIPT_BYTES = 64 * 1024
 FORBIDDEN_NAMES = {"__import__", "compile", "eval", "exec", "open", "input", "breakpoint"}
 FORBIDDEN_NODES = (ast.Import, ast.ImportFrom, ast.Global, ast.Nonlocal)

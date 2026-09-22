@@ -1,7 +1,11 @@
 """Real parent and child Blender background job isolation/cancellation."""
-import json,sys,time
+import json
+import sys
+import time
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
 

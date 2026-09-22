@@ -1,5 +1,6 @@
 """供应商兼容状态不能把局部完成或未知状态当成成功。"""
 import unittest
+
 from scripts.plugin_mcp_adapter import _generation_state
 
 

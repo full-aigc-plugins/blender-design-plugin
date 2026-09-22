@@ -3,7 +3,6 @@ from ..errors import HarnessError
 from ..identity import ObjectResolver
 from .validation import require_name
 
-
 SOCKET_TYPES={'FLOAT':'NodeSocketFloat','INT':'NodeSocketInt','VECTOR':'NodeSocketVector','BOOL':'NodeSocketBool'}
 NODE_TYPES={'GeometryNodeDistributePointsOnFaces','GeometryNodeInstanceOnPoints','GeometryNodeMeshIcoSphere',
  'GeometryNodeRealizeInstances','GeometryNodeJoinGeometry','GeometryNodeTransform','GeometryNodeMeshCube',

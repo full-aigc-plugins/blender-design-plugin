@@ -1,9 +1,14 @@
 """Foreground VIEW_3D sculpt brush acceptance."""
-import json,sys,traceback
+import json
+import sys
+import traceback
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
+
 assert '--' in sys.argv
 output=Path(sys.argv[sys.argv.index('--')+1]).resolve(strict=True)
 
@@ -20,5 +25,5 @@ def run():
  except Exception as exc:
   report|={'passed':False,'error':{'type':type(exc).__name__,'message':str(exc)}};traceback.print_exc()
  with (output/'acceptance.json').open('x',encoding='utf-8') as stream:json.dump(report,stream,ensure_ascii=False,indent=2)
- bpy.ops.wm.quit_blender();return None
+ bpy.ops.wm.quit_blender();
 bpy.app.timers.register(run,first_interval=1)

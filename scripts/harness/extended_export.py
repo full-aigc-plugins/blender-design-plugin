@@ -1,6 +1,7 @@
 """Version-2 receipt for newly probed EXR, USD and Alembic deliveries."""
 import hashlib
 from pathlib import Path
+
 from .errors import HarnessError
 
 

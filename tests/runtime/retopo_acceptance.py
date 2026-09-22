@@ -6,8 +6,10 @@ Demonstrates the four acceptance bullets:
   3. Exceeding deviation or pole thresholds enters explicit handover state.
   4. Save/reopen preserves projection, topology, and data layers.
 """
-import json, sys, time
+import json
+import sys
 from pathlib import Path
+
 import bpy
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -263,6 +265,7 @@ print(f'After reopen: {reopened_vert_count} verts, {reopened_face_count} faces')
 source_reopened = bpy.data.objects.get('SourceBody')
 assert source_reopened is not None, 'SourceBody must survive save/reopen'
 import mathutils
+
 src_verts = [v.co.copy() for v in source_reopened.data.vertices]
 kd = mathutils.kdtree.KDTree(len(src_verts))
 for i, v in enumerate(src_verts):

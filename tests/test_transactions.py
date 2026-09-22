@@ -5,8 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 
 from scripts.harness.errors import HarnessError
-from scripts.harness.transaction import TransactionManager
 from scripts.harness.session import HarnessSession
+from scripts.harness.transaction import TransactionManager
 
 
 class TestTransactionManager(unittest.TestCase):

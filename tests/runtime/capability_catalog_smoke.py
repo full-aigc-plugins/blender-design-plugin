@@ -7,8 +7,8 @@ import bpy
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.harness.runtime import build_registry
 from scripts.harness.errors import HarnessError
+from scripts.harness.runtime import build_registry
 
 registry = build_registry(bpy)
 before = set(bpy.data.objects.keys())

@@ -2,7 +2,11 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from scripts.harness.reimport_validator import build_validation_argv, parse_validation_output, validate_reimport
+from scripts.harness.reimport_validator import (
+    build_validation_argv,
+    parse_validation_output,
+    validate_reimport,
+)
 
 
 class TestReimportValidator(unittest.TestCase):

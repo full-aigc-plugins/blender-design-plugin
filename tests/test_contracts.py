@@ -4,7 +4,6 @@ from pathlib import Path
 
 from scripts.validate_document import validate_document
 
-
 ROOT = Path(__file__).resolve().parents[1]
 VALID_ARTIFACT = {
     "protocolVersion": "codex-blender/v1",

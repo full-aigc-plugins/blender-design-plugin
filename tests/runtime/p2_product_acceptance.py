@@ -1,7 +1,10 @@
 """P2-A desktop speaker, visual preview, reopen and GLB reimport acceptance."""
-import json,sys
+import json
+import sys
 from pathlib import Path
+
 import bpy
+
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
 

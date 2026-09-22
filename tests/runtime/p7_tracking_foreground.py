@@ -1,9 +1,13 @@
 """Generate known footage, solve it in foreground CLIP_EDITOR, and record error."""
-import json,sys,traceback
+import json
+import sys
+import traceback
 from pathlib import Path
+
 import bpy
-from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
+from mathutils import Vector
+
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from scripts.harness.runtime import build_registry
 
@@ -48,6 +52,6 @@ def run():
   except Exception as exc:
     report|={'passed':False,'productionAcceptance':False,'error':{'type':type(exc).__name__,'message':str(exc)}};traceback.print_exc()
   with (output/'acceptance.json').open('x',encoding='utf-8') as stream:json.dump(report,stream,ensure_ascii=False,indent=2)
-  bpy.ops.wm.quit_blender();return None
+  bpy.ops.wm.quit_blender();
 
 bpy.app.timers.register(run,first_interval=1)

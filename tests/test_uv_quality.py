@@ -6,8 +6,7 @@ from types import SimpleNamespace
 from scripts.harness.commands.uv import UVCommands
 from scripts.harness.errors import HarnessError
 from scripts.harness.identity import ObjectResolver
-from tests.test_design_commands import FakeBpy, FakeObjects
-
+from tests.test_design_commands import FakeBpy
 
 # -- Lightweight fakes with UV data -------------------------------------------
 

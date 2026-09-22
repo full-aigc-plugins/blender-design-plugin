@@ -2,7 +2,6 @@
 from ..errors import HarnessError
 from .validation import finite_number
 
-
 PASS_PROPERTIES={'Z':'use_pass_z','NORMAL':'use_pass_normal','DIFFUSE_COLOR':'use_pass_diffuse_color',
  'EMISSION':'use_pass_emit','MIST':'use_pass_mist','CRYPTO_OBJECT':'use_pass_cryptomatte_object'}
 

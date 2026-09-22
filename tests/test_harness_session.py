@@ -1,10 +1,8 @@
-import time
 import unittest
 from pathlib import Path
 
 from scripts.harness.authorization import AuthorizationManager
 from scripts.harness.execution_policy import ExecutionPolicy
-from scripts.harness.errors import HarnessError
 from scripts.harness.session import HarnessSession
 
 

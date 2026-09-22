@@ -2,13 +2,12 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import json
 import unittest
-import urllib.error
-from unittest import mock
 from pathlib import Path
+from unittest import mock
 
 from scripts.harness.commands.asset import AssetCommands
 from scripts.harness.errors import HarnessError

@@ -4,7 +4,7 @@ import unittest
 import uuid
 from pathlib import Path
 
-from scripts.harness.execution_policy import ExecutionMode, ExecutionPolicy
+from scripts.harness.execution_policy import ExecutionPolicy
 from scripts.harness.runtime import create_session
 from scripts.harness.session import HarnessSession
 from scripts.harness.transaction import TransactionManager
@@ -43,7 +43,7 @@ class PolicyDispatchTests(unittest.TestCase):
             root=Path(tmp); bpy=FakeBpy()
             bpy.ops.wm=type('Wm',(),{'save_as_mainfile':lambda _,**kw:Path(kw['filepath']).write_bytes(b'new scene')})()
             policy=ExecutionPolicy.auto_with_budget(str(root),False,None)
-            tx=TransactionManager(capture=lambda:[],restore=lambda _:None)
+            tx=TransactionManager(capture=list,restore=lambda _:None)
             session=create_session(bpy,'s',approved_output_root=root,transactions=tx,execution_policy=policy)
             target=root/'design.blend'
             bad=call(session,'export.file',{'path':str(target),'snapshotId':'none'})

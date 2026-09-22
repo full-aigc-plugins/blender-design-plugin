@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import os
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 from .artifact_validator import artifact_receipt
 from .errors import HarnessError
 from .media_probe import probe_video
-
 
 SUPPORTED_FORMATS = {"blend", "glb", "gltf", "fbx", "obj", "stl", "png", "jpg", "mp4"}
 FORMAT_PARAMETERS = {

@@ -15,7 +15,6 @@ from types import SimpleNamespace
 from .runtime import build_registry
 from .transport import Endpoint, send_request
 
-
 MCP_PROTOCOL_VERSION = "2025-06-18"
 HARNESS_PROTOCOL_VERSION = "codex-blender/v1"
 BLENDER_DOWNLOAD_URL = "https://www.blender.org/download/"

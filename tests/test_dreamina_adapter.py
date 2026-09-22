@@ -1,6 +1,6 @@
-import unittest
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 from scripts.dreamina_adapter import build_preview_receipt, export_preview

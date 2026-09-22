@@ -15,9 +15,9 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from scripts.managed_launcher import load_descriptor
 from scripts.harness.media_probe import probe_video
 from scripts.harness.transport import Endpoint, send_request
+from scripts.managed_launcher import load_descriptor
 
 
 def build_preview_receipt(artifact: dict, request: dict, media: dict) -> dict:

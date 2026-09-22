@@ -1,7 +1,7 @@
 """Scene units and collection organization commands."""
 from ..errors import HarnessError
 from ..identity import ObjectResolver
-from .validation import require_name, finite_number
+from .validation import finite_number, require_name
 
 
 class OrganizationCommands:

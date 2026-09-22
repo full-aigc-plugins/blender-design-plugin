@@ -6,10 +6,9 @@ Argument-specific object/path/authorization checks remain in the command/session
 from copy import deepcopy
 from pathlib import Path
 
+from .commands.validation import closed_arguments
 from .errors import HarnessError
 from .registry import CommandRegistry
-from .commands.validation import closed_arguments
-
 
 VECTOR = {'type': 'array', 'minItems': 3, 'maxItems': 3,
           'items': {'type': 'number'}, 'description': 'Three finite numbers; rotation uses radians'}

@@ -10,8 +10,8 @@ import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.managed_launcher import load_descriptor
 from scripts.harness.transport import Endpoint, send_request
+from scripts.managed_launcher import load_descriptor
 
 
 def main():

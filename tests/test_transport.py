@@ -1,11 +1,13 @@
-import json
-import socket
 import sys
-import threading
 import unittest
 import uuid
 
-from scripts.harness.transport import Endpoint, JsonLineServer, choose_endpoint, send_request
+from scripts.harness.transport import (
+    Endpoint,
+    JsonLineServer,
+    choose_endpoint,
+    send_request,
+)
 
 
 class TestEndpointSelection(unittest.TestCase):

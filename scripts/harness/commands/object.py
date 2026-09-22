@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from .validation import require_name, vector3, finite_number
 from ..errors import HarnessError
 from ..identity import ObjectResolver
 from ..operation_context import OperationContext
-
+from .validation import finite_number, require_name, vector3
 
 PRIMITIVE_OPERATORS = {
     "cube": "primitive_cube_add",

@@ -25,7 +25,8 @@ _SCRIPTS_DIR = ROOT / "scripts"
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from validate_distribution import main as validate_main, validate_segment
+from validate_distribution import main as validate_main
+from validate_distribution import validate_segment
 
 PLUGIN_ID = "blender-design"
 DISPLAY_NAME = "Blender Design"

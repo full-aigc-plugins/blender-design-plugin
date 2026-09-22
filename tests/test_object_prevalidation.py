@@ -1,7 +1,7 @@
 import unittest
 
-from scripts.harness.commands.object import ObjectCommands
 from scripts.harness.commands.curve import CurveCommands
+from scripts.harness.commands.object import ObjectCommands
 from scripts.harness.errors import HarnessError
 from tests.test_design_commands import FakeBpy
 

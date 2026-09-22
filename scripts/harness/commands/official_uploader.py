@@ -8,7 +8,6 @@ from urllib.parse import urlsplit
 
 from ..errors import HarnessError
 
-
 MODULE_NAME = "jimeng_blender_uploader"
 
 

@@ -1,7 +1,11 @@
-import hashlib,json,tempfile,unittest
+import hashlib
+import json
+import tempfile
+import unittest
 from pathlib import Path
-from scripts.harness.jobs import JobManager
+
 from scripts.harness.errors import HarnessError
+from scripts.harness.jobs import JobManager
 from tests.test_design_commands import FakeBpy
 
 

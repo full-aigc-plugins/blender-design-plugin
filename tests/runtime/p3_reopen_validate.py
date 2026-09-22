@@ -1,7 +1,10 @@
 """Validate persisted P3 structures after Blender opens the delivered file."""
-import json,sys
+import json
+import sys
 from pathlib import Path
+
 import bpy
+
 assert '--' in sys.argv
 output=Path(sys.argv[sys.argv.index('--')+1]).resolve(strict=True)
 spear=bpy.data.objects['ValidationHero_Spear']; face=bpy.data.objects['FaceProxy']; camera=bpy.data.objects['FollowCamera']

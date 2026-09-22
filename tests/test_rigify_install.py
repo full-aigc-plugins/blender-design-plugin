@@ -36,7 +36,7 @@ class RigifyInstallTests(unittest.TestCase):
             def __iter__(self):return iter([SimpleNamespace(module='bl_ext.blender_org.rigify')])
         bpy=SimpleNamespace(context=SimpleNamespace(preferences=SimpleNamespace(addons=AddonCollection())),
           app=SimpleNamespace(version_string='5.2.1'),ops=SimpleNamespace(pose=SimpleNamespace(rigify_generate=lambda:{'FINISHED'})))
-        with patch.dict(sys.modules,{'addon_utils':SimpleNamespace(modules=lambda:[])}):
+        with patch.dict(sys.modules,{'addon_utils':SimpleNamespace(modules=list)}):
             status=RigCommands(bpy).rigify_status({})['result']
         self.assertTrue(status['enabled']);self.assertTrue(status['operatorAvailable'])
 

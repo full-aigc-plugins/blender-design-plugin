@@ -3,12 +3,11 @@ import math
 import sys
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from scripts.harness.errors import HarnessError
 from scripts.harness.runtime import build_registry
 from tests.test_design_commands import FakeBpy, FakeObject, FakeObjects
-
 
 # ---------------------------------------------------------------------------
 # Argument-validation tests (unchanged from original)

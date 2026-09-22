@@ -1,8 +1,8 @@
 import unittest
 
-from scripts.harness.registry import CommandRegistry
 from scripts.harness.commands.validation import closed_arguments
 from scripts.harness.errors import HarnessError
+from scripts.harness.registry import CommandRegistry
 
 
 class CapabilityCatalogTests(unittest.TestCase):
@@ -112,6 +112,7 @@ class CapabilityCatalogTests(unittest.TestCase):
 
     def test_runtime_probe_distinguishes_background_and_output_scope(self):
         from types import SimpleNamespace
+
         from scripts.harness.runtime import build_registry
         from tests.test_design_commands import FakeBpy
         bpy = FakeBpy()
@@ -141,6 +142,7 @@ class CapabilityCatalogTests(unittest.TestCase):
 
     def test_runtime_metadata_references_existing_resources_without_l3_claim(self):
         from pathlib import Path
+
         from scripts.harness.runtime import build_registry
         from tests.test_design_commands import FakeBpy
         root = Path(__file__).resolve().parents[1]
@@ -171,8 +173,8 @@ class CapabilityCatalogTests(unittest.TestCase):
             self.registry().dispatch('sculpt.brush', {})
 
     def test_queries_work_during_readonly_takeover_without_revision_changes(self):
-        from scripts.harness.runtime import create_session
         from scripts.harness.execution_policy import ExecutionPolicy
+        from scripts.harness.runtime import create_session
         from tests.test_design_commands import FakeBpy
         from tests.test_foreground_policy import call
         session = create_session(FakeBpy(), 'catalog', execution_policy=ExecutionPolicy.review_only())
