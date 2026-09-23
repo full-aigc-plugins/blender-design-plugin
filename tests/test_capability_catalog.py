@@ -146,7 +146,15 @@ class CapabilityCatalogTests(unittest.TestCase):
         from scripts.harness.runtime import build_registry
         from tests.test_design_commands import FakeBpy
         root = Path(__file__).resolve().parents[1]
-        entries = build_registry(FakeBpy()).list_capabilities({'limit': 100})['items']
+        registry = build_registry(FakeBpy())
+        entries = []
+        offset = 0
+        while True:
+            page = registry.list_capabilities({'offset': offset, 'limit': 100})['items']
+            if not page:
+                break
+            entries.extend(page)
+            offset += len(page)
         for entry in entries:
             self.assertIsNotNone(entry['input'], entry['id'])
             self.assertTrue(entry['tests'], entry['id'])
@@ -155,6 +163,16 @@ class CapabilityCatalogTests(unittest.TestCase):
             for skill in entry['skills']:
                 self.assertTrue((root / 'skills' / skill / 'SKILL.md').is_file(), skill)
             self.assertIn(entry['maturity'], {'L1','L2','L3','L4'})
+            # Evidence paths must point at real files (catches phantom L3 visual/delivery).
+            # Strip markdown fragment identifiers (e.g. "#section") before checking.
+            verification = entry.get('verification', {})
+            for evidence_key in ('visual', 'delivery'):
+                for evidence_path in verification.get(evidence_key, []):
+                    file_part = evidence_path.split('#', 1)[0]
+                    self.assertTrue(
+                        (root / file_part).is_file(),
+                        f"{entry['id']}: {evidence_key} evidence path does not exist: {evidence_path}",
+                    )
 
     def test_windows_verified_recovery_and_rigify_commands_are_l4(self):
         from scripts.harness.runtime import build_registry

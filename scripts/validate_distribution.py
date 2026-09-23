@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.14\.1(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^0\.15\.0(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -65,7 +65,7 @@ REQUIRED_INTERFACE_FIELDS = (
     "category", "brandColor", "composerIcon", "logo", "logoDark",
 )
 REPO_URL = "https://github.com/full-aigc-plugins/blender-design-plugin"
-EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.14.1"}
+EXPECTED_SOURCE = {"source": "url", "url": REPO_URL + ".git", "ref": "v0.15.0"}
 EXPECTED_POLICY = {"installation": "AVAILABLE", "authentication": "ON_USE"}
 EXPECTED_MCP = {
     "mcpServers": {
@@ -439,7 +439,7 @@ def validate(root: Path) -> list[str]:
         errors.append("manifest name must be a kebab-case identifier")
     if VERSION_PATTERN.fullmatch(manifest.get("version") or "") is None:
         errors.append(
-            "release version must be 0.14.1, optionally with a +build cachebuster"
+            "release version must be 0.15.0, optionally with a +build cachebuster"
         )
     for field in ("description", "skills"):
         if not manifest.get(field):

@@ -90,8 +90,8 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 168 commands: 154 at L3, 3 Windows-verified recovery and Rigify commands at L4, 11 at L1, and 0 at L2, across 35 domains, routed through 23 of the 36 bundled Skills.
-- **Connector** adds the 5 optional `official_uploader.*` commands: 173 commands, 154 at L3, 3 at L4, 16 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
+- **Managed** registers 196 commands: 175 at L3, 3 Windows-verified recovery and Rigify commands at L4, 18 at L1, and 0 at L2, across 35 domains, routed through 23 of the 37 bundled Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 201 commands, 175 at L3, 3 at L4, 23 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).
 
@@ -160,6 +160,8 @@ flowchart TB
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
 
+- **Managed** records 192 commands: 175 at L3, 3 Windows-verified recovery/Rigify commands at L4, 14 at L1, across 35 domains, routed through 23 Skills.
+- **Connector** adds the 5 optional `official_uploader.*` commands: 201 commands, 175 at L3, 3 at L4, 23 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 Foreground Windows UI takeover is not L4-verified. Only the combinations in `docs/verification/harness-runtime.md` are claimed.
 
 ## Installation
