@@ -214,5 +214,6 @@ BLE001 (`except Exception:`) 是有意的（需要捕获所有 stdin 解析异�
 
 - `scripts/git-commit-safe.sh` — 见上文配方 1，绕过 hook 的提交入口
 - `scripts/format-drift-cleanup.sh` — 见上文配方 2，清理 formatter 漂移
+- `scripts/fal-batch.mjs` — Fal 队列批量生成 3D 资产（H3.1 + Trellis）；MIT 移植自 `achimala/dream-loop`，用于 `blender-design-loop` skill 的快速 3D 资产路径；`node scripts/fal-batch.mjs --help` 看 job 格式；测试 `node --test scripts/fal-batch.test.mjs`（9 个）
 - `scripts/bump-plugin.mjs` — 发版 bump（版本升级要求章节）
 - `scripts/check_harness_drift.py` — 检查 harness 边界漂移

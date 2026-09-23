@@ -1,17 +1,24 @@
 # 3D Asset Generation Reference
 
-Port of `research/dream-loop/references/fal.md` recipes for Blender.
-These recipes assume you have a `FAL_KEY` or `FAL_API_KEY`
-environment variable set up. If you do not, fall back to:
+Adapted from `research/dream-loop/references/fal.md` recipes for Blender
+in the context of `blender-design-plugin`. These recipes assume you have
+a `FAL_KEY` or `FAL_API_KEY` environment variable set up. If you do not,
+fall back to:
 
 - The bundled upstream `blender-asset-library` skill (procedural
   assets — no external API)
 - The bundled `blender-asset-polypizza` style skill for direct
   asset downloads (no generation)
 
+**Local helper**: [`scripts/fal-batch.mjs`](../../../scripts/fal-batch.mjs)
+(Node 18+, MIT from `achimala/dream-loop`, adapted). Use it to run
+`check` / `submit` / `collect` against the Fal queue. Run
+`node scripts/fal-batch.mjs --help` for the job-file format and example.
+Tests: `node --test scripts/fal-batch.test.mjs` (9 tests, offline mock).
+
 ## Two models, two recipes
 
-`dream-loop/scripts/fal-batch.mjs` documents two specific Fal models
+The Fal helper documents two specific Fal models
 for image-to-3D generation. They take **different parameters**;
 do not copy one model's input wholesale to the other.
 
@@ -44,8 +51,8 @@ do not copy one model's input wholesale to the other.
 
 ## Job state machine
 
-dream-loop's helper maintains three states per job. Reproduce the
-same discipline here:
+`scripts/fal-batch.mjs` maintains these states per job. The same
+discipline applies:
 
 | State | Meaning | Action |
 |---|---|---|
