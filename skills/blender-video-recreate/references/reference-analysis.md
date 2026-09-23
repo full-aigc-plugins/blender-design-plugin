@@ -12,7 +12,7 @@ record that uncertainty and derive frames from timestamps rather than assuming a
 For each shot or continuous take, capture:
 
 | Field | Required evidence |
-| --- | --- |
+|---|---|
 | Time | source start/end timestamps and project frame interval |
 | Composition | shot size, subject screen position/scale, horizon, dominant lines |
 | Space | floor, anchors, relative distance, visible parallax |

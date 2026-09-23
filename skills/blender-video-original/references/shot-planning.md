@@ -5,7 +5,7 @@
 Write one row per shot or continuous action interval:
 
 | Field | Meaning |
-| --- | --- |
+|---|---|
 | id | stable identifier retained through revisions |
 | frames | inclusive integer start/end at project FPS |
 | roles | subject and prop ids present in the interval |

@@ -90,7 +90,7 @@ Editable Blender scene + verified local exports
 
 Running-session truth comes from `capability.list` and `capability.describe`. The catalog is counted **per runtime mode**, generated from the command registry, and reproduced by `docs/verification/capability-counts.json`.
 
-- **Managed** registers 196 commands: 175 at L3, 3 Windows-verified recovery and Rigify commands at L4, 18 at L1, and 0 at L2, across 35 domains, routed through 23 of the 37 bundled Skills.
+- **Managed** registers 196 commands: 175 at L3, 3 Windows-verified recovery and Rigify commands at L4, 18 at L1, and 0 at L2, across 35 domains, routed through 23 of the 38 bundled Skills.
 - **Connector** adds the 5 optional `official_uploader.*` commands: 201 commands, 175 at L3, 3 at L4, 23 at L1, and 0 at L2, across 36 domains, routed through 24 Skills.
 
 The two modes are never merged into a single count, and no combined coverage percentage is claimed. Foreground Windows UI takeover is not L4-verified. See the [runtime evidence](docs/verification/harness-runtime.md).

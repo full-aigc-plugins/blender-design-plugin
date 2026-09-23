@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import struct
+import re
 import subprocess
 import sys
 import tempfile
@@ -72,7 +73,8 @@ class TestManifestAndMarketplace(unittest.TestCase):
     def test_manifest_identity(self) -> None:
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], PLUGIN_ID)
-        self.assertRegex(manifest["version"], r"^0\.15\.0(?:\+codex\.[0-9A-Za-z.-]+)?$")
+        base = load_json(".zcode-plugin/plugin.json")["version"]
+        self.assertRegex(manifest["version"], rf"^{re.escape(base)}(?:\+codex\.[0-9A-Za-z.-]+)?$")
         self.assertEqual(manifest["repository"], REPOSITORY)
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
@@ -180,7 +182,8 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(
             entries[0]["source"],
-            {"source": "url", "url": REPOSITORY + ".git", "ref": "v0.15.0"},
+            {"source": "url", "url": REPOSITORY + ".git",
+                "ref": "v" + load_json(".zcode-plugin/plugin.json")["version"]},
         )
         self.assertEqual(
             entries[0]["policy"],
@@ -378,14 +381,15 @@ class TestValidatorRejectsDefects(unittest.TestCase):
         self._rejects()
 
     def test_accepts_cachebuster_build_suffix(self):
-        """Local iteration requires 0.15.0+codex.<cachebuster>.
+        """Local iteration requires <base>+codex.<cachebuster>.
 
         Hard-pinning the version would reject the documented form, so this
         guards against reintroducing that pin.
         """
+        base = str(json.loads(Path(self.manifest).read_text(encoding="utf-8"))["version"]).split("+", 1)[0]
         self._mutate(
             self.manifest,
-            lambda d: d.update(version="0.15.0+codex.local-20260922-120000"),
+            lambda d: d.update(version=f"{base}+codex.local-20260922-120000"),
         )
         self.assertEqual(validate_main(str(self.repo)), 0)
 

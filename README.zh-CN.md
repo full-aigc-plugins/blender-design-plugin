@@ -90,7 +90,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 
 运行时事实以 `capability.list` 和 `capability.describe` 为准。目录数量**按运行模式分别统计**，由命令注册表生成，并可由 `docs/verification/capability-counts.json` 复现。
 
-- **非侵入模式（Managed）** 注册 196 条命令：其中 175 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、18 条 L1、0 条 L2，横跨 35 个域，路由到 37 个内置 Skill 中的 23 个。
+- **非侵入模式（Managed）** 注册 196 条命令：其中 175 条 L3、3 条经 Windows 验证的恢复与 Rigify 命令达到 L4、18 条 L1、0 条 L2，横跨 35 个域，路由到 38 个内置 Skill 中的 23 个。
 - **Connector 模式** 额外加入 5 条可选 `official_uploader.*` 命令：合计 201 条命令，175 条 L3、3 条 L4、23 条 L1、0 条 L2，横跨 36 个域，路由到 24 个 Skill。
 
 两种模式**不合并为单一总数**，也不宣称任何综合覆盖率。Windows 前台 UI 接管未达到 L4 验证，详见[运行证据](docs/verification/harness-runtime.md)。
