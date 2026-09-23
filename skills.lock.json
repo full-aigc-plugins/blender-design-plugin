@@ -4,8 +4,8 @@
     {
       "package": "blender-skills",
       "repo": "https://github.com/full-aigc-skills/blender-skills.git",
-      "ref": "v1.1.0",
-      "sha": "03ef93ce7916ac70bfd4590a1cf00149a004ddb5",
+      "ref": "v1.2.0",
+      "sha": "fe78ce4a2463d5b6ef31475c849481b77bd1f8a6",
       "skills": [
         "blender-background-jobs",
         "blender-character-animation",
@@ -29,7 +29,8 @@
         "blender-tracking",
         "blender-uv-material",
         "blender-video-original",
-        "blender-video-recreate"
+        "blender-video-recreate",
+        "blender-ai-replication"
       ],
       "dest": "skills/",
       "sha256": {
@@ -55,7 +56,8 @@
         "blender-tracking": "0716a7213d38f7eda7342e61a1279d7a26ee85369040f14db4baa83254f5abef",
         "blender-uv-material": "d7e7e9e1d832bb420ceb19af958960daf296901f588f501ad737fa287913e805",
         "blender-video-original": "7d3854e20ed69778b2f9b9855eeb1a411dc4fe55a2bf9b9effdbeec1f72b4b2c",
-        "blender-video-recreate": "2e84ee63039a4e31663f738bcc60a6eeb3f1910e5c0f2030747eaf7f399c0c29"
+        "blender-video-recreate": "2e84ee63039a4e31663f738bcc60a6eeb3f1910e5c0f2030747eaf7f399c0c29",
+        "blender-ai-replication": "145bf66669ac109ab60930b608af126c0eaab0e841ae0377c1314690087ce68d"
       }
     }
   ]
