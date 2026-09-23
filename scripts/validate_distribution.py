@@ -43,7 +43,7 @@ from pathlib import Path
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Local iteration requires a "+codex.<cachebuster>" build suffix, so the version
 # must not be pinned to a bare literal.
-VERSION_PATTERN = re.compile(r"^0\.14\.1(?:\+[0-9A-Za-z.-]+)?$")
+VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
     "README.zh-CN.md",
@@ -381,8 +381,21 @@ def _validate_marketplace(root, marketplace, plugin_id, errors):
     if len(matching) != 1:
         errors.append("marketplace must contain exactly one matching plugin")
         return
-    if matching[0].get("source") != EXPECTED_SOURCE:
+    source = matching[0].get("source") or {}
+    base_version = str(matching[0].get("version") or "").split("+", 1)[0]
+    if source.get("source") != "url" or source.get("url") != REPO_URL + ".git":
         errors.append("marketplace source does not match repository")
+    if source.get("ref") != "v" + base_version:
+        errors.append("marketplace source ref must pin v<release version>")
+    manifest_version = ""
+    manifest_path = root / ".codex-plugin" / "plugin.json"
+    if manifest_path.is_file():
+        try:
+            manifest_version = json.loads(manifest_path.read_text(encoding="utf-8")).get("version") or ""
+        except ValueError:
+            pass
+    if manifest_version and base_version != manifest_version.split("+", 1)[0]:
+        errors.append("marketplace version must match manifest release version")
     if matching[0].get("policy") != EXPECTED_POLICY:
         errors.append("marketplace policy mismatch")
 
