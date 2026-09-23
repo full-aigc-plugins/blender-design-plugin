@@ -60,7 +60,7 @@ class JsonLineServer:
                     return
                 try:
                     envelope = json.loads(raw.decode("utf-8"))
-                except Exception:
+                except Exception:  # noqa: BLE001
                     self._write({"error": {"code": "INVALID_JSON", "message": "request is not valid JSON"}})
                     return
                 if envelope.get("token") != owner._token:
@@ -68,7 +68,7 @@ class JsonLineServer:
                     return
                 try:
                     response = owner._handle(envelope.get("payload"))
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     response = {"error": {"code": getattr(exc, "code", "SERVER_ERROR"), "message": str(exc)}}
                 self._write(response)
 
@@ -138,10 +138,10 @@ class JsonLineServer:
                     else:
                         response = self._handle(envelope.get("payload"))
                 connection.send_bytes(json.dumps(response, separators=(",", ":")).encode("utf-8"))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 try:
                     connection.send_bytes(json.dumps({"error": {"code": getattr(exc, "code", "SERVER_ERROR"), "message": str(exc)}}).encode("utf-8"))
-                except Exception:
+                except Exception:  # noqa: S110, BLE001
                     pass
             finally:
                 connection.close()

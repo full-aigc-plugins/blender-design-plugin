@@ -83,7 +83,7 @@ class SculptCommands:
         if not found:raise HarnessError('FRONTEND_UNAVAILABLE','sculpt brush requires a foreground VIEW_3D area')
         window,area,region=found
         try:
-            with self.context.active_object(obj,mode='SCULPT'):
+            with self.context.active_object(obj,mode='SCULPT'):  # noqa: SIM117
                 with self.bpy.context.temp_override(window=window,area=area,region=region):
                     result=self.bpy.ops.sculpt.brush_stroke(stroke=stroke,mode='NORMAL',override_location=True)
             if result!={'FINISHED'}:raise RuntimeError('stroke did not finish')

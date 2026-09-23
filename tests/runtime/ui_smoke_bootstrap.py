@@ -44,7 +44,7 @@ def verify():
                 'ephemeral_panel_registered':True,'present_idempotent':True,'state':handle.session.status()}
         (output/'ui-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
         print('FOREGROUND_UI_VERIFIED',flush=True)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         (output/'ui-report.json').write_text(json.dumps({'passed':False,'error':str(exc)},indent=2))
         print('FOREGROUND_UI_FAILED '+str(exc),flush=True)
 

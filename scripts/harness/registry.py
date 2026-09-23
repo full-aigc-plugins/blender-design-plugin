@@ -133,7 +133,7 @@ class CommandRegistry:
                 if probe['status'] != 'available' and not probe.get('reason'):
                     raise ValueError('missing probe reason')
                 result['availability'] = deepcopy(probe)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Diagnostic failure must not hide the rest of the catalog or leak paths/tokens.
                 result['availability'] = {'status': 'unknown', 'reason': 'Capability prerequisite probe failed'}
         # Production verdict is only added when both profile and runtime are provided.

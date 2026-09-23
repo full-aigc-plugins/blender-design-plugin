@@ -104,7 +104,7 @@ class TestOutOfRangeVersions(unittest.TestCase):
 class TestAdapterMethodPresence(unittest.TestCase):
     """Every adapter must expose all ten required methods."""
 
-    REQUIRED_METHODS = [
+    REQUIRED_METHODS = [  # noqa: RUF012
         'create_compositor_tree',
         'configure_file_output',
         'create_sequence_strip',

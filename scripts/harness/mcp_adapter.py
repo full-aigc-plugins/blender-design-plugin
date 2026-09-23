@@ -383,7 +383,7 @@ def serve_stdio(input_stream=None, output_stream=None, adapter: McpAdapter | Non
         try:
             request = json.loads(raw)
             if not isinstance(request, dict):
-                raise ValueError("request must be an object")
+                raise TypeError("request must be an object")
             request_id = request.get("id")
             method = request.get("method")
             if method == "notifications/initialized":
@@ -430,7 +430,7 @@ def serve_stdio(input_stream=None, output_stream=None, adapter: McpAdapter | Non
         except (json.JSONDecodeError, ValueError):
             output_stream.write(json.dumps(_jsonrpc_error(None, -32700, "parse error"), separators=(",", ":")) + "\n")
             output_stream.flush()
-        except Exception:
+        except Exception:  # noqa: BLE001
             output_stream.write(json.dumps(_jsonrpc_error(None, -32603, "internal error"), separators=(",", ":")) + "\n")
             output_stream.flush()
     return 0

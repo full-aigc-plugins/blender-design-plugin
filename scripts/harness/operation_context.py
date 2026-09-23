@@ -50,6 +50,6 @@ class OperationContext:
                                     {'PAINT_WEIGHT':'WEIGHT_PAINT','PAINT_VERTEX':'VERTEX_PAINT',
                                      'PAINT_TEXTURE':'TEXTURE_PAINT'}.get(previous_mode,previous_mode))
                     self.bpy.ops.object.mode_set(mode=restore_mode)
-            except Exception:
+            except Exception:  # noqa: S110, BLE001
                 # Never replace the original operation error with best-effort UI restoration.
                 pass

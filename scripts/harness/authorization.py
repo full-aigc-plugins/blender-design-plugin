@@ -36,7 +36,7 @@ class AuthorizationManager:
             signature = self._decode(signature_token)
             expected = hmac.new(self._secret, body, hashlib.sha256).digest()
             payload = json.loads(body)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
         return (
             hmac.compare_digest(signature, expected)

@@ -40,7 +40,7 @@ class HarnessRuntime:
         self.transport.close()
         try:
             self.bpy_module.app.timers.unregister(self.executor.blender_timer_callback)
-        except Exception:
+        except Exception:  # noqa: S110, BLE001
             pass
         try:
             self.descriptor_path.unlink()

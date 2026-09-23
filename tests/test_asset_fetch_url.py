@@ -16,7 +16,7 @@ from scripts.harness.path_policy import PathPolicy
 
 class FakeBpy:
     class data:
-        objects = []
+        objects = []  # noqa: RUF012
     class ops:
         class file:
             pack_all = staticmethod(lambda: {"FINISHED"})

@@ -76,7 +76,7 @@ class TransactionManager:
             restore_result = self._restore(deepcopy(transaction["snapshot"]))
             restored = restore_result if isinstance(restore_result, bool) else self._capture() == transaction["snapshot"]
             transaction["restoration"] = "confirmed" if restored else "failed"
-        except Exception:
+        except Exception:  # noqa: BLE001
             transaction["restoration"] = "failed"
         transaction["state"] = "rolled_back"
         transaction.pop("snapshot", None)

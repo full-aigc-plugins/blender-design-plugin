@@ -377,7 +377,7 @@ class FakeCollection:
             self._parent.objects_list.append(obj)
 
     @property
-    def objects(self):
+    def objects(self):  # noqa: F811
         return self._Objects(self)
 
 

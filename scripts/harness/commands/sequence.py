@@ -6,7 +6,7 @@ from .validation import finite_number, require_name
 
 
 class SequenceCommands:
-    TRANSITIONS = {"CROSS", "GAMMA_CROSS", "WIPE", "SOUND_CROSSFADE"}
+    TRANSITIONS = {"CROSS", "GAMMA_CROSS", "WIPE", "SOUND_CROSSFADE"}  # noqa: RUF012
 
     def __init__(self, bpy_module, asset_policy=None):
         self.bpy = bpy_module

@@ -17,7 +17,7 @@ from .frame_pipeline import (
 
 
 class JobManager:
-    SUPPORTED_KINDS = {
+    SUPPORTED_KINDS = {  # noqa: RUF012
         "EXPORT", "RENDER_STILL", "BAKE_POINT_CACHES",
         "RENDER_ANIMATION_FRAMES", "COMPOSE_VIDEO",
     }

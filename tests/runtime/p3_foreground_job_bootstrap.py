@@ -27,7 +27,7 @@ def run():
         cancelled=registry.dispatch('job.cancel',{'jobId':job['jobId']})['result']
         report|={'checks':['foreground_view','foreground_playback','foreground_mutation','child_cancel'],
                  'cancelState':cancelled['state'],'passed':cancelled['state']=='cancelled'}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         report|={'passed':False,'error':{'type':type(exc).__name__,'message':str(exc)}};traceback.print_exc()
     with (output/'foreground-job-report.json').open('x',encoding='utf-8') as stream:json.dump(report,stream,ensure_ascii=False,indent=2)
     bpy.ops.wm.quit_blender()

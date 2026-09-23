@@ -32,12 +32,12 @@ class TestManagedMode(unittest.TestCase):
 
     def test_cli_help_runs_as_a_script(self):
         script = Path(__file__).resolve().parents[1] / "scripts" / "harness_cli.py"
-        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True, check=False,)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_launcher_cli_help_runs_as_a_script(self):
         script = Path(__file__).resolve().parents[1] / "scripts" / "launch_harness.py"
-        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True, check=False,)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_argv_is_foreground_and_disables_autoexec(self):

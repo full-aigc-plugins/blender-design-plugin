@@ -17,7 +17,7 @@ class RenderCommands:
                 for group in addon.preferences.get_devices():
                     for device in group:
                         devices.append({'name':device.name,'type':device.type,'available':bool(device.use)})
-        except Exception:pass
+        except Exception:pass  # noqa: BLE001, S110
         return devices
     def configure(self,args):
         scene=self.bpy.context.scene;requested=str(args.get('engine','EEVEE')).upper()

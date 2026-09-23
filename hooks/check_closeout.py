@@ -32,7 +32,7 @@ def main() -> int:
         )
     try:
         sys.stdin.read()
-    except Exception:
+    except Exception:  # noqa: S110, BLE001
         pass
     return 0
 

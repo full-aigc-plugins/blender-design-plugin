@@ -36,7 +36,7 @@ CDN_GLB = b"glTF-model-bytes"
 
 class FakeBpy:
     class data:
-        objects = []
+        objects = []  # noqa: RUF012
     class ops:
         class file:
             pack_all = staticmethod(lambda: {"FINISHED"})
@@ -73,7 +73,7 @@ class PolypizzaSearchTests(PolypizzaTestBase):
     def run_search(self, arguments):
         with self.env, mock.patch(
             "urllib.request.urlopen",
-            fake_urlopen := (lambda request, timeout=30: FakeResponse(
+            (lambda request, timeout=30: FakeResponse(
                 200, json.dumps(SEARCH_RESPONSE).encode("utf-8"),
                 {"Content-Type": "application/json"},
             )),

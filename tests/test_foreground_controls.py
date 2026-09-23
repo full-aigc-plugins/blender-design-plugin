@@ -41,7 +41,7 @@ class QueueCancellationTests(unittest.TestCase):
         executor=MainThreadExecutor(); calls=[]; errors=[]
         def submit():
             try: executor.submit(lambda:calls.append('executed'),timeout=2)
-            except Exception as exc: errors.append(exc)
+            except Exception as exc: errors.append(exc)  # noqa: BLE001
         threads=[threading.Thread(target=submit) for _ in range(2)]
         for thread in threads: thread.start()
         deadline=time.monotonic()+1

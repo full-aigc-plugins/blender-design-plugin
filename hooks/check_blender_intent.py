@@ -19,7 +19,7 @@ INTENT_RE = re.compile(
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001
         payload = {}
 
     prompt = ""

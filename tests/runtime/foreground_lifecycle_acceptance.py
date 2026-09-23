@@ -102,7 +102,7 @@ def run_acceptance(descriptor_path: Path, report_path: Path,
                     return None
             revision = new_rev
             return result
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             errors.append({'command': command, 'error': str(exc)})
             return None
 

@@ -66,7 +66,7 @@ def main() -> int:
     # Consume stdin if present so the writer never sees EPIPE; payload unused.
     try:
         sys.stdin.read()
-    except Exception:
+    except Exception:  # noqa: S110, BLE001
         pass
 
     print("Blender 插件环境：" + "；".join(lines))
@@ -76,6 +76,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: S110, BLE001
         pass
     sys.exit(main())

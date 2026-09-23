@@ -37,7 +37,7 @@ class BackgroundJobRecoveryTests(unittest.TestCase):
             self.assertEqual(manager.recover({'jobId':'job_lost'})['result']['state'],'interrupted')
 
     def test_invalid_job_id_cannot_escape_root(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory:  # noqa: SIM117
                 with self.assertRaises(HarnessError):JobManager(FakeBpy(),Path(directory)).status({'jobId':'../outside'})
 
     def test_render_job_limits_are_checked_before_snapshot(self):

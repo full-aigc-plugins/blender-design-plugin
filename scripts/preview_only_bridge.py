@@ -145,7 +145,7 @@ def main(request_path: str) -> int:
         request = json.loads(Path(request_path).read_text(encoding="utf-8"))
         print(json.dumps(render_preview_only(bpy, request), sort_keys=True))
         return 0
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(json.dumps({"category": "RENDER_FAILED", "message": str(exc)}), file=sys.stderr)
         return 1
 

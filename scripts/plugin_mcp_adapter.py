@@ -373,7 +373,7 @@ def build_plugin_adapter(base_adapter_cls, *, plugin_root: Path | None = None, *
                             result["connectionStatus"] = self._active_bridge().status()
                         except Exception:  # noqa: BLE001, S110 - status is best-effort
                             pass
-                    except Exception:  # noqa: BLE001, S110 - keep partial result with manual hint
+                    except Exception:  # noqa: BLE001, S110 - keep partial result with manual hint  # noqa: S110
                         pass
                 return self._result(result)
             if name == COMMUNITY_STATUS_TOOL["name"]:

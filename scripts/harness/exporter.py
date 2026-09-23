@@ -64,7 +64,7 @@ class Exporter:
         for key,value in receipt_parameters.items():
             if key in {'frameStart','frameEnd'} and type(value) is not int:
                 raise HarnessError('INVALID_ARGUMENT',f'{key} must be an integer')
-            if key.startswith('use_') or key in {'export_apply','export_animations','bake_anim','export_selected_objects','apply_modifiers','export_uv'}:
+            if key.startswith('use_') or key in {'export_apply','export_animations','bake_anim','export_selected_objects','apply_modifiers','export_uv'}:  # noqa: SIM102
                 if type(value) is not bool:raise HarnessError('INVALID_ARGUMENT',f'{key} must be boolean')
         self._run_export(format_name, resolved, receipt_parameters)
         checks = ["exists", "non_empty", "sha256"]

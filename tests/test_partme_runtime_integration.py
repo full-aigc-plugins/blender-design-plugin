@@ -19,7 +19,7 @@ class PartMeRuntimeIntegrationTests(unittest.TestCase):
         foreign = ModuleType('partme_blender_mcp')
         foreign.__version__ = json.loads(LOCK.read_text())['version']
         foreign.__file__ = '/tmp/unrelated/partme_blender_mcp/__init__.py'
-        with mock.patch.dict(sys.modules, {'partme_blender_mcp': foreign}):
+        with mock.patch.dict(sys.modules, {'partme_blender_mcp': foreign}):  # noqa: SIM117
             with self.assertRaisesRegex(RuntimeIntegrationError, 'outside the pinned'):
                 activate_runtime(ROOT)
 
@@ -28,7 +28,7 @@ class PartMeRuntimeIntegrationTests(unittest.TestCase):
         activate_runtime(ROOT)
         foreign = ModuleType('partme_blender_mcp.harness.foreign')
         foreign.__file__ = '/tmp/unrelated/foreign.py'
-        with mock.patch.dict(sys.modules, {'partme_blender_mcp.harness.foreign': foreign}):
+        with mock.patch.dict(sys.modules, {'partme_blender_mcp.harness.foreign': foreign}):  # noqa: SIM117
             with self.assertRaisesRegex(RuntimeIntegrationError, 'outside the pinned'):
                 activate_runtime(ROOT)
 

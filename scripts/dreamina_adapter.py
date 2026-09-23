@@ -148,7 +148,7 @@ def main(argv=None) -> int:
             )
         receipt_path.write_text(json.dumps(receipt))
         return 0
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         receipt_path.parent.mkdir(parents=True, exist_ok=True)
         receipt_path.write_text(json.dumps({"status": "failed", "error": str(exc)}))
         print(str(exc), file=sys.stderr)

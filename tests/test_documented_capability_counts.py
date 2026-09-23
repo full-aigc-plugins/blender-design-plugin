@@ -176,8 +176,7 @@ class BaselineProvenanceTests(unittest.TestCase):
                 continue
             result = subprocess.run(
                 ["git", "-C", str(ROOT), "cat-file", "-e", f"{sha}^{{commit}}"],
-                capture_output=True,
-            )
+                capture_output=True, check=False,)
             self.assertEqual(
                 result.returncode, 0,
                 f"{'.'.join(path)} {sha} does not resolve to a commit in this repository",

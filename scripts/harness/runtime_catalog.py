@@ -54,8 +54,7 @@ FIELDS = {
     'cyclic': {'type': 'boolean'},
     'handleType': {'type': 'string', 'enum': ['AUTO','VECTOR','ALIGNED','FREE']},
     'bevelResolution': {'type': 'integer', 'minimum': 0},
-    'resolution': {'type': 'integer', 'minimum': 1},
-    'dataType': {'type': 'string', 'enum': ['OBJECT','COLLECTION']},
+        'dataType': {'type': 'string', 'enum': ['OBJECT','COLLECTION']},
     'names': {'type': 'array', 'minItems': 1, 'items': {'type':'string'}},
     'link': {'type': 'boolean'},
     'childObjectId': {'type':'string','pattern':'^obj_[0-9a-f]{32}$'},
@@ -71,7 +70,7 @@ FIELDS = {
     'bones': {'type':'array','minItems':1,'items':{'type':'object'}},
     'mesh': {'type':'object'}, 'armature': {'type':'object'}, 'owner': {'type':'object'},
     'bone': {'type':'string'}, 'armatureId': {'type':'string'},
-    'targetObjectId': {'type':'string'}, 'poleObjectId': {'type':['string','null']},
+    'poleObjectId': {'type':['string','null']},
     'chainLength': {'type':'integer','minimum':1}, 'poleAngle': {'type':'number'},
     'influence': {'type':'number','minimum':0,'maximum':1}, 'subtarget': {'type':'string'},
     'minRotation': VECTOR, 'maxRotation': VECTOR, 'value': VECTOR,
@@ -106,7 +105,7 @@ FIELDS = {
     'transparent': {'type':'boolean'}, 'look': {'type':'string'}, 'exposure': {'type':'number'},
     'passes': {'type':'array','items':{'type':'string'}}, 'viewLayer': {'type':'string'}, 'glare': {'type':'boolean'},
     'layers': {'type':'array','items':{'type':'string'}}, 'inFront': {'type':'boolean'},
-    'layer': {'type':'string'}, 'points': {'type':'array','minItems':2}, 'materialIndex': {'type':'integer','minimum':0},
+    'layer': {'type':'string'}, 'materialIndex': {'type':'integer','minimum':0},
     'type': {'type':'string'}, 'channel': {'type':'integer','minimum':1}, 'duration': {'type':'integer','minimum':1},
     'paths': {'type':'array','minItems':1,'items':{'type':'string'}}, 'scene': {'type':'string'},
     'fontSize': {'type':'number','exclusiveMinimum':0},
@@ -524,7 +523,7 @@ class RuntimeCommandRegistry(CommandRegistry):
             windows = getattr(manager, 'windows', ())
             if not any(area.type == 'VIEW_3D' for window in windows for area in window.screen.areas):
                 return {'status': 'unavailable', 'reason': 'No VIEW_3D window available'}
-        if name in {'tracking.solve_camera','tracking.setup_scene'}:
+        if name in {'tracking.solve_camera','tracking.setup_scene'}:  # noqa: SIM102
             if getattr(getattr(self.bpy,'app',None),'background',False):return {'status':'unavailable','reason':'Foreground CLIP_EDITOR required'}
         if name=='rig.rigify_generate' and self.bpy.context.preferences.addons.get('rigify') is None:
             return {'status':'unavailable','reason':'Rigify is not enabled; run authorized rig.rigify_install'}

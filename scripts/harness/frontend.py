@@ -33,7 +33,7 @@ class Frontend:
                 runtime.session.pause()
                 try:
                     view.set_playback({"playing": False})
-                except Exception:
+                except Exception:  # noqa: S110, BLE001
                     pass
                 return {"FINISHED"}
 
@@ -63,7 +63,7 @@ class Frontend:
             def execute(self, context):
                 try:
                     view.set_view({"view": self.view})
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     self.report({"WARNING"}, str(exc))
                     return {"CANCELLED"}
                 return {"FINISHED"}

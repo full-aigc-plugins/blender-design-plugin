@@ -9,7 +9,7 @@ from scripts.dreamina_adapter import build_preview_receipt, export_preview
 class TestPreviewHandoffReceipt(unittest.TestCase):
     def test_adapter_help_runs_as_script(self):
         script = Path(__file__).resolve().parents[1] / "scripts" / "dreamina_adapter.py"
-        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True, check=False,)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("usage:", result.stdout)
 

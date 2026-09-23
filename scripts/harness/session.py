@@ -171,7 +171,7 @@ class HarnessSession:
             self._sync_rolled_back_revision(payload)
             response = self._error_response(request_id, exc)
             self._last_error = {"code": exc.code, "message": str(exc)}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self._sync_rolled_back_revision(payload)
             response = self._error_response(request_id, HarnessError("COMMAND_FAILED", str(exc)))
             self._last_error = {"code": "COMMAND_FAILED", "message": str(exc)}
@@ -199,7 +199,7 @@ class HarnessSession:
             transaction_status = self.transactions.status(payload.get("transactionId"))
             if transaction_status["state"] == "rolled_back":
                 self.scene_revision = transaction_status["beginRevision"]
-        except Exception:
+        except Exception:  # noqa: S110, BLE001
             pass
 
     def _handle_transaction(self, request: CommandRequest) -> dict:

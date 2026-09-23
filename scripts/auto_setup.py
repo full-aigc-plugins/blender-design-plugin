@@ -56,8 +56,7 @@ def _candidate_blender_paths() -> list[Path]:
         program_dirs = [os.environ.get("ProgramFiles", r"C:\Program Files")]
         program_dirs.append(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
         for base in program_dirs:
-            for entry in Path(base).glob("Blender Foundation/Blender */blender.exe"):
-                candidates.append(entry)
+            candidates.extend(Path(base).glob("Blender Foundation/Blender */blender.exe"))
     else:
         candidates.extend(Path(p) for p in ("/snap/bin/blender", "/usr/local/bin/blender"))
     return candidates
@@ -84,7 +83,7 @@ def blender_running() -> bool:
             ["pgrep", "-f", pattern], capture_output=True, text=True, timeout=15, check=False,
         )
         return bool((out.stdout or "").strip())
-    except Exception:
+    except Exception:  # noqa: BLE001
         return True
 
 
@@ -124,7 +123,7 @@ def scripts_root_via_cli(blender_bin: Path) -> Path | None:
             [str(blender_bin), "--background", "--factory-startup", "--python-expr", expression],
             capture_output=True, text=True, timeout=CLI_QUERY_TIMEOUT, check=False,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     for line in (out.stdout or "").splitlines():
         if line.startswith("PARTME_SCRIPTS="):
@@ -179,7 +178,7 @@ def _release_payload() -> dict | None:
         )
         with _urlrequest.urlopen(req, timeout=DOWNLOAD_TIMEOUT) as response:
             return json.loads(response.read().decode("utf-8"))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -203,13 +202,13 @@ def resolve_addon_zip(plugin_root: Path) -> tuple[Path, str]:
                         )
                         with _urlrequest.urlopen(req, timeout=DOWNLOAD_TIMEOUT) as response:
                             data = response.read()
-                        probe = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+                        probe = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)  # noqa: SIM115
                         probe.write(data)
                         probe.close()
                         with zipfile.ZipFile(probe.name) as archive:
                             archive.namelist()
                         return Path(probe.name), f"github-release {tag}"
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         break
     return bundled, f"bundled v{bundled_version}"
 

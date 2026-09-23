@@ -35,7 +35,7 @@ def _probe_compositor(bpy_module):
         result['CompositorNodeTree_creatable'] = True
         result['interface_new_socket_available'] = hasattr(tree.interface, 'new_socket')
         bpy_module.data.node_groups.remove(tree)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         result['CompositorNodeTree_creatable'] = False
         result['CompositorNodeTree_error'] = str(exc)
     return result
@@ -55,7 +55,7 @@ def _probe_file_output(bpy_module):
             'has_layer_slots': hasattr(node, 'layer_slots'),
         }
         bpy_module.data.node_groups.remove(tree)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         result = {'error': str(exc)}
     return result
 
@@ -83,7 +83,7 @@ def _probe_geometry_nodes(bpy_module):
         bpy_module.data.node_groups.remove(group)
         bpy_module.data.objects.remove(obj, do_unlink=True)
         bpy_module.data.meshes.remove(mesh)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         result['probe_error'] = str(exc)
     return result
 
@@ -104,7 +104,7 @@ def _probe_grease_pencil(bpy_module):
             result['gp_has_layers'] = hasattr(obj.data, 'layers')
             result['gp_has_drawing'] = hasattr(obj.data, 'drawing') if hasattr(obj.data, 'drawing') else False
             bpy_module.data.objects.remove(obj, do_unlink=True)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         result['gp_create_error'] = str(exc)
     return result
 

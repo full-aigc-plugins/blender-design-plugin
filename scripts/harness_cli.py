@@ -32,7 +32,7 @@ def main(argv=None) -> int:
         descriptor = load_descriptor(Path(args.descriptor))
         request = json.loads(Path(args.request).read_text())
         response = send_request(_endpoint(descriptor), descriptor["token"], request)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "failed", "error": {"code": "CLIENT_ERROR", "message": str(exc)}}), file=sys.stderr)
         return 1
     print(json.dumps(response))

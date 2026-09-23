@@ -137,7 +137,7 @@ class AssetCommands:
         downloaded=0
         partial=target.with_name(target.name+'.part')
         try:
-            with urllib.request.urlopen(download_url,timeout=180) as response:
+            with urllib.request.urlopen(download_url,timeout=180) as response:  # noqa: SIM117
                 with open(partial,'wb') as sink:
                     while True:
                         chunk=response.read(1024*256)

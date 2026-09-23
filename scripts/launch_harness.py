@@ -72,7 +72,7 @@ def main(argv=None) -> int:
         public["processId"] = process.pid
         print(json.dumps(public))
         return 0
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(json.dumps({"status": "failed", "error": str(exc)}), file=sys.stderr)
         return 1
 

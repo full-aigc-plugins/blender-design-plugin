@@ -48,7 +48,7 @@ class MainThreadExecutor:
             if not item.cancelled:
                 try:
                     item.result = item.callback()
-                except BaseException as exc:
+                except BaseException as exc:  # noqa: BLE001
                     item.error = exc
             item.completed.set()
             processed += 1

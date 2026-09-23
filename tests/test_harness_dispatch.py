@@ -65,7 +65,7 @@ class TestMainThreadExecutor(unittest.TestCase):
         def worker():
             try:
                 executor.submit(lambda: (_ for _ in ()).throw(ValueError("boom")), timeout=2)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 errors.append(exc)
 
         thread = threading.Thread(target=worker)

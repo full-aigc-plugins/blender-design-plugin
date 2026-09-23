@@ -69,8 +69,7 @@ def make_consumer(base: Path, upstream: Path, skills: list[str]) -> Path:
 def vendor(command, consumer: Path, *extra):
     return subprocess.run(
         [sys.executable, str(SCRIPT), command, "--lock", "skills.lock.json", *extra],
-        cwd=consumer, capture_output=True, text=True,
-    )
+        cwd=consumer, capture_output=True, text=True, check=False,)
 
 
 class SkillVendorTest(unittest.TestCase):

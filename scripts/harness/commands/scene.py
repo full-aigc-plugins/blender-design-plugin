@@ -39,7 +39,7 @@ class SceneCommands:
                 continue
             try:
                 resolved = Path(self.bpy.path.abspath(filepath)).resolve()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 resolved = Path(filepath)
             if not resolved.is_file():
                 missing_assets.append(str(resolved))
@@ -206,7 +206,7 @@ class SceneCommands:
                 target_attr = image_settings if key == "file_format" else render
                 try:
                     setattr(target_attr, key, value)
-                except Exception:
+                except Exception:  # noqa: S110, BLE001
                     pass
 
         if not resolved.is_file() or resolved.stat().st_size <= 0:

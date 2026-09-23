@@ -49,7 +49,7 @@ def run():
     path=output/'tracking_solution.blend';bpy.ops.wm.save_as_mainfile(filepath=str(path))
     report|={'clip':clip,'solve':solved,'setup':setup,'tracks':len(inspected['tracks']),'bundles':sum(t['hasBundle'] for t in inspected['tracks']),
              'artifact':str(path),'passed':True,'productionAcceptance':True}
-  except Exception as exc:
+  except Exception as exc:  # noqa: BLE001
     report|={'passed':False,'productionAcceptance':False,'error':{'type':type(exc).__name__,'message':str(exc)}};traceback.print_exc()
   with (output/'acceptance.json').open('x',encoding='utf-8') as stream:json.dump(report,stream,ensure_ascii=False,indent=2)
   bpy.ops.wm.quit_blender()

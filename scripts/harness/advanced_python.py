@@ -41,7 +41,7 @@ class AdvancedPythonExecutor:
             "zip": zip,
         }
         code = compile(tree, "<codex-blender-authorized>", "exec")
-        exec(code, {"__builtins__": safe_builtins, "bpy": self.bpy}, {})
+        exec(code, {"__builtins__": safe_builtins, "bpy": self.bpy}, {})  # noqa: S102
         return {
             "changedObjects": [],
             "result": {"scriptSha256": hashlib.sha256(encoded).hexdigest()},

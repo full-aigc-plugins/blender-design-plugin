@@ -87,7 +87,7 @@ def run_acceptance(evidence_dir: Path) -> dict:
             """Run fn(); capture the result or record the error."""
             try:
                 return fn()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 errors.append({'command': name, 'error': str(exc)})
                 return None
 
