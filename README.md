@@ -110,6 +110,16 @@ The two modes are never merged into a single count, and no combined coverage per
 | Experimental | Behaviour may change; pin the version and verify before relying on it |
 | Blocked / NOT_RUN | Not verified on this host; never present it as working |
 
+### Bundled orchestration skills
+
+| Skill | What it wraps | Tier-aware? |
+| --- | --- | --- |
+| `blender-design` | Milestone-based scene build from an idea | No — single-mode orchestrator |
+| `blender-design-loop` | Closed dream → build → screenshot → critique → iterate loop against a target image; uses `scene.screenshot` + `blender-harness` JSON commands | Yes — Plus (low-quota, 3-round cap) vs Pro (judge subagent per round) |
+
+Both skills are plugin-local (live under `./skills/`). They share
+the `blender-harness` execution surface; neither duplicates it.
+
 ## Architecture and core flow
 
 ```mermaid
