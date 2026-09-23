@@ -882,7 +882,7 @@ git commit -m "release: publish codex-blender 1.0.0"
 # 1.0 Golden Projects
 
 | 工程 | 必须覆盖 |
-|---|---|
+| --- | --- |
 | 桌面音箱 | 硬表面、Boolean、UV overlap、texel density、PBR、GLB |
 | 持矛角色 | Rig、权重、IK/FK、Drivers、Root Motion、道具交接 |
 | 四足角色 | 非同构骨架、重定向、极限姿势 |

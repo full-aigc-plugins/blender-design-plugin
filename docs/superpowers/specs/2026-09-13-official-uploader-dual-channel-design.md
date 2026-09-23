@@ -43,7 +43,7 @@ states and must never be reported as equivalent.
 ## Repository Ownership
 
 | Repository | Responsibility |
-|---|---|
+| --- | --- |
 | `codex-blender-plugin` | Blender discovery, official add-on discovery, interactive operator invocation, preview-only rendering, local artifact receipt |
 | `codex-dreamina-3d-plugin` | channel routing, end-to-end job state, receipt validation, safe handoff between Blender and Design |
 | `codex-dreamina-design-plugin` | trusted Dreamina CLI/MCP capability discovery, native approval, submit-at-most-once, query, download and final artifact validation |
@@ -117,7 +117,7 @@ rather than inventing a second paid executable protocol.
 The router uses explicit intent and never silently switches channels:
 
 | User intent | Channel |
-|---|---|
+| --- | --- |
 | Upload/open in Jimeng, use official plugin, generate a Jimeng link | Official interactive |
 | Automatically generate, run Seedance, finish in background | Automated Seedance |
 | Render/export a local preview only | Preview-only Blender adapter |

@@ -50,7 +50,7 @@ class ExtendedSequenceTests(unittest.TestCase):
 
     def test_transition_speed_and_volume_animation_use_closed_parameters(self):
         bpy=_Bpy();commands=SequenceCommands(bpy)
-        first=bpy.editor.strips._put(_Strip('A','IMAGE',1,1,20));second=bpy.editor.strips._put(_Strip('B','IMAGE',2,11,20))
+        bpy.editor.strips._put(_Strip('A','IMAGE',1,1,20));bpy.editor.strips._put(_Strip('B','IMAGE',2,11,20))
         transition=commands.transition({'name':'Wipe','first':'A','second':'B','channel':3,'transitionType':'WIPE'})['result']
         speed=commands.set_speed({'name':'Fast','source':'A','channel':4,'factor':1.5})['result']
         volume_strip=bpy.editor.strips._put(_Strip('Voice','SOUND',5,1,20))

@@ -20,6 +20,7 @@ python3 scripts/validate_distribution.py
 ```
 
 Result: **PASS** — all checks green:
+
 - `.codex-plugin/plugin.json` exists with all required fields
 - `schemas/scene_receipt.schema.json` exists
 - `schemas/artifact_receipt.schema.json` exists
@@ -61,7 +62,7 @@ Blender is not installed on this host (`command -v blender` returns empty). The 
 ## Files
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `.codex-plugin/plugin.json` | Plugin manifest |
 | `.agents/plugins/marketplace.json` | Repository marketplace entry |
 | `schemas/*.schema.json` | Receipt schemas |
@@ -85,7 +86,7 @@ The manifests were audited against Codex's own manifest handling
 Rules that are enforced as hard errors, and now satisfied:
 
 | Rule | Source |
-|---|---|
+| --- | --- |
 | Manifest discovered at `.codex-plugin/plugin.json` | `DISCOVERABLE_PLUGIN_MANIFEST_PATHS` |
 | `name` allows only ASCII letters, digits, `.`, `_`, `-`; no leading/trailing/double dot | `validate_plugin_segment` |
 | `skills` starts with `./`, is never `./`, contains no `..`, stays inside the plugin root | `resolve_manifest_path` |

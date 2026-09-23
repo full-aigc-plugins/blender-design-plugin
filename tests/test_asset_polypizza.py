@@ -89,9 +89,8 @@ class PolypizzaSearchTests(PolypizzaTestBase):
             return self.cmds.polypizza_search(arguments)
 
     def test_search_requires_api_key(self):
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with self.assertRaises(HarnessError) as caught:
-                self.cmds.polypizza_search({"query": "chair"})
+        with mock.patch.dict(os.environ, {}, clear=True), self.assertRaises(HarnessError) as caught:
+            self.cmds.polypizza_search({"query": "chair"})
         self.assertIn("POLYPIZZA_API_KEY", str(caught.exception))
 
     def test_search_maps_fields_and_licence(self):
@@ -136,9 +135,8 @@ class PolypizzaDownloadTests(PolypizzaTestBase):
         self.assertIn("CC-BY", sidecar.read_text(encoding="utf-8"))
 
     def test_download_rejects_oversize(self):
-        with mock.patch.object(AssetCommands, "POLYPIZZA_MAX_BYTES", 10):
-            with self.assertRaises(HarnessError):
-                self.run_download({"modelId": "abc123"})
+        with mock.patch.object(AssetCommands, "POLYPIZZA_MAX_BYTES", 10), self.assertRaises(HarnessError):
+            self.run_download({"modelId": "abc123"})
 
 
 if __name__ == "__main__":

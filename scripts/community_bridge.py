@@ -66,7 +66,7 @@ BLOCKED_COMMUNITY_COMMANDS = {
 }
 
 COMMUNITY_COMMAND_RISKS = {
-    **{command: "read" for command in COMMUNITY_COMMANDS},
+    **dict.fromkeys(COMMUNITY_COMMANDS, "read"),
     "export_scene": "external_export",
     "create_rodin_job": "paid_generation",
     "create_hunyuan_job": "paid_generation",

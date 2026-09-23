@@ -81,15 +81,14 @@ class TestManagedMode(unittest.TestCase):
     def test_launcher_detaches_blender_from_caller_terminal(self, popen):
         process = popen.return_value
         process.poll.return_value = 1
-        with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaises(RuntimeError):
-                launch_managed(
-                    blender=Path("/Applications/Blender.app/Contents/MacOS/Blender"),
-                    project=None,
-                    session_id="s1",
-                    runtime_dir=Path(directory),
-                    timeout=0.1,
-                )
+        with tempfile.TemporaryDirectory() as directory, self.assertRaises(RuntimeError):
+            launch_managed(
+                blender=Path("/Applications/Blender.app/Contents/MacOS/Blender"),
+                project=None,
+                session_id="s1",
+                runtime_dir=Path(directory),
+                timeout=0.1,
+            )
         kwargs = popen.call_args.kwargs
         self.assertTrue(kwargs["start_new_session"])
         self.assertEqual(kwargs["stdout"], subprocess.DEVNULL)

@@ -17,7 +17,7 @@ first-run path and requires no manual steps from the user:
 2. When it returns `connected: true`, tell the user in Chinese that Blender 已自动连接 and
    summarize the installed package source and output directory. Setup is done — no manual steps.
 3. When it returns `ok: false`, relay `manualHint` verbatim to the user. The two common cases:
-   - `stage: discover` — Blender 未安装：给出官网下载链接 https://www.blender.org/download/ ，
+   - `stage: discover` — Blender 未安装：给出官网下载链接 <https://www.blender.org/download/> ，
      装好后让用户再说一次"连接 Blender"即可。
    - `stage: enable` 且检测到 Blender 正在运行：请用户完全退出 Blender 后重试
      `blender_auto_setup`（自动路径），或改走下面的手动步骤。

@@ -125,7 +125,7 @@ class RetopoCommands:
             for vert in target_bm.verts:
                 co = vert.co.copy()
                 # Find nearest point on source
-                nearest_loc, nearest_idx, nearest_dist = kd.find(co)
+                nearest_loc, _nearest_idx, nearest_dist = kd.find(co)
                 if nearest_loc is None:
                     continue
                 if nearest_dist <= max_distance:
@@ -273,9 +273,8 @@ class RetopoCommands:
             poles = []
             for vert in bm.verts:
                 valence = len(vert.link_edges)
-                if valence != 4:
-                    if valence > max_pole_valence:
-                        poles.append({'vertex': vert.index, 'valence': valence})
+                if valence != 4 and valence > max_pole_valence:
+                    poles.append({'vertex': vert.index, 'valence': valence})
         finally:
             bm.free()
 

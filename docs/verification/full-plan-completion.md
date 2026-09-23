@@ -7,7 +7,7 @@ P0–P9 的本地实现、macOS Apple Silicon 与 Windows Server 2025 x64 / Blen
 ## 分阶段证据
 
 | 阶段 | 实现与作品 | 最终证据 |
-|---|---|---|
+| --- | --- | --- |
 | P0 | 可查询目录、前台策略、平台矩阵 | `capability.list/describe`；foreground policy；157 managed / 162 connector 命令 |
 | P1 | 稳定 ID、上下文、BMesh、7 类 modifier、curve、asset、壳体/长矛 | `codex-blender-p1-acceptance-20260913-v4` |
 | P2-A | 五零件桌面音箱、18mm 壁厚、UV/材质、GLB 重导入 | `codex-blender-p2-product-20260913-v4` |

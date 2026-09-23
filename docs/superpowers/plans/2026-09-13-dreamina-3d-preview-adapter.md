@@ -23,11 +23,13 @@
 ### Task 1: Adapter CLI and durable status contract
 
 **Files:**
+
 - Create: `scripts/blender_adapter.py`
 - Create: `bin/blender_adapter`
 - Create: `tests/test_blender_adapter.py`
 
 **Interfaces:**
+
 - Consumes: `--request PATH --receipt PATH --output PATH [--inspect|--status]`.
 - Produces: exit code plus atomic receipt/status JSON.
 
@@ -39,11 +41,13 @@
 ### Task 2: Preview-only Blender bridge and shared receipt
 
 **Files:**
+
 - Create: `scripts/preview_only_bridge.py`
 - Modify: `scripts/blender_adapter.py`
 - Extend: `tests/test_blender_adapter.py`
 
 **Interfaces:**
+
 - Consumes: normalized scene/camera/frame/output request.
 - Produces: shared `ArtifactReceipt` version `1.0.0` after media verification.
 
@@ -56,6 +60,7 @@
 ### Task 3: Cross-plugin discovery and real Blender acceptance
 
 **Files:**
+
 - Modify: `.codex-plugin/plugin.json`
 - Modify: `scripts/validate_distribution.py`
 - Modify: `docs/verification/blender-runtime.md`
@@ -64,6 +69,7 @@
 - Test: `/Users/wandl/workspaces/workspace-partme-ai/codex-dreamina-3d-plugin/tests/test_three_package_validation.py`
 
 **Interfaces:**
+
 - Consumes: `codex-dreamina-3d` companion discovery and DCC handoff.
 - Produces: discoverable executable plus recorded Blender 5.2.1 runtime evidence.
 

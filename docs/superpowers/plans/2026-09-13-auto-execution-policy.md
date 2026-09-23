@@ -22,6 +22,7 @@
 ### Task 1: Define and validate the execution envelope
 
 **Files:**
+
 - Create: `scripts/harness/execution_policy.py`
 - Modify: `scripts/harness/session.py`
 - Test: `tests/test_execution_policy.py`
@@ -72,6 +73,7 @@ Run: `python3 -m unittest tests.test_execution_policy tests.test_harness_session
 ### Task 2: Add autonomous milestone reporting to Skills
 
 **Files:**
+
 - Modify: `skills/codex-blender-use/SKILL.md`
 - Modify: `skills/codex-blender-design/SKILL.md`
 - Modify: `docs/getting-started.zh-CN.md`
@@ -116,4 +118,3 @@ Run: `python3 scripts/validate_distribution.py`
 - [ ] **Step 3: Check patch integrity**
 
 Run: `git diff --check`
-

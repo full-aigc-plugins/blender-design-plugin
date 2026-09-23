@@ -62,13 +62,14 @@ python3 <插件根>/scripts/harness_cli.py \
 4. **`export.file`**：`arguments.snapshotId` 必须**逐字等于** commit 批准的 snapshotId，否则报 `MILESTONE_NOT_APPROVED`。
 
 规则：
+
 - `requestId` 每次唯一；读命令（`*.inspect`、`capability.*`、查询类）不需要事务，也不需要 revision。
 - 响应是 JSON：`status` 为 `succeeded` 时核对 `result` 与 `changedObjects`；`failed` 时读 `error.code` 与 `error.message`。
 
 ## 4. 常用错误码
 
 | 错误码 | 含义 | 下一步 |
-|---|---|---|
+| --- | --- | --- |
 | `INVALID_ARGUMENT` | 参数闭合校验失败 | 对照技能参考里的参数表修正，不要换 undocumented 参数 |
 | `TRANSACTION_NOT_FOUND` | 事务不存在（未 begin 或已 commit/rollback） | 先 `transaction.begin` 再发修改命令 |
 | `STALE_SCENE_REVISION` | expectedSceneRevision 过期（可重试） | 用响应里的当前 revision 重发 |

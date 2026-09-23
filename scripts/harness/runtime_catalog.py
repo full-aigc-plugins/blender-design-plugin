@@ -18,7 +18,7 @@ FIELDS = {
         'modifier', 'type', 'path', 'videoPath', 'outputDir', 'snapshotId', 'sessionId',
         'camera', 'dataPath', 'text', 'script', 'milestone', 'prompt', 'id', 'domain', 'maturity', 'view',
         'baseName', 'groupName', 'strip', 'colorDepth', 'uvLayer')},
-    **{key: VECTOR for key in ('location', 'rotation', 'scale', 'color')},
+    **dict.fromkeys(('location', 'rotation', 'scale', 'color'), VECTOR),
     'baseColor': {'type': 'array', 'minItems': 4, 'maxItems': 4,
                   'items': {'type': 'number', 'minimum': 0, 'maximum': 1}},
     **{key: {'type': 'number'} for key in ('bevelDepth', 'size', 'extrude', 'lens', 'energy', 'metallic', 'roughness', 'alpha')},
@@ -36,7 +36,7 @@ FIELDS = {
     'operation': {'type': 'string', 'enum': ['extrude', 'inset', 'bevel', 'subdivide', 'bridge', 'weld', 'delete', 'triangulate', 'recalculate_normals']},
     'selection': {'type': 'object', 'required': ['objectId', 'topologyVersion'],
                   'description': 'Selection receipt returned by mesh.select'},
-    **{key: VECTOR for key in ('min', 'max', 'direction', 'offset')},
+    **dict.fromkeys(('min', 'max', 'direction', 'offset'), VECTOR),
     **{key: {'type': 'array', 'items': {'type': 'integer', 'minimum': 0}} for key in ('vertices', 'edges', 'faces')},
     **{key: {'type': 'number'} for key in ('tolerance', 'angleDegrees', 'thickness', 'depth', 'width', 'distance')},
     **{key: {'type': 'integer', 'minimum': 1} for key in ('seedVertex', 'segments', 'cuts')},
@@ -579,14 +579,14 @@ def generate_coverage_summary(runtime_mode):
     if runtime_mode not in SUPPORTED_RUNTIME_MODES:
         raise HarnessError(
             'INVALID_ARGUMENT',
-            'runtime_mode must be one of {0}'.format(', '.join(SUPPORTED_RUNTIME_MODES)),
+            'runtime_mode must be one of {}'.format(', '.join(SUPPORTED_RUNTIME_MODES)),
         )
     # Imported lazily: runtime.py imports this module at import time.
     from .runtime import build_registry
 
     registry = build_registry(_registration_only_bpy(), runtime_mode=runtime_mode)
 
-    commands = {grade: 0 for grade in _MATURITY_GRADES}
+    commands = dict.fromkeys(_MATURITY_GRADES, 0)
     domain_names = set()
     referenced_skills = set()
     command_ids = []

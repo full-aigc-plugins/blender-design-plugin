@@ -28,7 +28,7 @@ The runner accepts JSON input on a file descriptor or temporary file and invokes
 ## 4. Preview modes
 
 | Mode | Source | Output | Guardrail |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | white model | active scene/camera | Workbench MP4 | temporary material override, restored |
 | material preview | user materials/textures | Workbench MP4 | unsupported nodes become warnings |
 | existing video | approved local file | validated receipt | no scene mutation |

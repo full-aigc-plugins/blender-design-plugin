@@ -16,7 +16,7 @@ JSON 保留协议规定的 sessionId/requestId/transactionId；内容修改使�
 下表是 `arguments`，不包含令牌。令牌由 CLI 从私有 descriptor 读取，不输出给用户。
 
 | command | arguments | 可观察结果 |
-|---|---|---|
+| --- | --- | --- |
 | `session.status` | `{}` | 实际策略、revision、暂停状态、阶段、变化对象、最近错误 |
 | `session.set_progress` | `{"stage":"制作相机路线","progress":0.4}` | 前台面板与视口标题显示阶段；进度仅表示调用方报告 |
 | `view.set` | `{"view":"CAMERA"}` | 相机视图；也支持 FRONT、SIDE、TOP |

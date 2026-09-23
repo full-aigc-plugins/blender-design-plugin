@@ -545,7 +545,7 @@ class SetupSurfaceProductionTests(unittest.TestCase):
 
         from scripts.harness.commands.retopo import RetopoCommands
         cmds = RetopoCommands(bpy)
-        fake_bmesh, created_verts = _inject_fake_bmesh()
+        fake_bmesh, _created_verts = _inject_fake_bmesh()
         with patch.dict(sys.modules, {'bmesh': fake_bmesh, 'mathutils': SimpleNamespace(
                 Vector=lambda args: FakeCo(*args))}):
             result = cmds.setup_surface({
@@ -574,7 +574,7 @@ class SetupSurfaceProductionTests(unittest.TestCase):
 
         from scripts.harness.commands.retopo import RetopoCommands
         cmds = RetopoCommands(bpy)
-        fake_bmesh, created_verts = _inject_fake_bmesh()
+        fake_bmesh, _created_verts = _inject_fake_bmesh()
         with patch.dict(sys.modules, {'bmesh': fake_bmesh, 'mathutils': SimpleNamespace(
                 Vector=lambda args: FakeCo(*args))}):
             result = cmds.setup_surface({
@@ -616,7 +616,7 @@ class ProjectProductionTests(unittest.TestCase):
             faces=[SimpleNamespace() for _ in source.data._polys]))
         # Patch at the module level where retopo.py imports them
         with patch.dict(sys.modules, {'bmesh': fake_bmesh, 'mathutils': fake_mathutils}):
-            result = cmds.project({
+            cmds.project({
                 'objectId': {'name': 'Target'},
                 'sourceObjectId': {'name': 'Source'},
                 'method': 'nearest', 'maxDistance': 5.0
@@ -666,7 +666,7 @@ class TransferLayersProductionTests(unittest.TestCase):
         from scripts.harness.commands.retopo import RetopoCommands
         cmds = RetopoCommands(bpy)
         fake_mathutils = _inject_fake_mathutils(source.data.vertices)
-        
+
         with patch.dict(sys.modules, {'mathutils': fake_mathutils}):
             result = cmds.transfer_layers({
                 'sourceObjectId': {'name': 'Source'},
@@ -700,7 +700,7 @@ class TransferLayersProductionTests(unittest.TestCase):
         from scripts.harness.commands.retopo import RetopoCommands
         cmds = RetopoCommands(bpy)
         fake_mathutils = _inject_fake_mathutils(source.data.vertices)
-        
+
         with patch.dict(sys.modules, {'mathutils': fake_mathutils}):
             result = cmds.transfer_layers({
                 'sourceObjectId': {'name': 'Source'},
@@ -731,7 +731,7 @@ class ValidateProductionTests(unittest.TestCase):
         # Fake bmesh for pole analysis: 3 verts with 2 edges each (valence 2 < 5)
         fake_bm_verts = [SimpleNamespace(link_edges=[1, 2], index=i) for i in range(3)]
         fake_bmesh = SimpleNamespace(new=lambda: _make_fake_bmesh(verts=fake_bm_verts))
-        
+
         with patch.dict(sys.modules, { 'mathutils': fake_mathutils, 'bmesh': fake_bmesh }):
             result = cmds.validate({
                 'objectId': {'name': 'Target'},
@@ -755,7 +755,7 @@ class ValidateProductionTests(unittest.TestCase):
         cmds = RetopoCommands(bpy)
         fake_mathutils = _inject_fake_mathutils(source.data.vertices)
         fake_bmesh = SimpleNamespace(new=lambda: _make_fake_bmesh())
-        
+
         with patch.dict(sys.modules, { 'mathutils': fake_mathutils, 'bmesh': fake_bmesh }):
             result = cmds.validate({
                 'objectId': {'name': 'Target'},
@@ -781,7 +781,7 @@ class ValidateProductionTests(unittest.TestCase):
         # Vertex with valence 6 (> maxPoleValence=4)
         fake_bm_verts = [SimpleNamespace(link_edges=[1, 2, 3, 4, 5, 6], index=0)]
         fake_bmesh = SimpleNamespace(new=lambda: _make_fake_bmesh(verts=fake_bm_verts))
-        
+
         with patch.dict(sys.modules, { 'mathutils': fake_mathutils, 'bmesh': fake_bmesh }):
             result = cmds.validate({
                 'objectId': {'name': 'Target'},

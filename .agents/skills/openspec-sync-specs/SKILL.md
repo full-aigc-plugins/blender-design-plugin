@@ -36,6 +36,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 2. **Resolve change context**
 
    Run:
+
    ```bash
    openspec status --change "<name>" --json
    ```
@@ -226,6 +227,7 @@ The system SHALL do something new.
 **Key Principle: Intelligent Merging**
 
 Unlike programmatic merging, you merge rather than overwrite:
+
 - A MODIFIED block carries the whole requirement - body plus every scenario that survives the change. `openspec validate` and `openspec archive` both reject one that drops a scenario the main spec still has.
 - Keep anything the delta does not mention, in the main spec's existing order
 - Use your judgment to merge changes sensibly
@@ -249,6 +251,7 @@ Main specs are now updated. The change remains active - archive when implementat
 ```
 
 **Guardrails**
+
 - Read both delta and main specs before making changes
 - Preserve existing content not mentioned in delta
 - Never copy a delta file into a main spec as-is - merge its content so the main spec keeps the Main Spec Format Reference structure, with no delta operation headers

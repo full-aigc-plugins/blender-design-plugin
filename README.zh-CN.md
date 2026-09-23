@@ -31,7 +31,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 ### 解决什么问题
 
 | 问题 | 本插件提供 | 可验证入口 |
-|---|---|---|
+| --- | --- | --- |
 | 自动化脚本会把场景弄坏 | 仅主线程修改、场景 revision、requestId | `scripts/harness/server.py`、`docs/Codex-Blender-Plugin-Architecture.md` |
 | 某一步失败就毁掉文件 | 里程碑快照与回滚证据 | `scripts/harness/snapshot.py` |
 | 长导出卡死会话 | 基于快照隔离的后台任务与显式续跑 | `docs/verification/harness-runtime.md` |
@@ -58,7 +58,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 ```
 
 | 项目属性 | 值 |
-|---|---|
+| --- | --- |
 | 插件 ID | `blender-design` |
 | 宿主 | Codex CLI 或 ChatGPT 桌面应用 |
 | 当前版本 | `0.14.1` |
@@ -72,7 +72,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 ### 已支持
 
 | 能力 | 输入 | 输出 | 限制 | 状态 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 场景装配 | 想法、参考素材或时间线 | 集合、稳定对象 ID、变换、BMesh、曲线、Modifier | 仅限已批准的资产导入 | 稳定 |
 | 建模与材质 | 设计意图 | 硬表面与程序化配方、UV、PBR 材质、Geometry Nodes、雕刻、Hair Curves、烘焙 | — | 稳定 |
 | 绑定与动画 | 角色或道具意图 | Armature、权重、IK/FK、约束、Action、F-Curve、NLA、Shape Key、重定向 | — | 稳定 |
@@ -84,7 +84,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 ### 两种连接方式
 
 | 模式 | 是否安装 Blender Add-on | 适用场景 |
-|---|---:|---|
+| --- | ---: | --- |
 | **非侵入模式（默认）** | 不需要 | 从零开始，Codex 启动 Blender 并临时加载 Harness |
 | **Connector 模式** | 安装可选轻量 Add-on | 继续操作已经打开的 Blender 工程 |
 
@@ -105,7 +105,7 @@ Harness 是封闭的结构化命令面：默认禁止任意 Python，Blender 数
 ### 成熟度
 
 | 状态 | 含义 |
-|---|---|
+| --- | --- |
 | 稳定 | 有自动化测试与运行证据，可用于真实工作 |
 | 实验性 | 行为可能调整；依赖前请固定版本并自行验证 |
 | 封锁 / NOT_RUN | 本机未验证；不得描述为可用 |
@@ -132,7 +132,7 @@ flowchart TB
 ### 组件职责
 
 | 组件 | 负责 | 不负责 |
-|---|---|---|
+| --- | --- | --- |
 | `scripts/launch_harness.py`、`scripts/managed_launcher.py` | 启动 Blender 并写入会话描述符 | 场景语义 |
 | `scripts/harness/server.py` | 传输、会话、命令分发、检查点 | 领域建模 |
 | `scripts/harness/execution_policy.py` | 判定哪些动作不可逆、需要授权 | 解读用户意图 |
@@ -145,7 +145,7 @@ flowchart TB
 ## 兼容性
 
 | 插件版本 | 宿主 | Blender | 平台 | 状态 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI 或 ChatGPT 桌面应用 | Blender 4.2.23 CI 基线；Blender 5.2.1 可见 UI 验收 | macOS Apple Silicon（UDS 传输） | 通过 |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI 或 ChatGPT 桌面应用 | Blender 5.2.1 后台 L4 工作流 | Windows Server 2025 x64（Named Pipe 传输） | 通过；不声称前台 UI 接管 |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI 或 ChatGPT 桌面应用 | 同上 | Linux 无头（带 token 的 loopback TCP） | 实验性，不作为发布门禁 |
@@ -263,7 +263,7 @@ codex plugin add blender-design@partme-ai-blender
 ### 环境变量
 
 | 变量 | 用途 | 默认值 |
-|---|---|---|
+| --- | --- | --- |
 | `CODEX_BLENDER_DESCRIPTOR` | Harness 会话描述符路径 | 由启动器写入 |
 | `CODEX_BLENDER_RUNTIME_DIR` | 覆盖运行时目录 | Harness 默认目录 |
 | `CODEX_BLENDER_FFMPEG` | 覆盖 FFmpeg 可执行文件 | `PATH` 上的 `ffmpeg` |
@@ -272,7 +272,7 @@ codex plugin add blender-design@partme-ai-blender
 ### 配置文件
 
 | 文件 | 用途 |
-|---|---|
+| --- | --- |
 | `config/blender-release-matrix.json` | 受支持的 Blender 版本 |
 | `config/production-profile.json` | 从生产目录中排除的域与命令类 |
 
@@ -283,7 +283,7 @@ codex plugin add blender-design@partme-ai-blender
 ### 会话生命周期
 
 | 阶段 | 输入 | 必须完成 | 失败语义 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `launch` | Blender 路径、运行时目录 | 启动 Blender 并加载 Harness | 启动失败，不留半加载会话 |
 | `handshake` | 会话描述符 | 完成认证并注册能力 | 会话标记为不可用 |
 | `execute` | 结构化命令 | 在主线程修改并递增场景 revision | 返回稳定错误码 |
@@ -294,7 +294,7 @@ codex plugin add blender-design@partme-ai-blender
 ### 稳定错误码
 
 | 错误码 | 含义 | 是否可重试 |
-|---|---|---|
+| --- | --- | --- |
 | `UNKNOWN_COMMAND` | 命令不在注册表中 | 否 |
 | `INVALID_ARGUMENT` | 参数未通过校验 | 否 |
 | `INVALID_COMMAND_DEFINITION` | 注册表条目定义非法 | 否 |
@@ -317,7 +317,7 @@ codex plugin add blender-design@partme-ai-blender
 ## 数据与状态
 
 | 数据 | 位置 | 生命周期 | 是否含秘密 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 会话描述符 | `<runtime_dir>/<session_id>.json` | 会话范围内；正常关闭即删除 | 仅含临时 HMAC 令牌 |
 | 事务日志 | `<runtime_dir>/recovery.json` | 直到会话结束或被丢弃 | 否 |
 | 场景检查点 | 运行时目录的快照存储 | 直到你删除 | 否 |
@@ -358,7 +358,7 @@ python3 scripts/validate_model_in_blender.py
 ## 故障排查
 
 | 现象 | 优先检查 | 处理方式 |
-|---|---|---|
+| --- | --- | --- |
 | Blender 没有启动 | Blender 安装与 `PATH` | 安装 Blender 后重跑非侵入模式 |
 | 视频导出失败 | FFmpeg 与 ffprobe | 二者都安装，或设置 `CODEX_BLENDER_FFMPEG` / `CODEX_BLENDER_FFPROBE` |
 | 命令返回 `UNKNOWN_COMMAND` | 当前会话的 `capability.list` | 使用已声明的命令，或切换连接模式 |

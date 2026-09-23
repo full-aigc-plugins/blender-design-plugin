@@ -70,9 +70,8 @@ def launch_managed(*, blender: Path, project: Path | None, session_id: str, runt
     runtime_dir = Path(runtime_dir)
     runtime_dir.mkdir(parents=True, exist_ok=True)
     descriptor = runtime_dir / f"{session_id}.json"
-    if descriptor.exists():
-        if not remove_stale_descriptor(descriptor):
-            raise FileExistsError(f"session already exists: {session_id}")
+    if descriptor.exists() and not remove_stale_descriptor(descriptor):
+        raise FileExistsError(f"session already exists: {session_id}")
     process = subprocess.Popen(
         build_managed_argv(blender=blender, project=project, session_id=session_id, runtime_dir=runtime_dir, output_root=output_root, asset_roots=asset_roots, execution_policy=execution_policy),
         stdin=subprocess.DEVNULL,

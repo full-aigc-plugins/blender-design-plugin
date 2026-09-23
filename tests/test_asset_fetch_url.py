@@ -48,7 +48,7 @@ class FakeResponse:
 
 class FetchUrlTests(unittest.TestCase):
     def test_download_writes_into_approved_root(self):
-        cmds, tmp = make_commands(tmp_root := __import__("tempfile").mkdtemp())
+        cmds, _tmp = make_commands(tmp_root := __import__("tempfile").mkdtemp())
         with mock.patch("urllib.request.urlopen", return_value=FakeResponse(b"asset-bytes")):
             result = cmds.fetch_url({"url": "https://dl.polyhaven.org/file/admin/assets/hdris/sunset/1k/sunset_1k.hdr"})
         target = Path(result["result"]["path"])
@@ -59,7 +59,7 @@ class FetchUrlTests(unittest.TestCase):
         self.assertEqual(target.suffix, ".hdr")
 
     def test_cached_download_is_idempotent(self):
-        cmds, tmp = make_commands(__import__("tempfile").mkdtemp())
+        cmds, _tmp = make_commands(__import__("tempfile").mkdtemp())
         with mock.patch("urllib.request.urlopen", return_value=FakeResponse(b"abc")):
             first = cmds.fetch_url({"url": "https://dl.polyhaven.org/x/pbr/wood_1k.png"})
         urlopen = mock.Mock(side_effect=AssertionError("must not re-download"))

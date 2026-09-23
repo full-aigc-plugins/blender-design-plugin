@@ -69,7 +69,7 @@ to `blender-design-render-compositing` and `blender-design-character-animation`.
 Override as a set, per project, in the geometry-to-role map; never ad hoc per shot.
 
 | Role class | Primitive | Color |
-|---|---|---|
+| --- | --- | --- |
 | Protagonist | Cube | Light cyan `#7FD4C1` |
 | Antagonists / pursuers | Cubes, one each | Dark gray `#4A4A4A` |
 | Hero prop (rocket, weapon, macguffin) | Cylinder | Red `#D9483B` |

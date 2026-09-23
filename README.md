@@ -31,7 +31,7 @@ The Harness is a closed, structured-command surface: arbitrary Python is disable
 ### What problem it solves
 
 | Problem | What this plugin provides | Verifiable entry point |
-|---|---|---|
+| --- | --- | --- |
 | Automation scripts break scenes | Main-thread-only mutation, scene revisions, request IDs | `scripts/harness/server.py`, `docs/Codex-Blender-Plugin-Architecture.md` |
 | A failed step ruins the file | Milestone checkpoints and rollback evidence | `scripts/harness/snapshot.py` |
 | Long exports block the session | Snapshot-isolated background jobs with explicit resume | `docs/verification/harness-runtime.md` |
@@ -58,7 +58,7 @@ Editable Blender scene + verified local exports
 ```
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Plugin ID | `blender-design` |
 | Host | Codex CLI or ChatGPT desktop app |
 | Current version | `0.14.1` |
@@ -72,7 +72,7 @@ Editable Blender scene + verified local exports
 ### Supported
 
 | Capability | Input | Output | Limit | Status |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Scene assembly | Idea, references, or timeline | Collections, stable object identity, transforms, BMesh, curves, modifiers | Approved asset imports only | Stable |
 | Modeling and surfacing | Design intent | Hard-surface and procedural recipes, UVs, PBR materials, Geometry Nodes, sculpt, Hair Curves, baking | — | Stable |
 | Rigging and animation | Character or prop intent | Armatures, weights, IK/FK, constraints, Actions, F-Curves, NLA, shape keys, retargeting | — | Stable |
@@ -84,7 +84,7 @@ Editable Blender scene + verified local exports
 ### Two connection modes
 
 | Mode | Blender Add-on | Best for |
-|---|---:|---|
+| --- | ---: | --- |
 | **Managed — default** | Not required | Starting a fresh task with a non-invasive temporary Harness |
 | **Connector** | Optional lightweight Add-on | Continuing work in an already-open Blender window |
 
@@ -105,7 +105,7 @@ The two modes are never merged into a single count, and no combined coverage per
 ### Maturity
 
 | Status | Meaning |
-|---|---|
+| --- | --- |
 | Stable | Automated tests plus runtime evidence; usable for real work |
 | Experimental | Behaviour may change; pin the version and verify before relying on it |
 | Blocked / NOT_RUN | Not verified on this host; never present it as working |
@@ -132,7 +132,7 @@ flowchart TB
 ### Component responsibilities
 
 | Component | Owns | Does not own |
-|---|---|---|
+| --- | --- | --- |
 | `scripts/launch_harness.py`, `scripts/managed_launcher.py` | Launching Blender and writing the session descriptor | Scene semantics |
 | `scripts/harness/server.py` | Transport, session, command dispatch, checkpoints | Domain modelling |
 | `scripts/harness/execution_policy.py` | Which actions are irreversible and need authorization | User intent interpretation |
@@ -145,7 +145,7 @@ flowchart TB
 ## Compatibility
 
 | Plugin version | Host | Blender | Platform | Status |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI or ChatGPT desktop app | Blender 4.2.23 CI baseline; visible Blender 5.2.1 UI acceptance | macOS Apple Silicon (UDS transport) | PASS |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI or ChatGPT desktop app | Blender 5.2.1 background L4 workflow | Windows Server 2025 x64 (Named Pipe transport) | PASS; foreground UI takeover not claimed |
 | `0.13.2` + runtime `0.7.0-rc.2` | Codex CLI or ChatGPT desktop app | same | Linux headless (tokenized loopback TCP) | Experimental, not a release gate |
@@ -315,7 +315,7 @@ Install the Connector Add-on, open your project, and ask Codex to attach. Pause 
 ### Environment variables
 
 | Variable | Purpose | Default |
-|---|---|---|
+| --- | --- | --- |
 | `CODEX_BLENDER_DESCRIPTOR` | Path to the Harness session descriptor | Written by the launcher |
 | `CODEX_BLENDER_RUNTIME_DIR` | Override the runtime directory | Harness default |
 | `CODEX_BLENDER_FFMPEG` | Override the FFmpeg binary | `ffmpeg` on `PATH` |
@@ -324,7 +324,7 @@ Install the Connector Add-on, open your project, and ask Codex to attach. Pause 
 ### Configuration files
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `config/blender-release-matrix.json` | Which Blender versions are supported |
 | `config/production-profile.json` | Domains and command classes excluded from the production catalog |
 
@@ -335,7 +335,7 @@ There are no API keys. Session authorization uses ephemeral HMAC tokens generate
 ### Session lifecycle
 
 | Phase | Input | Must complete | Failure semantics |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `launch` | Blender path, runtime dir | Start Blender, load the Harness | Launch fails; no half-loaded session |
 | `handshake` | Session descriptor | Authenticate and register capabilities | Session marked unavailable |
 | `execute` | Structured command | Mutate on the main thread, bump scene revision | Returns a stable error code |
@@ -346,7 +346,7 @@ There are no API keys. Session authorization uses ephemeral HMAC tokens generate
 ### Stable error codes
 
 | Code | Meaning | Retryable |
-|---|---|---|
+| --- | --- | --- |
 | `UNKNOWN_COMMAND` | Command is not in the registry | No |
 | `INVALID_ARGUMENT` | Argument failed validation | No |
 | `INVALID_COMMAND_DEFINITION` | Registry entry is malformed | No |
@@ -369,7 +369,7 @@ Irreversible actions require action-bound authorization: `delete`, `overwrite`, 
 ## Data and state
 
 | Data | Location | Lifecycle | Secrets |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Session descriptor | `<runtime_dir>/<session_id>.json` | Session scope; removed on clean shutdown | Ephemeral HMAC token only |
 | Transaction journal | `<runtime_dir>/recovery.json` | Until the session completes or is discarded | None |
 | Scene checkpoints | Runtime directory snapshot store | Until you delete them | None |
@@ -410,7 +410,7 @@ Recorded evidence:
 ## Troubleshooting
 
 | Symptom | Check first | Resolution |
-|---|---|---|
+| --- | --- | --- |
 | Blender does not launch | Blender installation and `PATH` | Install Blender and re-run managed mode |
 | Video export fails | FFmpeg and ffprobe | Install both, or set `CODEX_BLENDER_FFMPEG` / `CODEX_BLENDER_FFPROBE` |
 | Command returns `UNKNOWN_COMMAND` | `capability.list` for this session | Use an advertised command, or switch connection mode |

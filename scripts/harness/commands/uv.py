@@ -196,7 +196,7 @@ class UVCommands:
 
         # Pairwise intersection within each tile.
         overlaps = []
-        for tile_key, group in tiles.items():
+        for group in tiles.values():
             n = len(group)
             for a in range(n):
                 for b in range(a+1, n):
@@ -214,8 +214,8 @@ class UVCommands:
                         })
 
         overlaps.sort(key=lambda o: o['area'], reverse=True)
-        limitations = ['Intersection area assumes convex UV polygons; '
-                       'concave n-gons may produce incorrect results']
+        limitations = [('Intersection area assumes convex UV polygons; '
+                       'concave n-gons may produce incorrect results')]
         return {'changedObjects':[], 'result':self.objects.receipt(obj)|{
             'hasUV':True, 'layer':layer.name,
             'hasOverlaps':len(overlaps)>0, 'overlaps':overlaps,

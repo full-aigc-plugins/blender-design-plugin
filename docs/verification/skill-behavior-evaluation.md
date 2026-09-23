@@ -3,7 +3,7 @@
 这是一次真实任务前向验收，不是关键词扫描。固定模型配置为当前 Codex GPT-5；宿主为 macOS Apple Silicon、Blender 5.2.1 LTS；输入为用户批准的 P0–P7 计划与各阶段固定尺寸/帧范围。自动模式只操作授权输出目录，没有下载资产、安装扩展或触发外部付费。
 
 | Skill | 固定任务 | 可观察行为与证据 | 结论 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | scene-assembly | 稳定 ID、复制/实例、集合、导入 | 重命名后解析、共享/独立数据、OBJ/GLB/FBX/blend 追加链接 | PASS |
 | hard-surface | 壳体、长矛、音箱 | 保留 helper 和 modifier 顺序；视觉失败后识别默认 Cube 遮挡并重验 | PASS |
 | curves | Bezier 路径转 mesh | 控制点、handle、bevel、sampling、conversion | PASS |

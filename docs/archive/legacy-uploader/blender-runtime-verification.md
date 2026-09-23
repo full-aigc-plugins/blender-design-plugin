@@ -5,6 +5,7 @@
 ## What's Needed
 
 A real Blender smoke test requires:
+
 1. An explicitly authorized Blender executable (user must provide the path)
 2. A fixture `.blend` scene with at least one camera
 3. Network isolation (no remote calls during the test)

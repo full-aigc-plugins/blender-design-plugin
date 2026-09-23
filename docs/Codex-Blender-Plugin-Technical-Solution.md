@@ -3,7 +3,7 @@
 > **Document control**
 >
 > | Field | Value |
-> |---|---|
+> | --- | --- |
 > | Status | Implemented for `blender-design` `0.3.0`; Windows runtime gates recorded `NOT RUN` |
 > | Scope | Technology choices, contracts, configuration precedence, error model, tests, and release rules |
 > | Audience | Implementers extending or reviewing this plugin |
@@ -16,7 +16,7 @@ Run a guarded local Harness inside the user's own Blender, driven by a closed, v
 ### Technology choices
 
 | Choice | Rationale |
-|---|---|
+| --- | --- |
 | Blender Python API only, no C++ or external DCC SDK | The plugin must run inside the user's own Blender 5.2.1 LTS install without a build step |
 | Unix Domain Socket on macOS, Named Pipe on Windows, tokenized loopback TCP as fallback | Local transports avoid exposing a port while still covering both release-gate platforms |
 | Closed JSON command documents over a versioned protocol | Codex can validate a request before dispatch, and unknown commands fail closed |
@@ -28,7 +28,7 @@ Run a guarded local Harness inside the user's own Blender, driven by a closed, v
 ### Alternatives considered
 
 | Alternative | Why it was rejected |
-|---|---|
+| --- | --- |
 | Expose a general Python execution command | Makes arbitrary execution reachable from a model-authored argument |
 | Serve the Harness over a network port | Expands the attack surface beyond the local machine for no benefit |
 | Install the Connector Add-on automatically | Writes into the user's Blender without consent |
@@ -80,7 +80,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 ## 5. Interface contracts
 
 | Interface | Contract |
-|---|---|
+| --- | --- |
 | Codex to Harness | closed JSON request over the local transport |
 | Harness to Codex | closed JSON response plus artifact receipts |
 | Harness to Blender | registered commands executed on the main thread only |
@@ -103,7 +103,7 @@ An omitted policy remains `interactive` so existing callers keep their behaviour
 ## 7. Error model
 
 | Condition | Outcome |
-|---|---|
+| --- | --- |
 | Unknown command | Fail closed, no dispatch |
 | Stale `expectedSceneRevision` | Rejected before mutation |
 | Duplicate non-idempotent `requestId` | Prior response returned, no re-execution |
@@ -122,7 +122,7 @@ Milestone approval binds `sceneRevision + snapshotId`, and the final export must
 ## 9. Implementation phases
 
 | Phase | Content |
-|---|---|
+| --- | --- |
 | Harness core | session, guard, main-thread queue, registry, transaction engine |
 | Foreground and policy | viewport and playback commands, panel, `ExecutionPolicy` propagation, pause and takeover |
 | Capability coverage | the phased P0–P9 domain build-out recorded in the acceptance evidence |
@@ -144,7 +144,7 @@ The suite is written test-first against the published contract. Representative c
 - Frame and playback changes do not increment the content revision or write scene files.
 
 | Dimension | Coverage |
-|---|---|
+| --- | --- |
 | Test modules | 37 under `tests/` |
 | Runtime modes | managed and Connector share one conformance suite |
 | Platforms | macOS Apple Silicon verified; Windows x64 required by the release gate |
@@ -161,7 +161,7 @@ Rollback is a first-class runtime behaviour rather than a release-time concern: 
 ## 12. Evidence map
 
 | Claim | Evidence |
-|---|---|
+| --- | --- |
 | Harness core and command registry | `scripts/harness/`, `schemas/` |
 | Managed and Connector conformance | `tests/` and [harness-runtime.md](verification/harness-runtime.md) |
 | Export validation | [harness-runtime.md](verification/harness-runtime.md), independent re-import and probing |

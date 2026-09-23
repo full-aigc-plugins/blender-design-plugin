@@ -479,7 +479,7 @@ class TestUVLayerParameter(unittest.TestCase):
         uvs = UVCommands(bpy)
         mesh = FakeMeshWithUV()
         mesh.uv_layers.new('UVMap')
-        second = mesh.uv_layers.new('SecondUV')
+        mesh.uv_layers.new('SecondUV')
         # Set overlapping UVs on the second layer
         mesh.add_polygon(
             [0, 1, 2],

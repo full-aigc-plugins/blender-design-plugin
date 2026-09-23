@@ -181,7 +181,7 @@ jimeng_or_dreamina_runtime_ownership = 0
 ## Execution ledger
 
 | Task | Current evidence |
-|---|---|
+| --- | --- |
 | 1 Contracts and identity | PASS — new manifest and four closed schemas |
 | 2 Session core | PASS — revision, idempotency, HMAC authorization, redacted audit |
 | 3 Registry and main thread | PASS — queue/thread tests and Blender timer server |

@@ -165,7 +165,7 @@ runtime_acceptance = PASS or explicitly BLOCKED
 ## Revision 3 completion ledger (authoritative)
 
 | Planned outcome | Status | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Contracts, manifest, schemas, validator | Complete | `45da963`, `84b58d6`, contract/distribution tests |
 | Safe Blender discovery and process runner | Complete | `99d9600`, `f148f93`, runner tests |
 | Read-only scene inspection | Complete | `74c5568`, `421a152`, inspection tests |

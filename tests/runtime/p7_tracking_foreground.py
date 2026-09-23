@@ -52,6 +52,6 @@ def run():
   except Exception as exc:
     report|={'passed':False,'productionAcceptance':False,'error':{'type':type(exc).__name__,'message':str(exc)}};traceback.print_exc()
   with (output/'acceptance.json').open('x',encoding='utf-8') as stream:json.dump(report,stream,ensure_ascii=False,indent=2)
-  bpy.ops.wm.quit_blender();
+  bpy.ops.wm.quit_blender()
 
 bpy.app.timers.register(run,first_interval=1)

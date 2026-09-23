@@ -242,12 +242,12 @@ class TestUpdater(unittest.TestCase):
         subset = [c for c in config["combinations"] if c["version"] == "4.2.23"]
         updater.update_combinations(subset, fetcher=fake_fetcher)
 
-        macos = [c for c in subset if c["platform"] == "macos-arm64"][0]
+        macos = next(c for c in subset if c["platform"] == "macos-arm64")
         self.assertEqual(
             macos["sha256"],
             "8b6bc5fafd4773e94bb863ca19ba1c9a54d096eecbbc4375eae7dbc3b49fab40",
         )
-        windows = [c for c in subset if c["platform"] == "windows-x64"][0]
+        windows = next(c for c in subset if c["platform"] == "windows-x64")
         self.assertEqual(
             windows["sha256"],
             "82e791475779a7342424a480bdde9a20b43710da9264c60346125aa16cd910cb",

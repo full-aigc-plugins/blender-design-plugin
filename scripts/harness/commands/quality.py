@@ -1,4 +1,5 @@
 """Explicit frame/object quality measurements; no inferred performance intent."""
+import itertools
 import math
 
 from ..errors import HarnessError
@@ -86,7 +87,7 @@ class QualityCommands:
             for frame in self._range(args):
                 self.bpy.context.scene.frame_set(frame); samples.append((frame,obj.matrix_world.copy()))
         finally:self.bpy.context.scene.frame_set(previous)
-        for (frame_a,a),(frame_b,b) in zip(samples,samples[1:]):
+        for (frame_a,a),(frame_b,b) in itertools.pairwise(samples):
             distance=(b.translation-a.translation).length; angle=math.degrees(a.to_quaternion().rotation_difference(b.to_quaternion()).angle)
             if distance>pos_limit or angle>angle_limit: issues.append({'from':frame_a,'to':frame_b,'position':distance,'angleDegrees':angle})
         return {'changedObjects':[],'result':{'issues':issues,'passed':not issues}}

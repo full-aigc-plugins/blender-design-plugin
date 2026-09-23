@@ -3,7 +3,7 @@
 > **文档信息**
 >
 > | 字段 | 值 |
-> |---|---|
+> | --- | --- |
 > | 状态 | `blender-design` `0.3.0` 已实现；Windows 运行门禁记为 `NOT RUN` |
 > | 范围 | 技术选型、契约、配置优先级、错误模型、测试与发布规则 |
 > | 读者 | 扩展或评审本插件的实现者 |
@@ -16,7 +16,7 @@
 ### 技术选型
 
 | 选择 | 理由 |
-|---|---|
+| --- | --- |
 | 只用 Blender Python API，不引入 C++ 或外部 DCC SDK | 插件必须能跑在用户自己的 Blender 5.2.1 LTS 里，不需要构建步骤 |
 | macOS 用 Unix Domain Socket，Windows 用 Named Pipe，并保留令牌化环回 TCP 回退 | 本地传输既不暴露端口，又能覆盖两个发布门禁平台 |
 | 版本化协议上的闭合 JSON 命令文档 | Codex 可以在派发前校验请求，未知命令关闭式失败 |
@@ -28,7 +28,7 @@
 ### 备选方案
 
 | 备选方案 | 被否的原因 |
-|---|---|
+| --- | --- |
 | 暴露一个通用 Python 执行命令 | 会让任意执行从模型编写的参数抵达 |
 | 通过网络端口暴露 Harness | 无收益地把攻击面扩展到本机之外 |
 | 自动安装 Connector Add-on | 未经同意就写入用户的 Blender |
@@ -80,7 +80,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 ## 5. 接口契约
 
 | 接口 | 契约 |
-|---|---|
+| --- | --- |
 | Codex 到 Harness | 本地传输上的闭合 JSON 请求 |
 | Harness 到 Codex | 闭合 JSON 响应加产物回执 |
 | Harness 到 Blender | 只在主线程执行的已注册命令 |
@@ -103,7 +103,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 ## 7. 错误模型
 
 | 情形 | 结果 |
-|---|---|
+| --- | --- |
 | 未知命令 | 关闭式失败，不派发 |
 | `expectedSceneRevision` 过期 | 在修改之前拒绝 |
 | 非幂等 `requestId` 重复 | 返回先前响应，不重复执行 |
@@ -122,7 +122,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 ## 9. 实施阶段
 
 | 阶段 | 内容 |
-|---|---|
+| --- | --- |
 | Harness 核心 | 会话、守卫、主线程队列、注册表、事务引擎 |
 | 前台与策略 | 视口与播放命令、面板、`ExecutionPolicy` 传播、暂停与接管 |
 | 能力覆盖 | 记录在验收证据中的分阶段 P0–P9 领域建设 |
@@ -144,7 +144,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 - 帧与播放类变更不会递增内容修订号，也不写场景文件。
 
 | 维度 | 覆盖 |
-|---|---|
+| --- | --- |
 | 测试模块 | `tests/` 下 37 个 |
 | 运行模式 | 托管与 Connector 共用同一套一致性测试 |
 | 平台 | macOS Apple Silicon 已验证；Windows x64 由发布门禁要求 |
@@ -161,7 +161,7 @@ vendor/jimeng_blender_uploader/   archived research material, not a runtime depe
 ## 12. 证据映射
 
 | 断言 | 证据 |
-|---|---|
+| --- | --- |
 | Harness 核心与命令注册表 | `scripts/harness/`、`schemas/` |
 | 托管与 Connector 一致性 | `tests/` 与 [harness-runtime.md](verification/harness-runtime.md) |
 | 导出校验 | [harness-runtime.md](verification/harness-runtime.md)，独立重导入与探测 |

@@ -3,7 +3,7 @@
 > **Document control**
 >
 > | Field | Value |
-> |---|---|
+> | --- | --- |
 > | Status | Delivered architecture for `blender-design` `0.3.0` |
 > | Supersedes | The Jimeng-uploader-oriented architecture, archived under `docs/archive/legacy-uploader/` |
 > | Authoritative design record | [Blender Design Harness Design](superpowers/specs/2026-09-12-blender-design-harness-design.md) |
@@ -21,7 +21,7 @@ The plugin optimises for three properties, in this order: the user's scene is ne
 The failure modes that drove this architecture were: an agent mutating a user's scene with no rollback path, claiming success from a command exit code rather than from a verified artifact, and mixing paid remote generation into a local modelling tool.
 
 | Driver | Consequence for the architecture |
-|---|---|
+| --- | --- |
 | A user's scene must never be lost | Main-thread-only mutation, milestone snapshots, rollback, and revision guards |
 | Exit codes are not evidence | Fresh previews plus independent re-import and media probing before acceptance |
 | Local work and paid work must not blur | No export implies a handoff, an upload, an authentication step, a quotation, or a paid action |
@@ -71,7 +71,7 @@ The trust boundary sits at the local transport. Everything on the Codex side is 
 ## 5. Current state, target state, and gaps
 
 | Capability | Current | Target | Gap |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Managed mode on macOS Apple Silicon | Verified against recorded runtime evidence | Unchanged | None |
 | Connector lifecycle on macOS | Verified | Unchanged | None |
 | Model, raster, and H.264 exports | Verified, including re-import and probing | Unchanged | None |
@@ -86,7 +86,7 @@ This document claims only the combinations recorded in [harness-runtime.md](veri
 ## 6. Principles and decisions
 
 | Decision | Rationale | Reversal condition |
-|---|---|---|
+| --- | --- | --- |
 | Mutate only on Blender's main thread | Off-thread writes corrupt scene data in ways that are hard to detect | None |
 | Closed command registry instead of free-form Python | Makes every capability auditable and every argument schema-checked | None |
 | Scene revision on every mutation | Prevents a stale plan from overwriting a newer scene | None |
@@ -97,7 +97,7 @@ This document claims only the combinations recorded in [harness-runtime.md](veri
 ## 7. Components and dependencies
 
 | Component | Owns |
-|---|---|
+| --- | --- |
 | `session.*` registry | capabilities, status, close, audit summary |
 | Command guard | closed allowlist, revision check, path containment, authorization claim |
 | Main-thread queue | queuing mutations and executing them on Blender's timer callback |
@@ -142,7 +142,7 @@ No engine reaches back into transport. No Blender data is touched off the main t
 ### 8.3 Failure and recovery
 
 | Failure | Behaviour |
-|---|---|
+| --- | --- |
 | Unregistered command | Fails closed; no dispatch |
 | Stale `expectedSceneRevision` | Rejected before mutation |
 | Duplicate non-idempotent `requestId` | Returns the prior response without re-executing |
@@ -157,7 +157,7 @@ Rollback never reverts edits the user made by hand. Session revoke and loading a
 ## 9. Platforms, transport, and compatibility
 
 | Platform | Status | Preferred transport |
-|---|---|---|
+| --- | --- | --- |
 | macOS Apple Silicon | release gate | Unix Domain Socket |
 | Windows x64 | release gate | Named Pipe |
 | Linux | experimental | tokenized loopback TCP |
@@ -165,7 +165,7 @@ Rollback never reverts edits the user made by hand. Session revoke and loading a
 Both release-gate platforms also support tokenized `127.0.0.1` TCP as a fallback. Every session uses a random 256-bit secret, restrictive socket or pipe permissions, idle expiry, request-size limits, and protocol-version negotiation.
 
 | Dimension | Supported |
-|---|---|
+| --- | --- |
 | Blender | 5.2.1 LTS verified on the release-gate platforms |
 | Protocol | `codex-blender/v1` |
 | Model exports | `.blend`, `.glb`, `.gltf`, `.fbx`, `.obj`, `.stl` |
@@ -186,7 +186,7 @@ Omitted policy remains `interactive` for backwards compatibility.
 - The Connector stops accepting commands when Blender switches to an unapproved file.
 
 | Budget | Value | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | Authorization token lifetime | 60 seconds, action-bound | A token authorizes one irreversible action, not a session |
 | Session secret | Random 256-bit | A guessed secret would grant scene control |
 | Request size | Bounded | Prevents an oversized payload from stalling the main thread |
@@ -208,7 +208,7 @@ Every session exposes capabilities, status, and an audit summary. Each completed
 The archived uploader-era design is not a fallback path; it is superseded. Future increments extend the command registry and the export contract rather than reintroducing Dreamina behaviour into this plugin. Animation-authoring upgrades, motion-quality evaluation, and background export workers are the next declared increments. Because the command contract is closed and versioned, adding a capability is an additive change to the registry plus its schema and tests.
 
 | Risk | Mitigation |
-|---|---|
+| --- | --- |
 | Scene loss | Main-thread discipline, snapshots, and verified rollback |
 | Silent export corruption | Independent re-import and media probing |
 | Platform overclaiming | Windows and Linux lines are published as `NOT RUN` and experimental |
@@ -221,7 +221,7 @@ Runtime evidence is recorded under `docs/verification/`. The Harness runtime not
 It also records what is **not** accepted: Windows x64 managed mode and Connector runtime remain `NOT RUN` because they require a Windows Blender host. This document does not claim them.
 
 | Claim | Evidence |
-|---|---|
+| --- | --- |
 | Capability inventory per mode | [capability-counts.json](verification/capability-counts.json) and the generated coverage summary |
 | Domain coverage | [blender-domain-coverage-matrix.md](verification/blender-domain-coverage-matrix.md) |
 | Foreground lifecycle and policy | [foreground-lifecycle-macos-arm64.md](verification/foreground-lifecycle-macos-arm64.md), [foreground-policy-runtime.md](verification/foreground-policy-runtime.md) |

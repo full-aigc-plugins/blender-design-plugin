@@ -27,7 +27,7 @@ Trust crosses from Codex into a local Blender process and again when a `.blend` 
 ## 3. Components
 
 | Component | Owns | Does not own |
-|---|---|---|
+| --- | --- | --- |
 | Skills | intent routing, approvals, user-facing recovery | Blender internals |
 | Capability probe | executable/version/features | installation |
 | Process runner | argv, timeout, cancellation, receipt capture | shell-string evaluation |

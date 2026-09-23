@@ -25,11 +25,13 @@
 ### Task 1: Official uploader runtime delegation
 
 **Files:**
+
 - Create: `scripts/harness/commands/official_uploader.py`
 - Modify: `scripts/harness/runtime.py`
 - Test: `tests/test_official_uploader.py`
 
 **Interfaces:**
+
 - Produces: commands `official_uploader.inspect`, `official_uploader.render_and_link`, `official_uploader.link_existing`, `official_uploader.status`, `official_uploader.open_link`.
 - Consumes: a running Connector Harness and the user-installed `jimeng_blender_uploader` operators.
 
@@ -42,6 +44,7 @@
 ### Task 2: Blender one-click Skills and packaging
 
 **Files:**
+
 - Create: `skills/codex-blender-jimeng-web/SKILL.md`
 - Modify: `skills/codex-blender-use/SKILL.md`
 - Modify: `.codex-plugin/plugin.json`
@@ -50,6 +53,7 @@
 - Test: `tests/test_product_boundary.py`
 
 **Interfaces:**
+
 - Produces: explicit intents `preview_only`, `jimeng_web`, and `downstream_seedance`.
 - Consumes: Task 1 official-uploader commands and the existing preview/export Skills.
 
@@ -61,6 +65,7 @@
 ### Task 3: Dreamina 3D three-entry orchestration
 
 **Files:**
+
 - Modify: `/Users/wandl/workspaces/workspace-partme-ai/codex-dreamina-3d-plugin/skills/codex-dreamina-3d-use/SKILL.md`
 - Create: `/Users/wandl/workspaces/workspace-partme-ai/codex-dreamina-3d-plugin/skills/codex-dreamina-3d-jimeng-web/SKILL.md`
 - Create: `/Users/wandl/workspaces/workspace-partme-ai/codex-dreamina-3d-plugin/skills/codex-dreamina-3d-auto-seedance/SKILL.md`
@@ -69,6 +74,7 @@
 - Test: `/Users/wandl/workspaces/workspace-partme-ai/codex-dreamina-3d-plugin/tests/test_skills.py`
 
 **Interfaces:**
+
 - Produces: a single router with preview-only, Jimeng Web, and automatic Seedance routes.
 - Consumes: Blender Harness/adapter and installed Dreamina Design MCP tools.
 
@@ -80,10 +86,12 @@
 ### Task 4: Release refresh and acceptance
 
 **Files:**
+
 - Modify: both plugin manifests, marketplace metadata, READMEs, verification evidence, and version validators.
 - Test: both complete repositories and distribution validators.
 
 **Interfaces:**
+
 - Produces: refreshed installed plugin snapshots and auditable GitHub release evidence.
 
 - [x] Bump `codex-blender` and `codex-dreamina-3d` to the next compatible minor versions.

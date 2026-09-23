@@ -8,4 +8,3 @@
 兼容树和锁定 Runtime 内上游树的规范化 SHA-256。任一侧变化都会失败；升级 Runtime
 时必须先审查差异、运行受影响的 managed-mode 测试，再明确更新
 `config/harness-boundary.json`。不得把未审查的上游覆盖或插件私有能力静默混入另一侧。
-

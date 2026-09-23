@@ -48,7 +48,7 @@ record. It controls user-interaction cadence without weakening command or
 path guardrails:
 
 | Policy | Behaviour |
-|---|---|
+| --- | --- |
 | `interactive` | Ask for milestone review and each gated action. |
 | `auto_with_budget` | Default for an end-to-end request. Automatically complete approved design milestones and exports within the declared output roots, proxy-asset rule, and downstream budget. |
 | `review_only` | Inspect, preview, plan, and report without scene mutation or export. |

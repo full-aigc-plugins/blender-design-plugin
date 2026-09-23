@@ -103,6 +103,7 @@ The task summaries above define review boundaries. Implementers must follow the 
 ### Task 1 detailed steps — package identity and schemas
 
 **Files:**
+
 - Create: `.codex-plugin/plugin.json`
 - Create: `.agents/plugins/marketplace.json`
 - Create: `schemas/scene_receipt.schema.json`
@@ -123,6 +124,7 @@ The task summaries above define review boundaries. Implementers must follow the 
 ### Task 2 detailed steps — discovery and process isolation
 
 **Files:**
+
 - Create: `scripts/blender_runner.py`
 - Create: `tests/test_blender_runner.py`
 
@@ -149,6 +151,7 @@ def run_blender(argv: list[str], timeout_seconds: int) -> CompletedProcess[str]:
 ### Task 3 detailed steps — read-only scene inspection
 
 **Files:**
+
 - Create: `scripts/blender_bridge.py`
 - Create: `tests/fakes/fake_bpy.py`
 - Create: `tests/test_scene_inspection.py`
@@ -169,6 +172,7 @@ def main(request_path: str) -> int: ...
 ### Task 4 detailed steps — reversible preview rendering
 
 **Files:**
+
 - Modify: `scripts/blender_bridge.py`
 - Create: `tests/test_preview_export.py`
 
@@ -190,6 +194,7 @@ def export_preview(bpy_module, request: dict) -> dict: ...
 ### Task 5 detailed steps — media validation
 
 **Files:**
+
 - Create: `scripts/media_probe.py`
 - Create: `tests/test_media_probe.py`
 
@@ -209,6 +214,7 @@ def validate_media(probe: dict, profile: dict) -> list[str]: ...
 ### Task 6 detailed steps — Agent Skills
 
 **Files:**
+
 - Create: `skills/codex-blender-use/SKILL.md`
 - Create: `skills/codex-blender-inspect/SKILL.md`
 - Create: `skills/codex-blender-export-preview/SKILL.md`
@@ -224,6 +230,7 @@ def validate_media(probe: dict, profile: dict) -> list[str]: ...
 ### Task 7 detailed steps — release evidence
 
 **Files:**
+
 - Create: `tests/test_distribution.py`
 - Create: `docs/verification/offline.md`
 - Create: `docs/verification/blender-runtime.md`

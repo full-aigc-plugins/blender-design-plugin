@@ -15,7 +15,7 @@
 使用既有 codex-blender/v1 请求封装。下面仅为 arguments：
 
 | 命令 | 参数 | 返回 |
-|---|---|---|
+| --- | --- | --- |
 | capability.list | `{ "domain": "mesh", "limit": 50, "offset": 0 }` | items、total、nextOffset、全领域 domains |
 | capability.describe | `{ "id": "object.transform" }` | 输入字段、风险、成熟度、上下文、证据、可用性 |
 
@@ -46,7 +46,7 @@ domain/maturity 可省略；maturity 使用 L0–L4；offset 为非负整数，l
 ### 平台与阶段门禁
 
 | 项目 | 当前证据 | 结论 |
-|---|---|---|
+| --- | --- | --- |
 | macOS Apple Silicon / Blender 5.2.1 LTS 后台 | 本次隔离查询及前置校验 | 目录测试通过，非作品验收 |
 | 同版本 Managed / Connector 前台 | foreground-policy-runtime.md 既有记录 | 保留证据；此次未重跑整套 GUI |
 | 多 Blender 实例窗口焦点 | 既有记录指出错误实例选择 | 未解决，不承诺 OS 前台激活 |

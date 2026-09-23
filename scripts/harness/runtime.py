@@ -2,52 +2,52 @@
 
 from __future__ import annotations
 
-from .commands.animation import AnimationCommands
-from .commands.camera import CameraCommands
-from .commands.light import LightCommands
-from .commands.material import MaterialCommands
-from .commands.object import ObjectCommands
-from .commands.official_uploader import OfficialUploaderCommands
-from .commands.scene import SceneCommands
-from .commands.view import ViewCommands
-from .commands.collection import OrganizationCommands
-from .commands.mesh import MeshCommands
-from .commands.modifier import ModifierCommands
-from .commands.curve import CurveCommands
-from .commands.asset import AssetCommands
-from .commands.recipe import RecipeCommands
-from .commands.uv import UVCommands
-from .commands.rig import RigCommands
-from .commands.constraint import ConstraintCommands
-from .commands.advanced_animation import AdvancedAnimationCommands
-from .commands.quality import QualityCommands
-from .jobs import JobManager
-from .commands.geometry_nodes import GeometryNodeCommands
-from .commands.sculpt import SculptCommands
-from .commands.hair import HairCommands
-from .commands.simulation import SimulationCommands
-from .commands.render import RenderCommands
-from .commands.compositor import CompositorCommands
-from .extended_export import ExtendedExporter
-from .commands.grease_pencil import GreasePencilCommands
-from .commands.sequence import SequenceCommands
-from .commands.tracking import TrackingCommands
-from .commands.retopo import RetopoCommands
-from .commands.validation import closed_arguments
-from pathlib import Path
 import re
+from pathlib import Path
 
 from .advanced_python import AdvancedPythonExecutor
-from .exporter import Exporter
-from .preview import PreviewEngine
-from .path_policy import PathPolicy
-from .errors import HarnessError
-from .production_profile import ProductionProfile, RuntimeIdentity
+from .commands.advanced_animation import AdvancedAnimationCommands
+from .commands.animation import AnimationCommands
+from .commands.asset import AssetCommands
+from .commands.camera import CameraCommands
+from .commands.collection import OrganizationCommands
+from .commands.compositor import CompositorCommands
+from .commands.constraint import ConstraintCommands
+from .commands.curve import CurveCommands
+from .commands.geometry_nodes import GeometryNodeCommands
+from .commands.grease_pencil import GreasePencilCommands
+from .commands.hair import HairCommands
+from .commands.light import LightCommands
+from .commands.material import MaterialCommands
+from .commands.mesh import MeshCommands
+from .commands.modifier import ModifierCommands
+from .commands.object import ObjectCommands
+from .commands.official_uploader import OfficialUploaderCommands
+from .commands.quality import QualityCommands
+from .commands.recipe import RecipeCommands
+from .commands.render import RenderCommands
+from .commands.retopo import RetopoCommands
+from .commands.rig import RigCommands
+from .commands.scene import SceneCommands
+from .commands.sculpt import SculptCommands
+from .commands.sequence import SequenceCommands
+from .commands.simulation import SimulationCommands
+from .commands.tracking import TrackingCommands
+from .commands.uv import UVCommands
+from .commands.validation import closed_arguments
+from .commands.view import ViewCommands
 from .compat.selector import select_adapter
+from .errors import HarnessError
+from .execution_policy import ExecutionMode, ExecutionPolicy
+from .exporter import Exporter
+from .extended_export import ExtendedExporter
+from .jobs import JobManager
+from .path_policy import PathPolicy
+from .preview import PreviewEngine
+from .production_profile import ProductionProfile, RuntimeIdentity
 from .registry import CommandRegistry
 from .runtime_catalog import RuntimeCommandRegistry
 from .session import HarnessSession
-from .execution_policy import ExecutionMode, ExecutionPolicy
 
 
 def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output_root: Path | None = None, approved_asset_roots=(), revision_provider=lambda: 0) -> CommandRegistry:
@@ -298,7 +298,6 @@ def build_registry(bpy_module, *, runtime_mode: str = "managed", approved_output
                       validate=closed_arguments(required=('camera','path','name','frameStart','frameEnd'),optional=('targetObjectId',)))
     registry.register('camera.add_handheld',advanced_animation.camera_handheld,
                       validate=closed_arguments(required=('frameStart','frameEnd'),optional=('name','objectId','translationStrength','rotationStrength','noiseScale','seed')))
-    common_validation=('frameStart','frameEnd','limit')
     registry.register('validation.foot_drift',quality.foot_drift,
                       validate=closed_arguments(required=('armature','bone','frameStart','frameEnd'),optional=('limit',)),risk='read')
     registry.register('validation.limb_length',quality.limb_length,

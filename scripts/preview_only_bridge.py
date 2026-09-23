@@ -100,7 +100,6 @@ def render_preview_only(
     """Render one local preview without invoking any upload operator."""
     from blender_bridge import snapshot_scene_state, verify_restoration
     from codex_bridge import enable_addon
-
     from vendor.jimeng_blender_uploader import dcc_config, viewport_render
 
     enable_addon(bpy_module)

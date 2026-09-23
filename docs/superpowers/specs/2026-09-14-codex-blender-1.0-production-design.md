@@ -29,7 +29,7 @@
 ## 3. 固定事实（不得由实现自行选择）
 
 | 项 | 固定值 |
-|---|---|
+| --- | --- |
 | 正式 Blender 版本 | 4.2.23、4.3.2、4.4.3、4.5.13、5.0.1、5.1.2、5.2.1 |
 | 正式平台 | macOS arm64、Windows x64 |
 | Linux | 仅 experimental headless |
@@ -38,7 +38,7 @@
 | 并发 active 后台任务 | 最多 2 个 |
 | Job log 轮转 | 50 MiB × 5 |
 | 磁盘保留 | `max(卷容量 20%, 20GB)` |
-| Blender 包来源 | https://download.blender.org/release/ 的官方 `.sha256` |
+| Blender 包来源 | <https://download.blender.org/release/> 的官方 `.sha256` |
 | 契约兼容 | 保持 v1 请求 Envelope；v1–v3 回执兼容；新增生产回执用 v4 |
 
 ## 4. 证据分级与门禁

@@ -9,7 +9,7 @@ Blender 5.2.1 LTS, macOS Apple Silicon. Tests were executed against this working
 tree in separate foreground processes, leaving existing creative project files intact.
 
 | Gate | Result | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Managed policy reaches the live session | PASS | Descriptor and `session.status` report auto_with_budget and blend/png scope |
 | Real design through public commands | PASS | New object, material, transform, frame range and location keyframes |
 | Camera/front/side/top, focus and playback | PASS | Public command responses; duplicate playback=true remains playing |

@@ -3,7 +3,7 @@
 > **文档信息**
 >
 > | 字段 | 值 |
-> |---|---|
+> | --- | --- |
 > | 状态 | `blender-design` `0.3.0` 的已交付架构 |
 > | 取代 | 面向即梦上传器的旧架构，归档于 `docs/archive/legacy-uploader/` |
 > | 权威设计记录 | [Blender Design Harness Design](superpowers/specs/2026-09-12-blender-design-harness-design.md) |
@@ -21,7 +21,7 @@ Codex 已经能用语言描述场景。它做不到的是把描述可靠地变�
 推动本架构的失效模式有三个：Agent 修改用户场景却没有回滚路径；把命令退出码当作成功证据而不是验证过的产物；以及把付费远程生成混进本地建模工具。
 
 | 驱动力 | 对架构的后果 |
-|---|---|
+| --- | --- |
 | 用户场景绝不能丢 | 只在主线程修改、里程碑快照、回滚与修订守卫 |
 | 退出码不是证据 | 接受之前先出新鲜预览，再做独立重导入与媒体探测 |
 | 本地工作与付费工作不能混 | 任何导出都不隐含交接、上传、认证、报价或付费动作 |
@@ -71,7 +71,7 @@ flowchart TB
 ## 5. 当前状态、目标状态与差距
 
 | 能力 | 当前 | 目标 | 差距 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | macOS Apple Silicon 非侵入模式 | 已有记录的运行证据 | 不变 | 无 |
 | macOS Connector 生命周期 | 已验证 | 不变 | 无 |
 | 模型、栅格与 H.264 导出 | 已验证，含重导入与探测 | 不变 | 无 |
@@ -86,7 +86,7 @@ flowchart TB
 ## 6. 原则与决策
 
 | 决策 | 理由 | 反转条件 |
-|---|---|---|
+| --- | --- | --- |
 | 只在 Blender 主线程修改 | 跨线程写入会以难以察觉的方式破坏场景数据 | 无 |
 | 用封闭命令注册表代替自由 Python | 让每项能力可审计、每个参数经过 schema 校验 | 无 |
 | 每次修改都带场景 revision | 防止过期计划覆盖更新的场景 | 无 |
@@ -97,7 +97,7 @@ flowchart TB
 ## 7. 组件与依赖
 
 | 组件 | 负责 |
-|---|---|
+| --- | --- |
 | `session.*` 注册表 | 能力、状态、关闭、审计摘要 |
 | 命令守卫 | 封闭白名单、revision 校验、路径收敛、授权声明 |
 | 主线程队列 | 排队修改并在 Blender 定时回调中执行 |
@@ -142,7 +142,7 @@ transport (UDS / Named Pipe / loopback TCP)
 ### 8.3 失败与恢复
 
 | 失败 | 行为 |
-|---|---|
+| --- | --- |
 | 未注册命令 | 失败即关闭；不派发 |
 | `expectedSceneRevision` 过期 | 在修改之前拒绝 |
 | 非幂等 `requestId` 重复 | 返回此前的响应，不重复执行 |
@@ -157,7 +157,7 @@ transport (UDS / Named Pipe / loopback TCP)
 ## 9. 平台、传输与兼容性
 
 | 平台 | 状态 | 首选传输 |
-|---|---|---|
+| --- | --- | --- |
 | macOS Apple Silicon | 发布门禁 | Unix Domain Socket |
 | Windows x64 | 发布门禁 | Named Pipe |
 | Linux | 实验性 | 带 token 的 loopback TCP |
@@ -165,7 +165,7 @@ transport (UDS / Named Pipe / loopback TCP)
 两个发布门禁平台也都支持带 token 的 `127.0.0.1` TCP 作为降级方案。每个会话都使用随机 256 位密钥、受限的 socket 或管道权限、空闲过期、请求大小上限与协议版本协商。
 
 | 维度 | 受支持 |
-|---|---|
+| --- | --- |
 | Blender | 发布门禁平台上验证的 5.2.1 LTS |
 | 协议 | `codex-blender/v1` |
 | 模型导出 | `.blend`、`.glb`、`.gltf`、`.fbx`、`.obj`、`.stl` |
@@ -186,7 +186,7 @@ transport (UDS / Named Pipe / loopback TCP)
 - 当 Blender 切换到未批准的文件时，Connector 停止接受命令。
 
 | 预算 | 值 | 理由 |
-|---|---|---|
+| --- | --- | --- |
 | 授权令牌有效期 | 60 秒，动作绑定 | 令牌授权一个不可逆动作，而不是一个会话 |
 | 会话密钥 | 随机 256 位 | 密钥被猜中等于交出场景控制权 |
 | 请求大小 | 有上限 | 防止超大载荷卡住主线程 |
@@ -208,7 +208,7 @@ transport (UDS / Named Pipe / loopback TCP)
 归档的上传器时代设计不是回退路径，而是已被取代。后续增量扩展命令注册表与导出契约，而不是把 Dreamina 行为重新引入本插件。动画创作能力升级、动作质量评估与后台导出 worker 是下一批宣告的增量。由于命令契约是封闭且版本化的，新增能力是对注册表的追加式改动加上其 schema 与测试。
 
 | 风险 | 缓解 |
-|---|---|
+| --- | --- |
 | 场景丢失 | 主线程纪律、快照与已验证回滚 |
 | 导出静默损坏 | 独立重导入与媒体探测 |
 | 平台过度声称 | Windows 与 Linux 条目如实发布为 `NOT RUN` 与实验性 |
@@ -221,7 +221,7 @@ transport (UDS / Named Pipe / loopback TCP)
 它同样记录了**不被接受**的部分：Windows x64 非侵入模式与 Connector 运行期仍为 `NOT RUN`，因为它们需要 Windows Blender 主机。本文档不做这些声称。
 
 | 断言 | 证据 |
-|---|---|
+| --- | --- |
 | 各模式能力清单 | [capability-counts.json](verification/capability-counts.json) 与生成的覆盖摘要 |
 | 领域覆盖 | [blender-domain-coverage-matrix.md](verification/blender-domain-coverage-matrix.md) |
 | 前台生命周期与策略 | [foreground-lifecycle-macos-arm64.md](verification/foreground-lifecycle-macos-arm64.md)、[foreground-policy-runtime.md](verification/foreground-policy-runtime.md) |

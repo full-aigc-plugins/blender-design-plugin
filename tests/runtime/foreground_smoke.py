@@ -86,7 +86,7 @@ def main():
         call('transaction.begin')
         snap = call('transaction.commit')['snapshotId']
         target = Path(descriptor['outputRoot'])/'foreground_demo.blend'
-        result = call('export.file', {'path':str(target),'snapshotId':snap})
+        call('export.file', {'path':str(target),'snapshotId':snap})
         assert target.is_file()
         call('export.file', {'path':str(target),'snapshotId':snap}, expect='AUTHORIZATION_REQUIRED')
         call('session.set_progress', {'stage':'Local smoke passed','progress':1})

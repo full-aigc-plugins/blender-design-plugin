@@ -9,7 +9,7 @@ Every Skill uses `blender-design-<clear-action-or-domain>`, lowercase ASCII and 
 ## Routing matrix
 
 | Intent or command | Primary Skill | Add when needed |
-|---|---|---|
+| --- | --- | --- |
 | Session launch/open scene | managed or connector | inspect before mutation |
 | Scene hierarchy/assets | scene-assembly | inspect |
 | Mesh/product/prop | hard-surface | curves, UV-material |

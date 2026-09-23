@@ -1,4 +1,5 @@
 """Non-destructive named compositor chain and inspection."""
+import itertools
 from pathlib import Path
 
 from ..errors import HarnessError
@@ -17,7 +18,7 @@ class CompositorCommands:
             if hasattr(scene,'use_nodes'):scene.use_nodes=True
         return tree
     def configure(self,args):
-        scene=self.bpy.context.scene;tree=self._tree(True);exposure=finite_number(args.get('exposure',0),'exposure');glare=args.get('glare',False)
+        tree=self._tree(True);exposure=finite_number(args.get('exposure',0),'exposure');glare=args.get('glare',False)
         if type(glare) is not bool:raise HarnessError('INVALID_ARGUMENT','glare must be boolean')
         def node(node_type,name):
             existing=tree.nodes.get(name)
@@ -32,10 +33,10 @@ class CompositorCommands:
             if hasattr(glare_node,'glare_type'):glare_node.glare_type='FOG_GLOW'
             chain.append(glare_node)
         chain.append(composite)
-        for source,target in zip(chain,chain[1:]):tree.links.new(source.outputs['Image'],target.inputs['Image'])
+        for source,target in itertools.pairwise(chain):tree.links.new(source.outputs['Image'],target.inputs['Image'])
         return {'changedObjects':[],'result':{'nodes':[item.name for item in chain],'exposure':exposure,'glare':glare}}
     def inspect(self,_args):
-        scene=self.bpy.context.scene;tree=self._tree(False)
+        tree=self._tree(False)
         if tree is None:return {'changedObjects':[],'result':{'enabled':False,'nodes':[],'links':[]}}
         return {'changedObjects':[],'result':{'enabled':True,'nodes':[{'name':n.name,'type':n.bl_idname} for n in tree.nodes],
           'links':[{'from':f'{l.from_node.name}.{l.from_socket.name}','to':f'{l.to_node.name}.{l.to_socket.name}'} for l in tree.links]}}

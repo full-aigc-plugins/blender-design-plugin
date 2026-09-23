@@ -93,7 +93,7 @@ def _probe_grease_pencil(bpy_module):
     result = {
         'GPencil_available': hasattr(bpy_module.types, 'GPencil') or hasattr(bpy_module.data, 'grease_pencil'),
         'GreasePencil_available': hasattr(bpy_module.types, 'GreasePencil'),
-        'grease_pencil_add_operator': hasattr(getattr(bpy_module.ops.object, 'grease_pencil_add', None), '__call__'),
+        'grease_pencil_add_operator': callable(getattr(bpy_module.ops.object, 'grease_pencil_add', None)),
     }
     # Try creating a GP object to see which API works.
     try:

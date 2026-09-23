@@ -13,7 +13,7 @@ installed, no network calls, no telemetry.
 ## Commands exercised
 
 | Command | Evidence | Result |
-|---------|----------|--------|
+| --------- | ---------- | -------- |
 | `view.set` | 4 calls with orientations FRONT, SIDE, TOP, CAMERA | All succeeded |
 | `view.focus` | Called with target object `FgAcceptFocusTarget` (created via `object.create_mesh`) | Succeeded |
 | `view.present` | Called once; returned `windowCount: 2` | Succeeded |
@@ -27,7 +27,7 @@ under `<output-root>/milestones/snapshot-9ded457afa6ac4b1f9e22bc8/`.  SHA-256
 checksums (verified on disk):
 
 | View | SHA-256 |
-|------|---------|
+| ------ | --------- |
 | camera.png | `c858bb68b9bc87d2903d26b7d7b4c64a182ce06691e709bdbf438ddf83f2b7d7` |
 | front.png | `b0e0dc1e03dcca835664d2a8ce6ef647f718aa533d992f1b1b621361d76ed6c3` |
 | side.png | `437e6011de0491ffcffc3f07e79a238b5ba3ac4e6681625c8680a267ca66b5bc` |

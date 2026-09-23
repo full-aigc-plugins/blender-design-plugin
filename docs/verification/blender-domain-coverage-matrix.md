@@ -5,7 +5,7 @@
 代码事实源：运行时命令注册表与 `capability.list/describe`。本表是 P0 审计快照；注册命令、Skill 和真实验收分别计算。
 
 | 领域 | 工具覆盖 | Skill 覆盖 | 真实验证 | 当前成熟度/缺口 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 场景/对象/集合 | 单位、稳定 ID、局部/世界变换、父子保持世界坐标、复制/实例、合并/分离、可见性、原点、应用变换 | hard-surface + router | Blender 5.2.1 后台真实测试及 P1 工程重开 | L3（macOS 基线）；其他平台未验证 |
 | Mesh | indices/spatial/connected/normal 选择；挤出、内插、倒角、细分、桥接、焊接、删除、三角化、法线重算；拓扑版本 | hard-surface | 九类操作真实测试；开放曲面语义验证 | L3（P1 范围）；更高级拓扑 L0 |
 | Modifier | Mirror/Array/Bevel/Subdivision/Solidify/Boolean/Decimate 生命周期 | hard-surface | 七类在真实 Blender 创建、配置、排序、启停、应用、移除 | L3（首批七类） |
@@ -31,7 +31,7 @@
 ## 平台与运行模式
 
 | 环境 | 证据 | 结论 |
-|---|---|---|
+| --- | --- | --- |
 | Blender 5.2.1 LTS / macOS Apple Silicon / 后台 | P1 foundation、mesh、modifier、curve/asset、recipe、保存重开 | P0/P1 当前基线 |
 | 同版本 Managed/Connector 前台 | 原生面板、视图、播放、暂停/恢复与策略验收记录 | 基础通过；多实例 OS 焦点不承诺 |
 | Windows x64 | 无当前实机证据 | 未验证，不得标 L4 |

@@ -75,9 +75,7 @@ class ProductionProfile:
         cmd_class = meta.get('class', 'standard')
         if cmd_class in self._exclude_classes:
             return True
-        if domain in self._exclude_domains:
-            return True
-        return False
+        return domain in self._exclude_domains
 
     def _required_evidence(self, maturity: str) -> tuple[str, ...]:
         """Return the evidence keys a maturity level requires."""

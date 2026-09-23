@@ -7,7 +7,7 @@
 ## Verified
 
 | Gate | Status | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Harness command core | PASS | 7 real Blender commands, revision 0→7 |
 | Managed foreground mode | PASS | Blender launched without Add-on installation; UDS request roundtrip created `ManagedSphere` |
 | Connector lifecycle | PASS | Generated zip installed/enabled in Blender 5.2, source mode start/descriptor/revoke/unregister passed; test installation removed afterward |
@@ -25,7 +25,7 @@
 ## Not yet accepted
 
 | Gate | Status | Reason |
-|---|---|---|
+| --- | --- | --- |
 | H.264 MP4 | PASS macOS | Blender PNG sequence encoded by ffmpeg 9.0.1/libx264; ffprobe confirmed H.264, even dimensions, 24fps, duration, and size |
 | Transaction integration | PASS macOS | Real managed session created an object, injected a failure, reopened the checkpoint, removed the object, and restored revision 0 |
 | Model re-import validation | PASS macOS | BLEND/GLB/GLTF/FBX/OBJ/STL were independently opened/imported and contained meshes |
