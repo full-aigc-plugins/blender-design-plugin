@@ -154,6 +154,24 @@ PARTME_ARTIFACTS = {
 
 # --- Codex manifest rules -------------------------------------------------
 
+
+def validate_portable_surface(root):
+    """Check the portable Agent Plugins v1.0.0 surface.
+
+    Migrated 2026-09-28: root `plugin.json` and `mcp.json` are the portable
+    manifest surface, so this gate validates them with the shared spec validator
+    rather than forbidding them. See docs/portable-migration.md.
+    """
+    import importlib.util
+
+    target = root / "scripts" / "validate_portable_plugin.py"
+    if not target.is_file():
+        return ["missing scripts/validate_portable_plugin.py"]
+    spec = importlib.util.spec_from_file_location("validate_portable_plugin", target)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.validate(root).errors
+
 def validate_segment(value, kind):
     """Mirror validate_plugin_segment(); return an error string or None."""
     if not value:
@@ -514,10 +532,7 @@ def validate(root: Path) -> list[str]:
     adapter = root / "bin" / "blender_adapter"
     if not adapter.is_file() or not os.access(adapter, os.X_OK):
         errors.append("bin/blender_adapter must exist and be executable")
-    if (root / "plugin.json").exists() or (root / "mcp.json").exists():
-        errors.append(
-            "portable manifests must remain inactive during compatibility-first scaffolding"
-        )
+    errors.extend(validate_portable_surface(root))
     for filename, expected in EXPECTED_ASSETS.items():
         try:
             if png_shape(root / filename) != expected:

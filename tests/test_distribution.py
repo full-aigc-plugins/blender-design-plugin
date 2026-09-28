@@ -215,9 +215,19 @@ class TestStructureLegalAndAssets(unittest.TestCase):
                          "docs/portable-migration.md"):
             self.assertTrue((ROOT / filename).is_file(), filename)
 
-    def test_portable_manifests_are_inactive(self) -> None:
-        self.assertFalse((ROOT / "plugin.json").exists())
-        self.assertFalse((ROOT / "mcp.json").exists())
+    def test_portable_manifests_are_active_and_conformant(self) -> None:
+        # Migrated 2026-09-28: these are the portable Agent Plugins v1.0.0
+        # surface. See docs/portable-migration.md.
+        self.assertTrue((ROOT / "plugin.json").is_file(), "missing portable manifest")
+        self.assertTrue((ROOT / "mcp.json").is_file(), "missing portable mcp.json")
+        portable = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            portable["$schema"],
+            "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+        )
+        self.assertEqual(portable["name"], "blender-design")
+        self.assertNotIn("skills", portable)
+        self.assertNotIn("mcpServers", portable)
 
     def test_brand_asset_shapes(self) -> None:
         self.assertEqual(png_shape("assets/official-logo.png"), (1024, 1024, 6))
