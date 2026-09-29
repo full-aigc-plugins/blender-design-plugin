@@ -1,81 +1,44 @@
 #!/usr/bin/env python3
-"""SessionStart hook: report Blender readiness for this plugin.
+"""SessionStart hook: plugin self-integrity check (advisory).
 
-Advisory only — always exits 0. Stdout is a short Chinese summary intended
-to be injected into session context by the host (Claude-format hooks).
+Contract, identical to the sibling check_*_intent / check_closeout hooks:
+only verifies files shipped with this package (and the interpreter version
+the hook itself needs); external apps, third-party CLIs and credentials are
+first-use setup owned by the skills. Everything intact -> print nothing,
+exit 0. Something missing -> one warning line, still exit 0. Any stdin
+(including malformed) is tolerated and never blocks a session.
 """
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import sys
 from pathlib import Path
 
-DISK_WARN_BYTES = 20 * 1024 * 1024 * 1024  # 20GB
-
-BLENDER_CANDIDATES = [
-    "/Applications/Blender.app/Contents/MacOS/Blender",
-    "/Applications/Blender/Blender.app/Contents/MacOS/Blender",
-]
-
-
-def find_blender() -> str:
-    for candidate in BLENDER_CANDIDATES:
-        if Path(candidate).exists():
-            return candidate
-    found = shutil.which("blender") or shutil.which("Blender")
-    return found or ""
-
-
-def stale_sockets() -> list[str]:
-    base = Path(os.environ.get("TMPDIR", "/tmp")) / "blender-design"
-    if not base.is_dir():
-        return []
-    hits = []
-    for pattern in ("*.sock", "*.socket"):
-        hits.extend(str(p) for p in base.glob(pattern))
-    return sorted(hits)
+ROOT = next((c for c in Path(__file__).resolve().parents if (c / "plugin.json").is_file()), Path(__file__).resolve().parents[1])
 
 
 def main() -> int:
-    lines: list[str] = []
-
-    blender = find_blender()
-    if blender:
-        lines.append(f"Blender: {blender}")
-    else:
-        lines.append("Blender: 未找到（/Applications/Blender.app 或 PATH 中均无）；涉及建模/渲染的请求前需先安装")
-
-    lines.append(f"python3: {sys.version.split()[0]} at {Path(sys.executable)}")
-
-    try:
-        usage = shutil.disk_usage(Path.cwd() or Path.home())
-        free_gb = usage.free / 1024**3
-        if free_gb < DISK_WARN_BYTES / 1024**3:
-            lines.append(f"磁盘: 仅剩 {free_gb:.1f}GB —— 渲染与导出可能失败，建议先清理")
-        else:
-            lines.append(f"磁盘: {free_gb:.1f}GB 可用")
-    except OSError:
-        pass
-
-    sockets = stale_sockets()
-    if sockets:
-        lines.append(f"残留 socket: {len(sockets)} 个于 blender-design 临时目录，可能是上次会话未收尾")
-
-    # Consume stdin if present so the writer never sees EPIPE; payload unused.
+    problems: list[str] = []
+    if not (ROOT / "scripts" / "blender_mcp_server.py").is_file():
+        problems.append("blender_mcp_server.py 缺失（包不完整）")
+    base = Path(__import__("os").environ.get("TMPDIR", "/tmp")) / "blender-design"
+    if base.is_dir():
+        residue = sorted(p.name for pat in ("*.sock", "*.socket") for p in base.glob(pat))
+        if residue:
+            problems.append(f"残留 socket {len(residue)} 个于 blender-design 临时目录——上次会话可能未收尾，连接失败时可清理")
+    if problems:
+        print("Blender 设计环境告警：" + "；".join(problems))
+    # Drain the hook payload so the host never sees a broken pipe.
     try:
         sys.stdin.read()
-    except Exception:  # noqa: S110, BLE001
+    except (OSError, ValueError, UnicodeDecodeError):
         pass
-
-    print("Blender 插件环境：" + "；".join(lines))
     return 0
 
 
 if __name__ == "__main__":
     try:
         json.load(sys.stdin)
-    except Exception:  # noqa: S110, BLE001
+    except (ValueError, OSError):
         pass
     sys.exit(main())
