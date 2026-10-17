@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "blender-design",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "author": {
     "name": "Full Stack Skills / PartMe.AI",

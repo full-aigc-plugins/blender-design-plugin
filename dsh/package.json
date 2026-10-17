@@ -1,0 +1,34 @@
+{
+  "name": "@partme-dsh/blender-design",
+  "version": "0.16.0",
+  "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "./icon.png",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/index.js",
+    "icon.svg",
+    "icon.png",
+    "README.md"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "blender",
+    "3d-design",
+    "modeling",
+    "animation",
+    "export",
+    "codex"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
