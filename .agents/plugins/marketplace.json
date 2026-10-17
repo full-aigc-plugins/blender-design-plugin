@@ -22,7 +22,7 @@
       "interface": {
         "displayName": "Blender Design",
         "shortDescription": "Design, review, and export Blender projects",
-        "logo": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.15.0/assets/official-logo.png"
+        "logo": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.16.0/assets/official-logo.png"
       }
     }
   ]
