@@ -1,5 +1,5 @@
 {
-  "name": "@partme-dsh/blender-design",
+  "name": "blender-design",
   "version": "0.16.0",
   "description": "Design, review, and export Blender scenes through controlled operations, visual milestones, and recovery checkpoints.",
   "type": "module",
@@ -32,5 +32,6 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  }
+  },
+  "private": true
 }
