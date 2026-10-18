@@ -1,0 +1,12 @@
+{
+  "name": "blender-design-plugin",
+  "version": "0.16.0",
+  "private": true,
+  "type": "module",
+  "main": "./dsh/lib/index.js",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
