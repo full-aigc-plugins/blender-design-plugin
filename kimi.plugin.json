@@ -1,7 +1,7 @@
 {
   "name": "blender-design",
   "version": "0.14.1",
-  "description": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
+  "description": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。",
   "author": {
     "name": "Full Stack Skills / PartMe.AI"
   },
@@ -14,8 +14,8 @@
     "previs"
   ],
   "interface": {
-    "displayName": "Blender Design · 3D Modeling",
-    "shortDescription": "Modeling, rigging, materials, animation, rendering and export",
+    "displayName": "Blender（三维建模）",
+    "shortDescription": "建模、绑定、材质、动画、渲染与导出",
     "longDescription": "Controls Blender through a guarded local harness in managed or connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports. Includes white-model previs and Jimeng handoff workflows.",
     "developerName": "Full Stack Skills / PartMe.AI",
     "websiteURL": "https://github.com/full-aigc-plugins/blender-design-plugin"
@@ -46,5 +46,11 @@
       "command": "python3 ./hooks/check_closeout.py",
       "timeout": 15
     }
-  ]
+  ],
+  "displayName_i18n": {
+    "zh-CN": "Blender（三维建模）"
+  },
+  "description_i18n": {
+    "zh-CN": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。"
+  }
 }

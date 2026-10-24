@@ -1,13 +1,15 @@
 {
   "name": "blender-design",
-  "displayName": "Blender Design · 3D Modeling",
+  "displayName": "Blender（三维建模）",
   "displayName_i18n": {
-    "en": "Blender Design · 3D Modeling"
+    "en": "Blender Design · 3D Modeling",
+    "zh-CN": "Blender（三维建模）"
   },
   "version": "0.14.1",
-  "description": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
+  "description": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。",
   "description_i18n": {
-    "en": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export."
+    "en": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
+    "zh-CN": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。"
   },
   "author": {
     "name": "Full Stack Skills / PartMe.AI",

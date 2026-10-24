@@ -1,7 +1,7 @@
 {
   "name": "blender-design",
   "version": "0.14.1",
-  "description": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
+  "description": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。",
   "author": {
     "name": "Full Stack Skills / PartMe.AI",
     "url": "https://github.com/partme-ai"
@@ -44,5 +44,12 @@
     "logoDark": "./assets/official-logo.png",
     "screenshots": [],
     "composerIconDark": "./assets/official-logo.png"
+  },
+  "displayName": "Blender（三维建模）",
+  "displayName_i18n": {
+    "zh-CN": "Blender（三维建模）"
+  },
+  "description_i18n": {
+    "zh-CN": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。"
   }
 }
