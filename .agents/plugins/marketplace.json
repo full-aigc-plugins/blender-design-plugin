@@ -1,7 +1,7 @@
 {
   "name": "partme-ai-blender",
   "interface": {
-    "displayName": "3D Modeling · Blender Design"
+    "displayName": "Blender Design · 3D Modeling"
   },
   "plugins": [
     {
@@ -20,7 +20,7 @@
       "description": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
       "icon": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.14.1/assets/official-logo.png",
       "interface": {
-        "displayName": "3D Modeling · Blender Design",
+        "displayName": "Blender Design · 3D Modeling",
         "shortDescription": "Modeling, rigging, materials, animation, rendering and export",
         "logo": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.14.1/assets/official-logo.png"
       }

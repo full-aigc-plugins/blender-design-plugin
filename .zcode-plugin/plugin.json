@@ -1,8 +1,8 @@
 {
   "name": "blender-design",
-  "displayName": "3D Modeling · Blender Design",
+  "displayName": "Blender Design · 3D Modeling",
   "displayName_i18n": {
-    "en": "3D Modeling · Blender Design"
+    "en": "Blender Design · 3D Modeling"
   },
   "version": "0.14.1",
   "description": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",

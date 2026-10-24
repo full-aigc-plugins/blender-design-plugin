@@ -20,7 +20,7 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "3D Modeling · Blender Design",
+    "displayName": "Blender Design · 3D Modeling",
     "shortDescription": "Modeling, rigging, materials, animation, rendering and export",
     "longDescription": "Controls Blender through a guarded local Harness in non-invasive managed or Connector mode, with structured scene operations, milestone screenshots, transaction rollback, and verified multi-format exports.",
     "developerName": "Full Stack Skills / PartMe.AI",
