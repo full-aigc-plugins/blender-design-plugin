@@ -49,6 +49,15 @@
     },
     "ai.nanoco.nanoclaw": {
       "agentName": "Blender Design"
+    },
+    "ai.partme": {
+      "displayName": "Blender（三维建模）",
+      "displayName_i18n": {
+        "zh-CN": "Blender（三维建模）"
+      },
+      "description_i18n": {
+        "zh-CN": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。"
+      }
     }
   }
 }
