@@ -27,6 +27,10 @@ Blender（三维建模） 技能（检查 → 计划 → 执行 → 核验）
 变更结果 + 证据 + 回退路径
 ```
 
+## 可核验能力计数
+
+运行时登记表 records 196 commands（Managed 模式，18 at L1）；Connector 模式登记 201 条命令，23 at L1。两种模式分别统计，不合并为一个总数。数据见 [capability-counts.json](docs/verification/capability-counts.json)。
+
 ## 能力与边界
 
 | 能力 | 说明 | 边界 |
