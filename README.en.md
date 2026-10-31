@@ -27,6 +27,10 @@ Blender（三维建模） skill (inspect → plan → execute → verify)
 change + evidence + rollback path
 ```
 
+## Verified capability counts
+
+The runtime registry records 196 commands in Managed mode (18 at L1) and 201 commands in Connector mode (23 at L1). These are separate mode totals; see [capability-counts.json](docs/verification/capability-counts.json).
+
 ## Capabilities and boundaries
 
 | Capability | What it does | Boundary |
