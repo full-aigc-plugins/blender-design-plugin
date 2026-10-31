@@ -23,7 +23,7 @@ from scripts.harness.runtime_catalog import (
 ROOT = Path(__file__).resolve().parents[1]
 COUNTS_PATH = ROOT / "docs/verification/capability-counts.json"
 README = ROOT / "README.md"
-README_ZH = ROOT / "README.zh-CN.md"
+README_ZH = ROOT / "README.en.md"
 COMPLETION_DOC = ROOT / "docs/verification/full-plan-completion.md"
 MATRIX_DOC = ROOT / "docs/verification/blender-domain-coverage-matrix.md"
 PROVENANCE_PATH = ROOT / "docs/verification/1.0-baseline-provenance.json"

@@ -46,7 +46,7 @@ NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:\+[0-9A-Za-z.-]+)?$")
 REQUIRED_FILES = (
     "README.md",
-    "README.zh-CN.md",
+    "README.en.md",
     "LICENSE",
     "NOTICE",
     "PRIVACY.md",
