@@ -165,7 +165,7 @@ class TestManifestAndMarketplace(unittest.TestCase):
         self.assertEqual(interface["brandColor"], BRAND_COLOR)
         self.assertEqual(interface["logo"], "./assets/official-logo.png")
         self.assertEqual(interface["logoDark"], "./assets/official-logo.png")
-        self.assertEqual(interface["composerIcon"], "./assets/composer-icon.png")
+        self.assertEqual(interface["composerIcon"], "./assets/official-logo.png")
         prompts = interface["defaultPrompt"]
         self.assertTrue(1 <= len(prompts) <= 3)
         self.assertTrue(all(len(prompt) <= 128 for prompt in prompts))
