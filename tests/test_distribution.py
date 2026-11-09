@@ -30,7 +30,7 @@ from validate_distribution import main as validate_main
 from validate_distribution import validate_segment
 
 PLUGIN_ID = "blender-design"
-DISPLAY_NAME = "Blender Design · 3D Modeling"
+DISPLAY_NAME = "Blender（三维建模）"
 REPOSITORY = "https://github.com/full-aigc-plugins/blender-design-plugin"
 BRAND_COLOR = "#E87D0D"
 EXPECTED_SKILLS = (

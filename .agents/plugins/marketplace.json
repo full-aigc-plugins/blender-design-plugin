@@ -1,7 +1,7 @@
 {
   "name": "partme-ai-blender",
   "interface": {
-    "displayName": "Blender Design · 3D Modeling"
+    "displayName": "Blender（三维建模）"
   },
   "plugins": [
     {
@@ -9,20 +9,20 @@
       "source": {
         "source": "url",
         "url": "https://github.com/full-aigc-plugins/blender-design-plugin.git",
-        "ref": "v0.14.1"
+        "ref": "v0.16.2"
       },
       "policy": {
         "installation": "AVAILABLE",
         "authentication": "ON_USE"
       },
       "category": "Creativity",
-      "version": "0.14.1",
-      "description": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。",
-      "icon": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.14.1/assets/official-logo.png",
+      "version": "0.16.2",
+      "description": "用自然语言搭 3D 场景：建模、材质、灯光、相机与渲染，关键节点截图，导出前可回滚。",
+      "icon": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.16.2/assets/official-logo.png",
       "interface": {
         "displayName": "Blender（三维建模）",
-        "shortDescription": "建模、绑定、材质、动画、渲染与导出",
-        "logo": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.14.1/assets/official-logo.png"
+        "shortDescription": "用自然语言搭 3D 场景：建模、材质、灯光、相机与渲染，关键节点截图，导出前可回滚。",
+        "logo": "https://cdn.jsdelivr.net/gh/full-aigc-plugins/blender-design-plugin@v0.16.2/assets/official-logo.png"
       },
       "displayName": "Blender（三维建模）"
     }

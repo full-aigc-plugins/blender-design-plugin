@@ -2,11 +2,11 @@
   "name": "blender-design",
   "displayName": "Blender（三维建模）",
   "displayName_i18n": {
-    "en": "Blender Design · 3D Modeling",
+    "en": "Blender（三维建模）",
     "zh-CN": "Blender（三维建模）"
   },
-  "version": "0.14.1",
-  "description": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。",
+  "version": "0.16.2",
+  "description": "用自然语言搭 3D 场景：建模、材质、灯光、相机与渲染，关键节点截图，导出前可回滚。",
   "description_i18n": {
     "en": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
     "zh-CN": "受控 Blender 操作，含里程碑截图、事务回滚、白模预演与多格式校验导出。"
