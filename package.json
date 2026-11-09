@@ -1,6 +1,6 @@
 {
   "name": "blender-design-plugin",
-  "version": "0.16.0",
+  "version": "0.16.2",
   "private": true,
   "type": "module",
   "main": "./dsh/lib/index.js",
