@@ -5,7 +5,7 @@
     "en": "Blender（三维建模）",
     "zh-CN": "Blender（三维建模）"
   },
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "用自然语言搭 3D 场景：建模、材质、灯光、相机与渲染，关键节点截图，导出前可回滚。",
   "description_i18n": {
     "en": "Controlled Blender operations with milestone screenshots, transaction rollback, previs and verified multi-format export.",
