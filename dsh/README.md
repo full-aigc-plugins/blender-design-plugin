@@ -7,7 +7,7 @@ host manifest; Claude Code, Codex, ZCode and Kimi keep using those.
 ## Install
 
 ```sh
-dsh plugin --profile desktop add link:/Users/wandl/workspaces/workspace-agent-skills/full-aigc-plugins-repositories/blender-design-plugin/dsh
+dsh plugin --profile desktop add link:/path/to/blender-design-plugin
 ```
 
 ## What DSH gets
